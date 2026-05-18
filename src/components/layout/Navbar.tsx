@@ -1,52 +1,45 @@
 import React, { useState } from 'react';
 import { AuthDialog } from '../ui/AuthDialog';
 
+// Add this to your global CSS or a <style> tag:
+// @keyframes spin-border {
+//   0% { --angle: 0deg; }
+//   100% { --angle: 360deg; }
+// }
+
 export const Navbar: React.FC = () => {
   const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false);
 
   return (
     <>
       <style>{`
-        @keyframes shimmer-line {
-          0% {
-            transform: translateX(-100%) skewX(-20deg);
-            opacity: 0;
-          }
-          10% {
-            opacity: 1;
-          }
-          90% {
-            opacity: 1;
-          }
-          100% {
-            transform: translateX(350%) skewX(-20deg);
-            opacity: 0;
-          }
+        @property --angle {
+          syntax: '<angle>';
+          initial-value: 0deg;
+          inherits: false;
         }
 
-        .shimmer-btn {
+        @keyframes spin-border {
+          0%   { --angle: 0deg; }
+          100% { --angle: 360deg; }
+        }
+
+        .animated-border-btn {
           position: relative;
-          overflow: hidden;
+          border-radius: 9999px;
+          padding: 2px;
+          background: conic-gradient(
+            from var(--angle),
+            #4885FF,
+            #F68035,
+            #4885FF
+          );
+          animation: spin-border 2.5s linear infinite;
+          box-shadow: 0 8px 25px rgba(8, 66, 152, 0.3);
         }
 
-        .shimmer-btn::after {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 30%;
-          height: 100%;
-          background: linear-gradient(
-            to right,
-            transparent 0%,
-            rgba(255, 255, 255, 0.25) 45%,
-            rgba(255, 255, 255, 0.5) 50%,
-            rgba(255, 255, 255, 0.25) 55%,
-            transparent 100%
-          );
-          transform: translateX(-100%) skewX(-20deg);
-          animation: shimmer-line 2.5s ease-in-out infinite;
-          pointer-events: none;
+        .animated-border-btn:hover {
+          box-shadow: 0 8px 32px rgba(8, 66, 152, 0.5);
         }
       `}</style>
 
@@ -55,7 +48,7 @@ export const Navbar: React.FC = () => {
 
           {/* Logo Section */}
           <div className="flex items-center gap-3 cursor-pointer">
-            <img src="/images/main-logo-2.png" alt="logo" className="" />
+            <img src="/images/main-logo-2.png" alt="logo" />
           </div>
 
           {/* Center Links - White Pill */}
@@ -90,8 +83,9 @@ export const Navbar: React.FC = () => {
 
             <div className='bg-[#0b2c5c] w-[2px] h-[50px]'></div>
 
-            <div className="rounded-full p-[2px] bg-gradient-to-r from-[#4885FF] to-[#F68035] shadow-lg shadow-blue-900/20">
-              <button className="shimmer-btn bg-[#035096] hover:bg-[#024078] text-white px-6 py-3 rounded-full font-semibold text-sm transition-colors flex items-center gap-2 h-full w-full">
+            {/* ✅ Animated rotating border button */}
+            <div className="animated-border-btn">
+              <button className="bg-[#035096] hover:bg-[#024078] text-white px-6 py-3 rounded-full font-semibold text-sm transition-colors flex items-center gap-2 h-full w-full">
                 Post Property
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M5 19L19 5M19 5v10M19 5H9"></path>

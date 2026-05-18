@@ -137,6 +137,7 @@ export const HeroSection: React.FC = () => {
 
       {/* Floating Ask Gummaam Button */}
       <div className="fixed bottom-8 right-8 z-50">
+        <img src="/images/chat-support.png" alt="chat" className='w-26 ml-auto' />
         <div className="rounded-full bg-gradient-to-r from-[#EB6753] to-[#4885FF] p-[3px] shadow-2xl shadow-blue-900/40 cursor-pointer hover:scale-105 transition-transform">
           <button className="bg-[#0B2C5C] hover:bg-[#082046] text-white px-5 py-3 rounded-full text-sm transition-colors flex items-center gap-1 h-full w-full">
             <span className="font-bold">Ask</span> <span className="font-normal">Gummaam</span>

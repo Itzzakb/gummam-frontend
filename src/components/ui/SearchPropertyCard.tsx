@@ -1,11 +1,9 @@
 import React from 'react';
-import { MapPin, BedDouble, Bath, Maximize, Heart, Share2, Mail, Phone } from 'lucide-react';
-import { Button } from './Button';
+import { MapPin, BedDouble, Bath, Maximize, Heart, Share2 } from 'lucide-react';
 
 export interface SearchPropertyCardProps {
   image: string;
   title: string;
-  location: string;
   price: string;
   type: string; // 'For Rent' | 'For Sale'
   beds?: number;
@@ -17,7 +15,7 @@ export interface SearchPropertyCardProps {
 }
 
 export const SearchPropertyCard: React.FC<SearchPropertyCardProps> = ({
-  image, title, location, price, type, beds, baths, sqft, description, updatedAt, viewType = 'grid'
+  image, title, price, type, beds, baths, sqft, description, updatedAt, viewType = 'grid'
 }) => {
   const isRent = type.toLowerCase().includes('rent');
 

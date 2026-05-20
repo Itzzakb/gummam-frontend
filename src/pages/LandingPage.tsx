@@ -1,5 +1,4 @@
 import React from 'react';
-import { Navbar } from '../components/layout/Navbar';
 import { HeroSection } from '../features/landing/HeroSection';
 import { TrendingHomes } from '../features/landing/TrendingHomes';
 import { PropertyCarousel } from '../features/landing/PropertyCarousel';
@@ -7,7 +6,6 @@ import { PromoBanner } from '../features/landing/PromoBanner';
 import { CityExplore } from '../features/landing/CityExplore';
 import { AgentSection } from '../features/landing/AgentSection';
 import { Testimonials } from '../features/landing/Testimonials';
-import { Footer } from '../components/layout/Footer';
 import { NewLaunch } from '../features/landing/NewLaunch';
 import { PrimeProperties } from '../features/landing/PrimeProperties';
 import { AdSection } from '../features/landing/AdSection';
@@ -32,26 +30,22 @@ const commercialProperties = [
 
 export const LandingPage: React.FC = () => {
   return (
-    <div className="min-h-screen bg-gray-50 font-sans text-gray-900">
-      <Navbar />
-      <main>
-        <HeroSection />
-        <TrendingHomes />
-        <PromoBanner />
-        {/* <PropertyTypes /> */}
-        <CityExplore />
-        <PropertyCarousel title="Your Ultimate Hub for Hyderabad" properties={dummyProperties} />
-        <NewLaunch />
-        <PrimeProperties />
-        <AdSection />
-        <AgentSection />
-        <SmartSolutions />
-        <PropertyCarousel title="Commercial Real Estate" properties={commercialProperties} />
-        <BlogSection />
-        <Testimonials />
-        <PostProperty />
-      </main>
-      <Footer />
-    </div>
+    <>
+      <HeroSection />
+      <TrendingHomes />
+      <PromoBanner />
+      {/* <PropertyTypes /> */}
+      <CityExplore />
+      <PropertyCarousel title="Your Ultimate Hub for Hyderabad" properties={dummyProperties} />
+      <NewLaunch />
+      <PrimeProperties />
+      <AdSection />
+      <AgentSection />
+      <SmartSolutions />
+      <PropertyCarousel title="Commercial Real Estate" properties={commercialProperties} />
+      <BlogSection />
+      <Testimonials />
+      <PostProperty />
+    </>
   );
 };

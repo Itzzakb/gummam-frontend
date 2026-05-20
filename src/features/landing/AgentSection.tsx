@@ -75,7 +75,7 @@ export const AgentSection: React.FC = () => {
         {/* See All Link */}
         <div className="flex justify-end mb-8">
           <a href="#" className="text-[#0B2C5C] font-semibold text-[14px] underline hover:text-[#4885FF] transition-colors whitespace-nowrap">
-            See all Properties
+            See all Agents
           </a>
         </div>
 

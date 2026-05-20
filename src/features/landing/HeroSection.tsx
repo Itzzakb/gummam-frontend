@@ -1,4 +1,5 @@
 import React, { type ReactNode } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Select,
   SelectContent,
@@ -45,6 +46,8 @@ const DropdownField: React.FC<DropdownFieldProps> = ({ icon, label, options }) =
 };
 
 export const HeroSection: React.FC = () => {
+  const navigate = useNavigate();
+
   return (
     <div className="px-4 sm:px-6 lg:px-8 font-poppins bg-[#FAFAFA] pb-10">
       <div className="max-w-7xl mx-auto rounded-[40px] relative overflow-hidden bg-gradient-to-r from-[#D7E5F0] via-[#EAEBE5] to-[#F1D7C2] pt-16 pb-20 px-10 sm:px-16 flex flex-col lg:flex-row items-center min-h-[600px] mt-4 shadow-sm">
@@ -111,7 +114,10 @@ export const HeroSection: React.FC = () => {
               </button>
 
               {/* Regular Search */}
-              <button className="bg-[#E67817] hover:bg-[#D5680E] text-white px-7 py-4 rounded-full font-medium text-[14px] transition-colors flex items-center gap-2 shrink-0 shadow-lg shadow-orange-500/20">
+              <button 
+                onClick={() => navigate('/search')}
+                className="bg-[#E67817] hover:bg-[#D5680E] text-white px-7 py-4 rounded-full font-medium text-[14px] transition-colors flex items-center gap-2 shrink-0 shadow-lg shadow-orange-500/20"
+              >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                 Regular Search
               </button>

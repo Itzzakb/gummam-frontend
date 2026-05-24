@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useAuth } from '@/context/AuthContext';
 
 type AuthDialogProps = {
   isOpen: boolean;
@@ -40,6 +41,7 @@ const socialButtons = [
 ];
 
 export const AuthDialog: React.FC<AuthDialogProps> = ({ isOpen, onClose }) => {
+  const { login } = useAuth();
   const [accountType, setAccountType] = useState<'user' | 'agent'>('user');
   const [authView, setAuthView] = useState<'login' | 'register' | 'forgot-password' | 'otp' | 'reset-password' | 'success' | 'agent-register-success'>('login');
   const [showLoginPassword, setShowLoginPassword] = useState(false);
@@ -99,8 +101,8 @@ export const AuthDialog: React.FC<AuthDialogProps> = ({ isOpen, onClose }) => {
           <X className="h-5 w-5" />
         </DialogClose>
 
-        <div className="max-h-[88vh] overflow-hidden rounded-[20px]">
-        <div className="max-h-[88vh] overflow-y-auto overflow-x-hidden pr-3 [scrollbar-color:#cbd5e1_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-300 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar]:w-1.5">
+        <div className="max-h-[calc(88vh-52px)] overflow-hidden rounded-[20px]">
+        <div className="max-h-[calc(88vh-52px)] overflow-y-auto overflow-x-hidden pr-3 [scrollbar-color:#cbd5e1_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-300 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar]:w-1.5">
           <div className="flex flex-col gap-5 pb-8">
             <div className="flex-1">
               <div className="mb-5 flex items-start justify-between gap-4">
@@ -211,6 +213,10 @@ export const AuthDialog: React.FC<AuthDialogProps> = ({ isOpen, onClose }) => {
 
                     <Button
                       type="button"
+                      onClick={() => {
+                        login();
+                        onClose();
+                      }}
                       className="flex h-11 w-full items-center justify-between rounded-full bg-[#035096] px-6 text-sm font-semibold text-white shadow-none hover:bg-[#024078]"
                     >
                       <span>Log In</span>
@@ -384,6 +390,10 @@ export const AuthDialog: React.FC<AuthDialogProps> = ({ isOpen, onClose }) => {
                   <div className="mx-auto mt-4 max-w-[320px]">
                     <Button
                       type="button"
+                      onClick={() => {
+                        login();
+                        onClose();
+                      }}
                       className="flex h-11 w-full items-center justify-between rounded-full bg-[#035096] px-6 text-sm font-semibold text-white shadow-none hover:bg-[#024078]"
                     >
                       <span>Register Now</span>

@@ -5,19 +5,24 @@ import { PageLayout } from './components/layout/PageLayout';
 import { ListingProjects } from './pages/ListingProjects';
 import { PropertyDetails } from './pages/PropertyDetails';
 import { ScrollToTop } from './components/layout/ScrollToTop';
+import { AuthProvider } from './context/AuthContext';
+import { Membership } from './pages/Membership';
 
 const App: React.FC = () => {
   return (
-    <BrowserRouter>
-      <ScrollToTop />
-      <Routes>
-        <Route path="/" element={<PageLayout />}>
-          <Route index element={<LandingPage />} />
-          <Route path="search" element={<ListingProjects />} />
-          <Route path="property/:id" element={<PropertyDetails />} />
-        </Route>
-      </Routes>
-    </BrowserRouter>
+    <AuthProvider>
+      <BrowserRouter>
+        <ScrollToTop />
+        <Routes>
+          <Route path="/" element={<PageLayout />}>
+            <Route index element={<LandingPage />} />
+            <Route path="search" element={<ListingProjects />} />
+            <Route path="property/:id" element={<PropertyDetails />} />
+            <Route path="membership" element={<Membership />} />
+          </Route>
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   );
 };
 

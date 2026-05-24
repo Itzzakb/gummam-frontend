@@ -88,7 +88,7 @@ const dummyProperties = [
 
 
 export const ListingProjects: React.FC = () => {
-  const [viewType, setViewType] = useState<'grid' | 'list'>('grid');
+  const [viewType, setViewType] = useState<'grid' | 'list'>('list');
   
   // Filter States
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
@@ -143,7 +143,8 @@ export const ListingProjects: React.FC = () => {
         <div className="flex justify-between items-end mb-6">
           <h1 className="text-[28px] font-bold text-[#0B2C5C] font-merriweather">Trending Homes</h1>
 
-          {/* View Toggle */}
+          {/* View Toggle (Hidden for list-only view) */}
+          {/*
           <div className="flex items-center gap-2 bg-white p-1 rounded-md border border-gray-200">
             <button
               onClick={() => setViewType('grid')}
@@ -158,6 +159,7 @@ export const ListingProjects: React.FC = () => {
               <ListIcon className="w-4 h-4" />
             </button>
           </div>
+          */}
         </div>
 
         {/* Filters */}

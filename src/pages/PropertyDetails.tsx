@@ -1,12 +1,11 @@
-import React, { useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import React from 'react';
+import { Link } from 'react-router-dom';
 import {
   ChevronRight, MapPin, Heart, Share2,
   BedDouble, Bath, Square, Calendar, Car,
-  Play, Star, CheckCircle2, Phone, Mail, User, Clock
+  Play, Star, Phone, Clock
 } from 'lucide-react';
 import { PromoSidebarCard } from '../components/ui/PromoSidebarCard';
-import { SearchPropertyCard } from '../components/ui/SearchPropertyCard';
 import { PropertyCarousel } from '../features/landing/PropertyCarousel';
 
 // Dummy data for property
@@ -113,7 +112,6 @@ const propertyData = {
 };
 
 export const PropertyDetails: React.FC = () => {
-  const { id } = useParams();
 
   // In a real app, we'd fetch property by ID here. Using dummy data for now.
   const data = propertyData;

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Filter, RotateCcw, LayoutGrid, List as ListIcon, ChevronRight, ChevronDown, ChevronUp, ArrowLeftRight, Check } from 'lucide-react';
+import { Filter, RotateCcw, ChevronRight, ChevronDown, ChevronUp, ArrowLeftRight, Check } from 'lucide-react';
 import { SearchPropertyCard } from '../components/ui/SearchPropertyCard';
 import { AgentSection } from '../features/landing/AgentSection';
 import { PromoSidebarCard } from '../components/ui/PromoSidebarCard';
@@ -88,7 +88,7 @@ const dummyProperties = [
 
 
 export const ListingProjects: React.FC = () => {
-  const [viewType, setViewType] = useState<'grid' | 'list'>('list');
+  const [viewType] = useState<'grid' | 'list'>('list');
   
   // Filter States
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);

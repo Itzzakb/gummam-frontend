@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { Building2, Calendar, Home, Key } from 'lucide-react';
 
 export interface AgentCardProps {
@@ -109,9 +110,9 @@ export const AgentCard: React.FC<AgentCardProps> = ({
         <button className="flex-1 bg-[#EB832D] text-white py-3 rounded-[16px] text-[12px] font-poppins font-semibold tracking-[1.2px] hover:bg-orange-600 transition-colors shadow-sm uppercase">
           View Properties
         </button>
-        <button className="flex-1 bg-[#00478F] text-white py-3 rounded-[16px] text-[12px] font-poppins font-semibold tracking-[1.2px] hover:bg-blue-900 transition-colors shadow-sm uppercase">
+        <Link to={`/agent/${encodeURIComponent(name.toLowerCase().replace(/\s+/g, '-'))}`} className="flex-1 bg-[#00478F] text-white py-3 rounded-[16px] text-[12px] font-poppins font-semibold tracking-[1.2px] hover:bg-blue-900 transition-colors shadow-sm uppercase text-center flex items-center justify-center">
           View Profile
-        </button>
+        </Link>
       </div>
     </div>
   );

@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { Building2, Calendar, Home, Key } from 'lucide-react';
 import {
   Carousel,
@@ -74,9 +75,9 @@ export const AgentSection: React.FC = () => {
 
         {/* See All Link */}
         <div className="flex justify-end mb-8">
-          <a href="#" className="text-[#0B2C5C] font-semibold text-[14px] underline hover:text-[#4885FF] transition-colors whitespace-nowrap">
+          <Link to="/agents" className="text-[#0B2C5C] font-semibold text-[14px] underline hover:text-[#4885FF] transition-colors whitespace-nowrap">
             See all Agents
-          </a>
+          </Link>
         </div>
 
         {/* Carousel */}
@@ -185,9 +186,9 @@ export const AgentSection: React.FC = () => {
                       <button className="flex-1 bg-[#EB832D] text-white py-3 rounded-[16px] text-[12px] font-poppins font-semibold tracking-[1.2px] hover:bg-orange-600 transition-colors shadow-sm uppercase">
                         View Properties
                       </button>
-                      <button className="flex-1 bg-[#00478F] text-white py-3 rounded-[16px] text-[12px] font-poppins font-semibold tracking-[1.2px] hover:bg-blue-900 transition-colors shadow-sm uppercase">
+                      <Link to={`/agent/${encodeURIComponent(agent.name.toLowerCase().replace(/\s+/g, '-'))}`} className="flex-1 bg-[#00478F] text-white py-3 rounded-[16px] text-[12px] font-poppins font-semibold tracking-[1.2px] hover:bg-blue-900 transition-colors shadow-sm uppercase text-center flex items-center justify-center">
                         View Profile
-                      </button>
+                      </Link>
                     </div>
 
                   </div>

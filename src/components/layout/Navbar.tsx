@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { AuthDialog } from '../ui/AuthDialog';
 import { useAuth } from '@/context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { LogOut } from 'lucide-react';
 
 // Add this to your global CSS or a <style> tag:
 // @keyframes spin-border {
@@ -126,10 +127,11 @@ export const Navbar: React.FC = () => {
                     <div className="absolute right-0 top-full mt-3 w-52 bg-white rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.15)] border border-slate-100 py-1.5 z-50">
                       {/* Upward pointer arrow */}
                       <div className="absolute -top-[6px] right-4 w-3 h-3 bg-white border-t border-l border-slate-100 rotate-45"></div>
-                      
+
                       <button
                         onClick={() => {
                           setIsDropdownOpen(false);
+                          navigate('/profile');
                         }}
                         className="relative flex items-center gap-4 w-full px-5 py-3 text-left text-[15px] font-normal text-black hover:bg-slate-50/80 transition-colors"
                       >
@@ -149,10 +151,7 @@ export const Navbar: React.FC = () => {
                         }}
                         className="relative flex items-center gap-4 w-full px-5 py-3 text-left text-[15px] font-normal text-black hover:bg-slate-50/80 transition-colors"
                       >
-                        <svg className="w-5 h-5 text-slate-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M18.36 5.64A9 9 0 1 0 18.36 18.36" />
-                          <path d="M9 12h12M17 8l4 4-4 4" />
-                        </svg>
+                        <LogOut className="w-5 h-5" />
                         Log Out
                       </button>
                     </div>

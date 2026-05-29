@@ -7,6 +7,9 @@ import { PropertyDetails } from './pages/PropertyDetails';
 import { ScrollToTop } from './components/layout/ScrollToTop';
 import { AuthProvider } from './context/AuthContext';
 import { Membership } from './pages/Membership';
+import { MyProfile } from './pages/MyProfile';
+import { AgentList } from './pages/AgentList';
+import { AgentDetails } from './pages/AgentDetails';
 
 const App: React.FC = () => {
   return (
@@ -19,6 +22,9 @@ const App: React.FC = () => {
             <Route path="search" element={<ListingProjects />} />
             <Route path="property/:id" element={<PropertyDetails />} />
             <Route path="membership" element={<Membership />} />
+            <Route path="profile" element={<MyProfile />} />
+            <Route path="agents" element={<AgentList />} />
+            <Route path="agent/:name" element={<AgentDetails />} />
           </Route>
         </Routes>
       </BrowserRouter>

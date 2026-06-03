@@ -10,6 +10,7 @@ import {
 
 const dummyNewLaunches: NewLaunchCardProps[] = [
   {
+    id: 301,
     image: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80',
     tagLabel: 'PRE-LAUNCH OFFER',
     title: 'Laxmi Tower',
@@ -17,6 +18,7 @@ const dummyNewLaunches: NewLaunchCardProps[] = [
     location: 'Hyderabad, Uppal'
   },
   {
+    id: 302,
     image: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&q=80',
     tagLabel: 'READY IN 2027',
     title: 'Best 1 Villas',
@@ -24,6 +26,7 @@ const dummyNewLaunches: NewLaunchCardProps[] = [
     location: 'Hyderabad, Uppal'
   },
   {
+    id: 303,
     image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80',
     tagLabel: 'NEW PROJECT',
     title: 'Skyline Residences',

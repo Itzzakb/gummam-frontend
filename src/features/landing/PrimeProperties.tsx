@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { MapPin, BedDouble, Bath, Maximize, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 interface PrimeProperty {
   id: number;
@@ -111,9 +112,9 @@ export const PrimeProperties: React.FC = () => {
               </div>
 
               <div>
-                <button className="px-6 py-2 border border-[#0B2C5C] text-[#0B2C5C] rounded-lg text-[14px] font-semibold hover:bg-[#0B2C5C] hover:text-white transition-colors">
+                <Link to={`/property/${currentProp.id}`} className="px-6 py-2 border border-[#0B2C5C] text-[#0B2C5C] rounded-lg text-[14px] font-semibold hover:bg-[#0B2C5C] hover:text-white transition-colors inline-block text-center">
                   View Detail
-                </button>
+                </Link>
               </div>
             </div>
 

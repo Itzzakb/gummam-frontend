@@ -1,7 +1,9 @@
 import React from 'react';
 import { MapPin, BedDouble, Bath, Maximize } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 export interface PropertyCardProps {
+  id?: number | string;
   image: string;
   title: string;
   location: string;
@@ -13,7 +15,7 @@ export interface PropertyCardProps {
 }
 
 export const PropertyCard: React.FC<PropertyCardProps> = ({
-  image, title, location, price, type, beds, baths, sqft
+  id = 1, image, title, location, price, type, beds, baths, sqft
 }) => {
   const isRent = type.toLowerCase().includes('rent');
 
@@ -67,9 +69,9 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
             {price}
             {isRent && <span className="text-[11px] font-medium text-gray-500 ml-1">/Month</span>}
           </div>
-          <button className="px-4 py-1.5 border border-[#0B2C5C] text-[#0B2C5C] rounded-md text-[12px] font-semibold hover:bg-[#0B2C5C] hover:text-white transition-colors">
+          <Link to={`/property/${id}`} className="px-4 py-1.5 border border-[#0B2C5C] text-[#0B2C5C] rounded-md text-[12px] font-semibold hover:bg-[#0B2C5C] hover:text-white transition-colors text-center">
             View Detail
-          </button>
+          </Link>
         </div>
       </div>
     </div>

@@ -1,7 +1,9 @@
 import React from 'react';
 import { MapPin } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 export interface NewLaunchCardProps {
+  id?: number | string;
   image: string;
   tagLabel: string;
   title: string;
@@ -10,7 +12,7 @@ export interface NewLaunchCardProps {
 }
 
 export const NewLaunchCard: React.FC<NewLaunchCardProps> = ({
-  image, tagLabel, title, description, location
+  id = 1, image, tagLabel, title, description, location
 }) => {
   return (
     <div className="bg-white rounded-[20px] overflow-hidden border border-gray-200/60 shadow-sm font-poppins flex flex-col sm:flex-row h-full">
@@ -44,9 +46,9 @@ export const NewLaunchCard: React.FC<NewLaunchCardProps> = ({
           <p className="text-[14px] text-gray-500 flex items-center">
             <MapPin className="w-4 h-4 mr-1.5 text-gray-400" /> {location}
           </p>
-          <button className="px-5 py-2 border border-[#0B2C5C] text-[#0B2C5C] rounded-lg text-[13px] font-semibold hover:bg-[#0B2C5C] hover:text-white transition-colors">
+          <Link to={`/property/${id}`} className="px-5 py-2 border border-[#0B2C5C] text-[#0B2C5C] rounded-lg text-[13px] font-semibold hover:bg-[#0B2C5C] hover:text-white transition-colors text-center">
             View Detail
-          </button>
+          </Link>
         </div>
       </div>
     </div>

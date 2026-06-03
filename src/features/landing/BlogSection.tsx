@@ -36,7 +36,7 @@ export const BlogSection: React.FC = () => {
         {/* Heading */}
         <div className="flex justify-center mb-6">
           <div className="relative inline-block border-b-2 border-[#0B2C5C] pb-3">
-            <h2 className="text-3xl font-bold text-[#0B2C5C] font-heading">
+            <h2 className="text-center text-3xl font-bold text-[#0B2C5C] font-heading">
               Our Blog
             </h2>
             <div className="absolute -bottom-[9px] left-1/2 -translate-x-1/2 w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[8px] border-t-[#0B2C5C]"></div>

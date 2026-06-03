@@ -62,7 +62,7 @@ export const PrimeProperties: React.FC = () => {
         {/* Heading */}
         <div className="flex justify-center mb-4">
           <div className="relative inline-block border-b-2 border-[#0B2C5C] pb-3">
-            <h2 className="text-3xl font-bold text-[#0B2C5C] font-heading">
+            <h2 className="text-center text-3xl font-bold text-[#0B2C5C] font-heading">
               Prime Properties
             </h2>
             <div className="absolute -bottom-[9px] left-1/2 -translate-x-1/2 w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[8px] border-t-[#0B2C5C]"></div>
@@ -93,17 +93,17 @@ export const PrimeProperties: React.FC = () => {
                 </p>
               </div>
 
-              <div className="flex items-center text-[15px] text-gray-600 mb-10 gap-6">
+              <div className="flex flex-wrap items-center text-[14px] sm:text-[15px] text-gray-600 mb-6 lg:mb-10 gap-3 sm:gap-6">
                 <div className="flex items-center gap-2">
                   <BedDouble className="w-5 h-5 text-gray-400" />
                   <span>{currentProp.beds}</span>
                 </div>
-                <div className="w-[1px] h-5 bg-gray-300"></div>
+                <div className="hidden sm:block w-[1px] h-5 bg-gray-300"></div>
                 <div className="flex items-center gap-2">
                   <Bath className="w-5 h-5 text-gray-400" />
                   <span>{currentProp.baths}</span>
                 </div>
-                <div className="w-[1px] h-5 bg-gray-300"></div>
+                <div className="hidden sm:block w-[1px] h-5 bg-gray-300"></div>
                 <div className="flex items-center gap-2">
                   <Maximize className="w-5 h-5 text-gray-400" />
                   <span>{currentProp.sqft}</span>
@@ -119,7 +119,7 @@ export const PrimeProperties: React.FC = () => {
 
             {/* Right Image Slider */}
             <div className="w-full lg:w-[55%] relative flex items-center justify-center">
-              <div className="w-full h-[300px] sm:h-[400px] bg-[#E3F2FD] rounded-xl border border-[#F6931D] p-3 relative">
+              <div className="w-full h-[250px] sm:h-[400px] bg-[#E3F2FD] rounded-xl border border-[#F6931D] p-3 relative">
                 <img
                   src={currentProp.images[activeImageIndex]}
                   alt={currentProp.title}
@@ -129,13 +129,13 @@ export const PrimeProperties: React.FC = () => {
                 {/* Arrows */}
                 <button
                   onClick={handlePrevImage}
-                  className="absolute -left-5 top-1/2 -translate-y-1/2 w-10 h-10 bg-white rounded-full shadow-md flex items-center justify-center text-[#0B2C5C] hover:bg-[#0B2C5C] hover:text-white transition-colors z-10"
+                  className="absolute left-2 sm:-left-5 top-1/2 -translate-y-1/2 w-10 h-10 bg-white rounded-full shadow-md flex items-center justify-center text-[#0B2C5C] hover:bg-[#0B2C5C] hover:text-white transition-colors z-10"
                 >
                   <ChevronLeft className="w-6 h-6" />
                 </button>
                 <button
                   onClick={handleNextImage}
-                  className="absolute -right-5 top-1/2 -translate-y-1/2 w-10 h-10 bg-white rounded-full shadow-md flex items-center justify-center text-[#0B2C5C] hover:bg-[#0B2C5C] hover:text-white transition-colors z-10"
+                  className="absolute right-2 sm:-right-5 top-1/2 -translate-y-1/2 w-10 h-10 bg-white rounded-full shadow-md flex items-center justify-center text-[#0B2C5C] hover:bg-[#0B2C5C] hover:text-white transition-colors z-10"
                 >
                   <ChevronRight className="w-6 h-6" />
                 </button>

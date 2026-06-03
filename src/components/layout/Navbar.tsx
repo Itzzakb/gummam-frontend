@@ -2,19 +2,14 @@ import React, { useState } from 'react';
 import { AuthDialog } from '../ui/AuthDialog';
 import { useAuth } from '@/context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { LogOut } from 'lucide-react';
-
-// Add this to your global CSS or a <style> tag:
-// @keyframes spin-border {
-//   0% { --angle: 0deg; }
-//   100% { --angle: 360deg; }
-// }
+import { LogOut, Menu, X } from 'lucide-react';
 
 export const Navbar: React.FC = () => {
   const navigate = useNavigate();
   const { user, logout, isAuthenticated } = useAuth();
   const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
     <>
@@ -49,27 +44,27 @@ export const Navbar: React.FC = () => {
         }
       `}</style>
 
-      <div className="pt-6 px-4 sm:px-6 lg:px-8 font-poppins bg-[#FAFAFA]">
+      <div className="pt-6 px-4 sm:px-6 lg:px-8 font-poppins bg-[#FAFAFA] relative z-40">
         <nav className="max-w-7xl mx-auto bg-[#F0F4F9] rounded-full px-6 py-3 flex justify-between items-center shadow-sm">
 
           {/* Logo Section */}
-          <div onClick={() => navigate('/')} className="flex items-center gap-3 cursor-pointer">
-            <img src="/images/main-logo-2.png" alt="logo" />
+          <div onClick={() => { setIsMobileMenuOpen(false); navigate('/'); }} className="flex items-center gap-3 cursor-pointer z-50">
+            <img src="/images/main-logo-2.png" alt="logo" className="h-8 sm:h-10 w-auto object-contain" />
           </div>
 
           {/* Center Links - White Pill */}
           <div className="hidden lg:flex items-center bg-white rounded-full px-8 py-3 shadow-[0_2px_10px_rgba(0,0,0,0.02)] gap-8">
-            <div className="relative group cursor-pointer">
+            <div className="relative group cursor-pointer" onClick={() => navigate('/search')}>
               <span className="text-[#1A2B4C] font-semibold text-sm">Projects</span>
               <div className="absolute -bottom-3 left-0 w-full h-[3px] bg-[#F6931D] rounded-full"></div>
             </div>
-            <span className="text-[#173F8D] font-medium text-sm cursor-pointer hover:text-[#F6931D] transition-colors">Map-View</span>
-            <span className="text-[#173F8D] font-medium text-sm cursor-pointer hover:text-[#F6931D] transition-colors">Commercial</span>
-            <span className="text-[#173F8D] font-medium text-sm cursor-pointer hover:text-[#F6931D] transition-colors">CRM</span>
+            <span onClick={() => navigate('/search')} className="text-[#173F8D] font-medium text-sm cursor-pointer hover:text-[#F6931D] transition-colors">Map-View</span>
+            <span onClick={() => navigate('/search')} className="text-[#173F8D] font-medium text-sm cursor-pointer hover:text-[#F6931D] transition-colors">Commercial</span>
+            <span onClick={() => navigate('/search')} className="text-[#173F8D] font-medium text-sm cursor-pointer hover:text-[#F6931D] transition-colors">CRM</span>
           </div>
 
           {/* Right Actions */}
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-4 lg:gap-6">
             <div onClick={() => navigate('/membership')} className="hidden md:flex items-start gap-1 cursor-pointer">
               <img src="/images/diamond.png" alt="membership" style={{ height: '30px', width: '30px' }} />
               <div className="flex flex-col leading-tight">
@@ -89,13 +84,13 @@ export const Navbar: React.FC = () => {
                   <span className="text-[#0B2C5C] font-semibold text-sm">Login</span>
                 </button>
 
-                <div className='bg-[#0b2c5c] w-[2px] h-[50px]'></div>
+                <div className='hidden md:block bg-[#0b2c5c] w-[2px] h-[50px]'></div>
               </>
             ) : null}
 
             {/* ✅ Animated rotating border button */}
-            <div className="animated-border-btn">
-              <button className="bg-[#035096] hover:bg-[#024078] text-white px-6 py-3 rounded-full font-semibold text-sm transition-colors flex items-center gap-2 h-full w-full">
+            <div className="animated-border-btn hidden sm:block">
+              <button className="bg-[#035096] hover:bg-[#024078] text-white px-5 sm:px-6 py-2.5 sm:py-3 rounded-full font-semibold text-xs sm:text-sm transition-colors flex items-center gap-2 h-full w-full">
                 Post Property
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M5 19L19 5M19 5v10M19 5H9"></path>
@@ -108,7 +103,7 @@ export const Navbar: React.FC = () => {
               <div className="relative flex items-center">
                 <button
                   onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                  className="flex items-center justify-center w-11 h-11 rounded-full border-2 border-[#0B56A2] p-[2px] overflow-hidden focus:outline-none"
+                  className="flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 rounded-full border-2 border-[#0B56A2] p-[2px] overflow-hidden focus:outline-none"
                 >
                   <img
                     src={user?.avatarUrl || "/images/profile_avatar.png"}
@@ -159,9 +154,171 @@ export const Navbar: React.FC = () => {
                 )}
               </div>
             )}
+
+            {/* Mobile Menu Button */}
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="lg:hidden text-[#0B2C5C] hover:text-[#F68035] transition-colors focus:outline-none p-1.5 rounded-full hover:bg-gray-200/50"
+            >
+              {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
           </div>
 
         </nav>
+
+        {/* Mobile Quick Navigation Pills */}
+        <div className="flex lg:hidden items-center gap-2 mt-4 px-4 overflow-x-auto whitespace-nowrap scrollbar-none scroll-smooth">
+          {[
+            { name: 'Projects', active: true },
+            { name: 'Map-View', active: false },
+            { name: 'Commercial', active: false },
+            { name: 'CRM', active: false }
+          ].map((item) => (
+            <button
+              key={item.name}
+              onClick={() => navigate('/search')}
+              className={`px-4 py-1.5 rounded-full mb-2 font-medium text-[13px] border transition-all shadow-sm shrink-0 ${
+                item.active
+                  ? 'bg-[#0B2C5C] text-white border-transparent font-semibold'
+                  : 'bg-white text-[#173F8D] border-gray-200/80 hover:border-[#173F8D] active:bg-gray-50'
+              }`}
+            >
+              {item.name}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Mobile Drawer Menu Sidebar */}
+      {/* Backdrop overlay */}
+      <div
+        className={`fixed inset-0 bg-black/40 z-[100] lg:hidden transition-opacity duration-300 ${
+          isMobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+        }`}
+        onClick={() => setIsMobileMenuOpen(false)}
+      />
+      
+      {/* Sidebar Panel */}
+      <div
+        className={`fixed top-0 right-0 bottom-0 w-80 max-w-[85vw] bg-white z-[110] lg:hidden flex flex-col pt-6 px-6 pb-8 shadow-2xl transition-transform duration-300 ease-in-out ${
+          isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
+        }`}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-6">
+          <img src="/images/main-logo-2.png" alt="logo" className="h-8 w-auto object-contain" />
+          <button
+            onClick={() => setIsMobileMenuOpen(false)}
+            className="p-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-full transition-colors"
+          >
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+
+        {/* Scrollable Content */}
+        <div className="flex-1 flex flex-col justify-between overflow-y-auto scrollbar-none">
+          <div>
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Quick Navigation</p>
+            {/* Rounded pill tab design for nav links */}
+            <div className="bg-[#F0F4F9] p-1.5 rounded-2xl flex flex-col gap-1.5 shadow-inner">
+              {[
+                { name: 'Projects', active: true },
+                { name: 'Map-View', active: false },
+                { name: 'Commercial', active: false },
+                { name: 'CRM', active: false }
+              ].map((item) => (
+                <button
+                  key={item.name}
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    navigate('/search');
+                  }}
+                  className={`w-full py-3 px-5 rounded-xl font-medium text-[15px] transition-all text-center ${
+                    item.active
+                      ? 'bg-white text-[#0B2C5C] shadow-sm font-semibold'
+                      : 'text-[#173F8D] hover:bg-white/50'
+                  }`}
+                >
+                  {item.name}
+                </button>
+              ))}
+            </div>
+
+            {/* Extras */}
+            <div className="mt-8 flex flex-col gap-4">
+              <div
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  navigate('/membership');
+                }}
+                className="flex items-center gap-3 p-4 rounded-xl bg-gradient-to-r from-[#FFF5ED] to-[#FFEBE0] border border-orange-100 cursor-pointer hover:shadow-sm transition-all"
+              >
+                <img src="/images/diamond.png" alt="membership" className="h-8 w-8 object-contain" />
+                <div className="flex flex-col">
+                  <span className="text-[#E67E22] font-bold text-base leading-tight">Membership Plan</span>
+                  <span className="text-[#E67E22]/80 text-xs mt-0.5">Explore premium benefits</span>
+                </div>
+              </div>
+
+              {!isAuthenticated ? (
+                <button
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    setIsAuthDialogOpen(true);
+                  }}
+                  className="flex items-center gap-3 p-4 rounded-xl bg-[#F8FAFC] border border-slate-100 hover:bg-[#F1F5F9] transition-all"
+                >
+                  <img src="/icons/solar_user-broken.png" alt="user" className="h-6 w-6 object-contain" />
+                  <span className="text-[#0B2C5C] font-semibold text-[15px]">Log In / Sign Up</span>
+                </button>
+              ) : (
+                <button
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    navigate('/profile');
+                  }}
+                  className="flex items-center gap-3 p-4 rounded-xl bg-[#F8FAFC] border border-slate-100 hover:bg-[#F1F5F9] transition-all"
+                >
+                  <svg className="w-6 h-6 text-slate-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                    <circle cx="12" cy="7" r="4" />
+                  </svg>
+                  <span className="text-[#0B2C5C] font-semibold text-[15px]">My Profile</span>
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Bottom Actions: Post Property Call-to-action */}
+          <div className="mt-8 flex flex-col gap-4">
+            <div className="animated-border-btn w-full">
+              <button
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                }}
+                className="bg-[#035096] hover:bg-[#024078] text-white py-4 rounded-full font-bold text-center text-sm transition-colors flex items-center justify-center gap-2 w-full"
+              >
+                Post Property
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 19L19 5M19 5v10M19 5H9"></path>
+                </svg>
+              </button>
+            </div>
+
+            {isAuthenticated && (
+              <button
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  logout();
+                }}
+                className="w-full py-4 text-center text-red-500 font-semibold border border-red-200 hover:bg-red-50 rounded-full transition-colors flex items-center justify-center gap-2"
+              >
+                <LogOut className="w-4 h-4" />
+                Log Out
+              </button>
+            )}
+          </div>
+        </div>
       </div>
 
       <AuthDialog isOpen={isAuthDialogOpen} onClose={() => setIsAuthDialogOpen(false)} />

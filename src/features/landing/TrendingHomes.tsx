@@ -84,7 +84,7 @@ export const TrendingHomes: React.FC = () => {
         {/* Heading */}
         <div className="flex justify-center mb-10">
           <div className="relative inline-block border-b-2 border-[#0B2C5C] pb-3">
-            <h2 className="text-3xl font-bold text-[#0B2C5C] font-heading">
+            <h2 className="text-center text-3xl font-bold text-[#0B2C5C] font-heading">
               Trending Homes You'll Love
             </h2>
             {/* Triangle pointing down */}

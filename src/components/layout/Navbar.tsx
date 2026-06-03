@@ -218,6 +218,39 @@ export const Navbar: React.FC = () => {
         {/* Scrollable Content */}
         <div className="flex-1 flex flex-col justify-between overflow-y-auto scrollbar-none">
           <div>
+            {/* Profile / Auth Section at the Top */}
+            <div className="mb-6">
+              {!isAuthenticated ? (
+                <button
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    setIsAuthDialogOpen(true);
+                  }}
+                  className="w-full flex items-center gap-3 p-4 rounded-xl bg-[#F8FAFC] border border-slate-100 hover:bg-[#F1F5F9] transition-all"
+                >
+                  <img src="/icons/solar_user-broken.png" alt="user" className="h-6 w-6 object-contain" />
+                  <span className="text-[#0B2C5C] font-semibold text-[15px]">Log In / Sign Up</span>
+                </button>
+              ) : (
+                <button
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    navigate('/profile');
+                  }}
+                  className="w-full flex items-center gap-3 p-4 rounded-xl bg-[#F8FAFC] border border-slate-100 hover:bg-[#F1F5F9] transition-all"
+                >
+                  <svg className="w-6 h-6 text-slate-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                    <circle cx="12" cy="7" r="4" />
+                  </svg>
+                  <div className="flex flex-col text-left">
+                    <span className="text-[#0B2C5C] font-semibold text-[15px]">My Profile</span>
+                    {user?.email && <span className="text-xs text-slate-500 font-light mt-0.5">{user.email}</span>}
+                  </div>
+                </button>
+              )}
+            </div>
+
             <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Quick Navigation</p>
             {/* Rounded pill tab design for nav links */}
             <div className="bg-[#F0F4F9] p-1.5 rounded-2xl flex flex-col gap-1.5 shadow-inner">
@@ -245,7 +278,7 @@ export const Navbar: React.FC = () => {
             </div>
 
             {/* Extras */}
-            <div className="mt-8 flex flex-col gap-4">
+            <div className="mt-6 flex flex-col gap-4">
               <div
                 onClick={() => {
                   setIsMobileMenuOpen(false);
@@ -259,33 +292,6 @@ export const Navbar: React.FC = () => {
                   <span className="text-[#E67E22]/80 text-xs mt-0.5">Explore premium benefits</span>
                 </div>
               </div>
-
-              {!isAuthenticated ? (
-                <button
-                  onClick={() => {
-                    setIsMobileMenuOpen(false);
-                    setIsAuthDialogOpen(true);
-                  }}
-                  className="flex items-center gap-3 p-4 rounded-xl bg-[#F8FAFC] border border-slate-100 hover:bg-[#F1F5F9] transition-all"
-                >
-                  <img src="/icons/solar_user-broken.png" alt="user" className="h-6 w-6 object-contain" />
-                  <span className="text-[#0B2C5C] font-semibold text-[15px]">Log In / Sign Up</span>
-                </button>
-              ) : (
-                <button
-                  onClick={() => {
-                    setIsMobileMenuOpen(false);
-                    navigate('/profile');
-                  }}
-                  className="flex items-center gap-3 p-4 rounded-xl bg-[#F8FAFC] border border-slate-100 hover:bg-[#F1F5F9] transition-all"
-                >
-                  <svg className="w-6 h-6 text-slate-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                    <circle cx="12" cy="7" r="4" />
-                  </svg>
-                  <span className="text-[#0B2C5C] font-semibold text-[15px]">My Profile</span>
-                </button>
-              )}
             </div>
           </div>
 

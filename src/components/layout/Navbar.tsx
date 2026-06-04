@@ -15,7 +15,7 @@ export const Navbar: React.FC = () => {
   const currentPath = location.pathname;
   const stateCategory = location.state?.category;
 
-  let activeTab = 'projects';
+  let activeTab = '';
   if (currentPath.startsWith('/map-view')) {
     activeTab = 'map-view';
   } else if (currentPath === '/search' && stateCategory === 'Commercial') {
@@ -24,7 +24,10 @@ export const Navbar: React.FC = () => {
     activeTab = 'crm';
   } else if (currentPath === '/search') {
     activeTab = 'projects';
+  } else if (currentPath === '/crm') {
+    activeTab = 'crm';
   }
+
 
   return (
     <>
@@ -84,7 +87,7 @@ export const Navbar: React.FC = () => {
               {activeTab === 'commercial' && <div className="absolute -bottom-3 left-0 w-full h-[3px] bg-[#F6931D] rounded-full"></div>}
             </div>
 
-            <div className="relative group cursor-pointer" onClick={() => navigate('/search', { state: { category: 'CRM' } })}>
+            <div className="relative group cursor-pointer" onClick={() => { /* Don't navigate for now */ }}>
               <span className={`text-sm ${activeTab === 'crm' ? 'text-[#0B2C5C] font-bold' : 'text-[#173F8D] font-medium hover:text-[#F6931D] transition-colors'}`}>CRM</span>
               {activeTab === 'crm' && <div className="absolute -bottom-3 left-0 w-full h-[3px] bg-[#F6931D] rounded-full"></div>}
             </div>
@@ -199,11 +202,14 @@ export const Navbar: React.FC = () => {
             { name: 'Projects', active: activeTab === 'projects', path: '/search', state: { category: 'Projects' } },
             { name: 'Map-View', active: activeTab === 'map-view', path: '/map-view' },
             { name: 'Commercial', active: activeTab === 'commercial', path: '/search', state: { category: 'Commercial' } },
-            { name: 'CRM', active: activeTab === 'crm', path: '/search', state: { category: 'CRM' } }
+            { name: 'CRM', active: activeTab === 'crm', path: '/crm' }
           ].map((item) => (
             <button
               key={item.name}
-              onClick={() => navigate(item.path, { state: item.state })}
+              onClick={() => {
+                if (item.name === 'CRM') return;
+                navigate(item.path, { state: item.state });
+              }}
               className={`px-4 py-1.5 rounded-full mb-2 font-medium text-[13px] border transition-all shadow-sm shrink-0 ${
                 item.active
                   ? 'bg-[#0B2C5C] text-white border-transparent font-semibold'
@@ -285,12 +291,13 @@ export const Navbar: React.FC = () => {
                 { name: 'Projects', active: activeTab === 'projects', path: '/search', state: { category: 'Projects' } },
                 { name: 'Map-View', active: activeTab === 'map-view', path: '/map-view' },
                 { name: 'Commercial', active: activeTab === 'commercial', path: '/search', state: { category: 'Commercial' } },
-                { name: 'CRM', active: activeTab === 'crm', path: '/search', state: { category: 'CRM' } }
+                { name: 'CRM', active: activeTab === 'crm', path: '/crm' }
               ].map((item) => (
                 <button
                   key={item.name}
                   onClick={() => {
                     setIsMobileMenuOpen(false);
+                    if (item.name === 'CRM') return;
                     navigate(item.path, { state: item.state });
                   }}
                   className={`w-full py-3 px-5 rounded-xl font-medium text-[15px] transition-all text-center ${

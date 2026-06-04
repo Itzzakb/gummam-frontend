@@ -11,6 +11,7 @@ import { MyProfile } from './pages/MyProfile';
 import { AgentList } from './pages/AgentList';
 import { AgentDetails } from './pages/AgentDetails';
 import { MapView } from './pages/MapView';
+import { CrmPortal } from './pages/CrmPortal';
 
 const App: React.FC = () => {
   return (
@@ -28,6 +29,7 @@ const App: React.FC = () => {
             <Route path="agent/:name" element={<AgentDetails />} />
             <Route path="map-view" element={<MapView />} />
             <Route path="map-view/:locationParams" element={<MapView />} />
+            <Route path="crm" element={<CrmPortal />} />
           </Route>
         </Routes>
       </BrowserRouter>

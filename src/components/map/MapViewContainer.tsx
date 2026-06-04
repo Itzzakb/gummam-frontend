@@ -239,8 +239,7 @@ export const MapViewContainer: React.FC<MapViewContainerProps> = ({
         optimized: true,
       });
 
-      // Bind Hover triggers
-      marker.addListener('mouseover', (e: any) => {
+      marker.addListener('mouseover', () => {
         setActiveHotspot(spot);
         
         // Find screen coordinates using standard overlay map projection

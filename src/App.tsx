@@ -10,6 +10,7 @@ import { Membership } from './pages/Membership';
 import { MyProfile } from './pages/MyProfile';
 import { AgentList } from './pages/AgentList';
 import { AgentDetails } from './pages/AgentDetails';
+import { MapView } from './pages/MapView';
 
 const App: React.FC = () => {
   return (
@@ -25,6 +26,8 @@ const App: React.FC = () => {
             <Route path="profile" element={<MyProfile />} />
             <Route path="agents" element={<AgentList />} />
             <Route path="agent/:name" element={<AgentDetails />} />
+            <Route path="map-view" element={<MapView />} />
+            <Route path="map-view/:locationParams" element={<MapView />} />
           </Route>
         </Routes>
       </BrowserRouter>

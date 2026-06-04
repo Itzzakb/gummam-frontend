@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Filter, RotateCcw, ChevronRight, ChevronDown, ChevronUp, ArrowLeftRight, Check } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
 import { SearchPropertyCard } from '../components/ui/SearchPropertyCard';
 import { AgentSection } from '../features/landing/AgentSection';
 import { PromoSidebarCard } from '../components/ui/PromoSidebarCard';
@@ -89,6 +90,23 @@ const dummyProperties = [
 
 export const ListingProjects: React.FC = () => {
   const [viewType] = useState<'grid' | 'list'>('list');
+  const location = useLocation();
+
+  const currentCategory = location.state?.category || 'Projects';
+
+  let pageTitle = 'Trending Homes';
+  let breadcrumbName = 'Trending Homes';
+
+  if (currentCategory === 'Commercial') {
+    pageTitle = 'Commercial Properties';
+    breadcrumbName = 'Commercial';
+  } else if (currentCategory === 'CRM') {
+    pageTitle = 'CRM Portal';
+    breadcrumbName = 'CRM';
+  } else if (currentCategory === 'Projects') {
+    pageTitle = 'Projects';
+    breadcrumbName = 'Projects';
+  }
   
   // Filter States
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
@@ -136,12 +154,12 @@ export const ListingProjects: React.FC = () => {
         <div className="flex items-center text-[13px] text-gray-500 mb-6">
           <span className="hover:text-gray-900 cursor-pointer">Home</span>
           <ChevronRight className="w-4 h-4 mx-1" />
-          <span className="text-gray-900 font-medium">Trending Homes</span>
+          <span className="text-gray-900 font-medium">{breadcrumbName}</span>
         </div>
 
         {/* Page Header */}
         <div className="flex justify-between items-end mb-6">
-          <h1 className="text-[28px] font-bold text-[#0B2C5C] font-merriweather">Trending Homes</h1>
+          <h1 className="text-[28px] font-bold text-[#0B2C5C] font-merriweather">{pageTitle}</h1>
 
           {/* View Toggle (Hidden for list-only view) */}
           {/*
@@ -373,7 +391,7 @@ export const ListingProjects: React.FC = () => {
 
           {/* Right Sidebar */}
           {viewType === 'list' && (
-            <div className="hidden lg:block w-[300px] flex-shrink-0">
+            <div className="hidden lg:block w-[300px] flex-shrink-0 sticky top-6 self-start">
               <PromoSidebarCard />
             </div>
           )}

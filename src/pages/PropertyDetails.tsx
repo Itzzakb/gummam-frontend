@@ -493,7 +493,9 @@ export const PropertyDetails: React.FC = () => {
               </form>
             </div>
 
-            <PromoSidebarCard />
+            <div className="sticky top-6">
+              <PromoSidebarCard />
+            </div>
           </div>
 
         </div>

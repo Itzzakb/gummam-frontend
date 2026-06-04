@@ -1,15 +1,30 @@
 import React, { useState } from 'react';
 import { AuthDialog } from '../ui/AuthDialog';
 import { useAuth } from '@/context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { LogOut, Menu, X } from 'lucide-react';
 
 export const Navbar: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, logout, isAuthenticated } = useAuth();
   const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const currentPath = location.pathname;
+  const stateCategory = location.state?.category;
+
+  let activeTab = 'projects';
+  if (currentPath.startsWith('/map-view')) {
+    activeTab = 'map-view';
+  } else if (currentPath === '/search' && stateCategory === 'Commercial') {
+    activeTab = 'commercial';
+  } else if (currentPath === '/search' && stateCategory === 'CRM') {
+    activeTab = 'crm';
+  } else if (currentPath === '/search') {
+    activeTab = 'projects';
+  }
 
   return (
     <>
@@ -54,13 +69,25 @@ export const Navbar: React.FC = () => {
 
           {/* Center Links - White Pill */}
           <div className="hidden lg:flex items-center bg-white rounded-full px-8 py-3 shadow-[0_2px_10px_rgba(0,0,0,0.02)] gap-8">
-            <div className="relative group cursor-pointer" onClick={() => navigate('/search')}>
-              <span className="text-[#1A2B4C] font-semibold text-sm">Projects</span>
-              <div className="absolute -bottom-3 left-0 w-full h-[3px] bg-[#F6931D] rounded-full"></div>
+            <div className="relative group cursor-pointer" onClick={() => navigate('/search', { state: { category: 'Projects' } })}>
+              <span className={`text-sm ${activeTab === 'projects' ? 'text-[#0B2C5C] font-bold' : 'text-[#173F8D] font-medium hover:text-[#F6931D] transition-colors'}`}>Projects</span>
+              {activeTab === 'projects' && <div className="absolute -bottom-3 left-0 w-full h-[3px] bg-[#F6931D] rounded-full"></div>}
             </div>
-            <span onClick={() => navigate('/search')} className="text-[#173F8D] font-medium text-sm cursor-pointer hover:text-[#F6931D] transition-colors">Map-View</span>
-            <span onClick={() => navigate('/search')} className="text-[#173F8D] font-medium text-sm cursor-pointer hover:text-[#F6931D] transition-colors">Commercial</span>
-            <span onClick={() => navigate('/search')} className="text-[#173F8D] font-medium text-sm cursor-pointer hover:text-[#F6931D] transition-colors">CRM</span>
+            
+            <div className="relative group cursor-pointer" onClick={() => navigate('/map-view')}>
+              <span className={`text-sm ${activeTab === 'map-view' ? 'text-[#0B2C5C] font-bold' : 'text-[#173F8D] font-medium hover:text-[#F6931D] transition-colors'}`}>Map-View</span>
+              {activeTab === 'map-view' && <div className="absolute -bottom-3 left-0 w-full h-[3px] bg-[#F6931D] rounded-full"></div>}
+            </div>
+
+            <div className="relative group cursor-pointer" onClick={() => navigate('/search', { state: { category: 'Commercial' } })}>
+              <span className={`text-sm ${activeTab === 'commercial' ? 'text-[#0B2C5C] font-bold' : 'text-[#173F8D] font-medium hover:text-[#F6931D] transition-colors'}`}>Commercial</span>
+              {activeTab === 'commercial' && <div className="absolute -bottom-3 left-0 w-full h-[3px] bg-[#F6931D] rounded-full"></div>}
+            </div>
+
+            <div className="relative group cursor-pointer" onClick={() => navigate('/search', { state: { category: 'CRM' } })}>
+              <span className={`text-sm ${activeTab === 'crm' ? 'text-[#0B2C5C] font-bold' : 'text-[#173F8D] font-medium hover:text-[#F6931D] transition-colors'}`}>CRM</span>
+              {activeTab === 'crm' && <div className="absolute -bottom-3 left-0 w-full h-[3px] bg-[#F6931D] rounded-full"></div>}
+            </div>
           </div>
 
           {/* Right Actions */}
@@ -169,14 +196,14 @@ export const Navbar: React.FC = () => {
         {/* Mobile Quick Navigation Pills */}
         <div className="flex lg:hidden items-center gap-2 mt-4 px-4 overflow-x-auto whitespace-nowrap scrollbar-none scroll-smooth">
           {[
-            { name: 'Projects', active: true },
-            { name: 'Map-View', active: false },
-            { name: 'Commercial', active: false },
-            { name: 'CRM', active: false }
+            { name: 'Projects', active: activeTab === 'projects', path: '/search', state: { category: 'Projects' } },
+            { name: 'Map-View', active: activeTab === 'map-view', path: '/map-view' },
+            { name: 'Commercial', active: activeTab === 'commercial', path: '/search', state: { category: 'Commercial' } },
+            { name: 'CRM', active: activeTab === 'crm', path: '/search', state: { category: 'CRM' } }
           ].map((item) => (
             <button
               key={item.name}
-              onClick={() => navigate('/search')}
+              onClick={() => navigate(item.path, { state: item.state })}
               className={`px-4 py-1.5 rounded-full mb-2 font-medium text-[13px] border transition-all shadow-sm shrink-0 ${
                 item.active
                   ? 'bg-[#0B2C5C] text-white border-transparent font-semibold'
@@ -255,16 +282,16 @@ export const Navbar: React.FC = () => {
             {/* Rounded pill tab design for nav links */}
             <div className="bg-[#F0F4F9] p-1.5 rounded-2xl flex flex-col gap-1.5 shadow-inner">
               {[
-                { name: 'Projects', active: true },
-                { name: 'Map-View', active: false },
-                { name: 'Commercial', active: false },
-                { name: 'CRM', active: false }
+                { name: 'Projects', active: activeTab === 'projects', path: '/search', state: { category: 'Projects' } },
+                { name: 'Map-View', active: activeTab === 'map-view', path: '/map-view' },
+                { name: 'Commercial', active: activeTab === 'commercial', path: '/search', state: { category: 'Commercial' } },
+                { name: 'CRM', active: activeTab === 'crm', path: '/search', state: { category: 'CRM' } }
               ].map((item) => (
                 <button
                   key={item.name}
                   onClick={() => {
                     setIsMobileMenuOpen(false);
-                    navigate('/search');
+                    navigate(item.path, { state: item.state });
                   }}
                   className={`w-full py-3 px-5 rounded-xl font-medium text-[15px] transition-all text-center ${
                     item.active

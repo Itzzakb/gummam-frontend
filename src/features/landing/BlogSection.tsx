@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { Calendar, Folder } from 'lucide-react';
 
 const dummyBlogs = [
@@ -45,15 +46,15 @@ export const BlogSection: React.FC = () => {
         
         {/* See All Link */}
         <div className="flex justify-end mb-8">
-          <a href="#" className="text-[#0B2C5C] font-semibold text-[14px] underline hover:text-[#4885FF] transition-colors whitespace-nowrap">
+          <Link to="/blogs" className="text-[#0B2C5C] font-semibold text-[14px] underline hover:text-[#4885FF] transition-colors whitespace-nowrap">
             See all blog
-          </a>
+          </Link>
         </div>
 
         {/* Grid Container */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
           {dummyBlogs.map((blog) => (
-            <div key={blog.id} className="bg-white rounded-[12px] overflow-hidden border border-gray-200/60 shadow-sm hover:shadow-md transition-shadow flex flex-col h-full cursor-pointer">
+            <Link to={`/blog/${blog.id}`} key={blog.id} className="bg-white rounded-[12px] overflow-hidden border border-gray-200/60 shadow-sm hover:shadow-md transition-shadow flex flex-col h-full cursor-pointer block">
               
               {/* Image */}
               <div className="w-full h-[220px] overflow-hidden relative">
@@ -88,7 +89,7 @@ export const BlogSection: React.FC = () => {
                 </p>
               </div>
 
-            </div>
+            </Link>
           ))}
         </div>
 

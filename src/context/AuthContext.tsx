@@ -4,13 +4,18 @@ export interface User {
   name: string;
   email: string;
   avatarUrl: string;
+  role?: 'user' | 'agent';
 }
 
 interface AuthContextType {
   user: User | null;
-  login: () => void;
+  login: (role?: 'user' | 'agent') => void;
   logout: () => void;
   isAuthenticated: boolean;
+  isAuthDialogOpen: boolean;
+  authDialogTab: 'user' | 'agent';
+  openAuthDialog: (tab?: 'user' | 'agent') => void;
+  closeAuthDialog: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -20,12 +25,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const saved = localStorage.getItem('gummam_user');
     return saved ? JSON.parse(saved) : null;
   });
+  const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false);
+  const [authDialogTab, setAuthDialogTab] = useState<'user' | 'agent'>('user');
 
-  const login = () => {
+  const openAuthDialog = (tab?: 'user' | 'agent') => {
+    if (tab) {
+      setAuthDialogTab(tab);
+    }
+    setIsAuthDialogOpen(true);
+  };
+
+  const closeAuthDialog = () => {
+    setIsAuthDialogOpen(false);
+  };
+
+  const login = (role?: 'user' | 'agent') => {
     const mockUser: User = {
-      name: 'John Doe',
-      email: 'john.doe@example.com',
-      avatarUrl: '/images/profile_avatar.png',
+      name: role === 'agent' ? 'Jane Agent' : 'John Doe',
+      email: role === 'agent' ? 'jane.agent@example.com' : 'john.doe@example.com',
+      avatarUrl: role === 'agent' ? '/images/agent_avatar.png' : '/images/profile_avatar.png',
+      role: role || 'user',
     };
     setUser(mockUser);
     localStorage.setItem('gummam_user', JSON.stringify(mockUser));
@@ -37,7 +56,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, isAuthenticated: !!user }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        login,
+        logout,
+        isAuthenticated: !!user,
+        isAuthDialogOpen,
+        authDialogTab,
+        openAuthDialog,
+        closeAuthDialog,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

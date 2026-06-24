@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Eye, EyeOff, X } from 'lucide-react';
 
 import { Button } from '@/components/ui/Button';
@@ -41,8 +41,14 @@ const socialButtons = [
 ];
 
 export const AuthDialog: React.FC<AuthDialogProps> = ({ isOpen, onClose }) => {
-  const { login } = useAuth();
+  const { login, authDialogTab } = useAuth();
   const [accountType, setAccountType] = useState<'user' | 'agent'>('user');
+
+  useEffect(() => {
+    if (isOpen) {
+      setAccountType(authDialogTab);
+    }
+  }, [isOpen, authDialogTab]);
   const [authView, setAuthView] = useState<'login' | 'register' | 'forgot-password' | 'otp' | 'reset-password' | 'success' | 'agent-register-success'>('login');
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [showRegisterPassword, setShowRegisterPassword] = useState(false);
@@ -214,7 +220,7 @@ export const AuthDialog: React.FC<AuthDialogProps> = ({ isOpen, onClose }) => {
                     <Button
                       type="button"
                       onClick={() => {
-                        login();
+                        login(accountType);
                         onClose();
                       }}
                       className="flex h-11 w-full items-center justify-between rounded-full bg-[#035096] px-6 text-sm font-semibold text-white shadow-none hover:bg-[#024078]"
@@ -235,30 +241,34 @@ export const AuthDialog: React.FC<AuthDialogProps> = ({ isOpen, onClose }) => {
                   </form>
 
                   <div className="mx-auto mt-6 max-w-[320px] lg:max-w-[340px]">
-                    <div className="flex items-center gap-3 text-xs text-slate-700">
-                      <div className="h-px flex-1 bg-[#0D76D8]" />
-                      <span className="whitespace-nowrap font-medium">Or Log In with</span>
-                      <div className="h-px flex-1 bg-[#0D76D8]" />
-                    </div>
+                    {accountType !== 'agent' && (
+                      <>
+                        <div className="flex items-center gap-3 text-xs text-slate-700">
+                          <div className="h-px flex-1 bg-[#0D76D8]" />
+                          <span className="whitespace-nowrap font-medium">Or Log In with</span>
+                          <div className="h-px flex-1 bg-[#0D76D8]" />
+                        </div>
 
-                    <div className="mt-5 flex items-center justify-center gap-3">
-                      {socialButtons.map((button) => (
-                        <button
-                          key={button.label}
-                          type="button"
-                          aria-label={`Continue with ${button.label}`}
-                          className="flex h-12 w-12 items-center justify-center rounded-full border border-slate-200 bg-white shadow-[0_6px_24px_rgba(15,23,42,0.08)] transition hover:-translate-y-0.5 hover:shadow-[0_10px_28px_rgba(15,23,42,0.12)]"
-                        >
-                          <img
-                            src={button.icon.startsWith('/') ? button.icon : `/${button.icon}`}
-                            alt={button.label}
-                            className="h-6 w-6 object-contain"
-                          />
-                        </button>
-                      ))}
-                    </div>
+                        <div className="mt-5 flex items-center justify-center gap-3">
+                          {socialButtons.map((button) => (
+                            <button
+                              key={button.label}
+                              type="button"
+                              aria-label={`Continue with ${button.label}`}
+                              className="flex h-12 w-12 items-center justify-center rounded-full border border-slate-200 bg-white shadow-[0_6px_24px_rgba(15,23,42,0.08)] transition hover:-translate-y-0.5 hover:shadow-[0_10px_28px_rgba(15,23,42,0.12)]"
+                            >
+                              <img
+                                src={button.icon.startsWith('/') ? button.icon : `/${button.icon}`}
+                                alt={button.label}
+                                className="h-6 w-6 object-contain"
+                              />
+                            </button>
+                          ))}
+                        </div>
+                      </>
+                    )}
 
-                    <p className="mt-6 text-center text-sm text-slate-800">
+                    <p className={`${accountType !== 'agent' ? 'mt-6' : 'mt-2'} text-center text-sm text-slate-800`}>
                       Don&apos;t have account?{' '}
                       <Button
                         type="button"
@@ -391,7 +401,7 @@ export const AuthDialog: React.FC<AuthDialogProps> = ({ isOpen, onClose }) => {
                     <Button
                       type="button"
                       onClick={() => {
-                        login();
+                        login(accountType);
                         onClose();
                       }}
                       className="flex h-11 w-full items-center justify-between rounded-full bg-[#035096] px-6 text-sm font-semibold text-white shadow-none hover:bg-[#024078]"

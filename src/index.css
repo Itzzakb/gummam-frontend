@@ -35,6 +35,13 @@
   html {
     @apply font-sans;
   }
+  select,
+  input[type="checkbox"],
+  input[type="radio"],
+  button,
+  label {
+    cursor: pointer;
+  }
 }
 
 @theme inline {
@@ -148,3 +155,13 @@
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
 }
+
+.crm-portal h1,
+.crm-portal h2,
+.crm-portal h3,
+.crm-portal h4,
+.crm-portal h5,
+.crm-portal h6 {
+  font-family: "Poppins", sans-serif !important;
+}
+

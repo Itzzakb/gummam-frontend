@@ -107,9 +107,12 @@ export const AgentCard: React.FC<AgentCardProps> = ({
 
       {/* Actions */}
       <div className="flex gap-3 mt-auto">
-        <button className="flex-1 bg-[#EB832D] text-white py-3 rounded-[16px] text-[12px] font-poppins font-semibold tracking-[1.2px] hover:bg-orange-600 transition-colors shadow-sm uppercase">
+        <Link
+          to={`/agent/${encodeURIComponent(name.toLowerCase().replace(/\s+/g, '-'))}/properties`}
+          className="flex-1 bg-[#EB832D] text-white py-3 rounded-[16px] text-[12px] font-poppins font-semibold tracking-[1.2px] hover:bg-orange-600 transition-colors shadow-sm uppercase text-center flex items-center justify-center"
+        >
           View Properties
-        </button>
+        </Link>
         <Link to={`/agent/${encodeURIComponent(name.toLowerCase().replace(/\s+/g, '-'))}`} className="flex-1 bg-[#00478F] text-white py-3 rounded-[16px] text-[12px] font-poppins font-semibold tracking-[1.2px] hover:bg-blue-900 transition-colors shadow-sm uppercase text-center flex items-center justify-center">
           View Profile
         </Link>

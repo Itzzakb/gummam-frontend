@@ -1,7 +1,30 @@
 import React from 'react';
 import { ArrowUpRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/context/AuthContext';
 
 export const PostProperty: React.FC = () => {
+  const navigate = useNavigate();
+  const { user, logout, isAuthenticated, openAuthDialog } = useAuth();
+
+  const handlePostPropertyClick = () => {
+    if (!isAuthenticated) {
+      openAuthDialog('agent');
+    } else if (user?.role !== 'agent') {
+      const confirmSwitch = window.confirm(
+        "Only agents can post properties. Would you like to log in/register as an Agent?"
+      );
+      if (confirmSwitch) {
+        logout();
+        setTimeout(() => {
+          openAuthDialog('agent');
+        }, 100);
+      }
+    } else {
+      navigate('/post-property');
+    }
+  };
+
   return (
     <section className="font-poppins py-16 relative">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -28,7 +51,10 @@ export const PostProperty: React.FC = () => {
             </p>
 
             <div>
-              <button className="bg-[#00478F] text-white px-7 py-3 rounded-[24px] flex items-center gap-2 font-semibold text-[15px] hover:bg-blue-900 transition-colors shadow-md border border-[#F58634]/50">
+              <button 
+                onClick={handlePostPropertyClick}
+                className="bg-[#00478F] text-white px-7 py-3 rounded-[24px] flex items-center gap-2 font-semibold text-[15px] hover:bg-blue-900 transition-colors shadow-md border border-[#F58634]/50"
+              >
                 Post Property
                 <ArrowUpRight className="w-[18px] h-[18px] stroke-[2]" />
               </button>

@@ -10,8 +10,12 @@ import { Membership } from './pages/Membership';
 import { MyProfile } from './pages/MyProfile';
 import { AgentList } from './pages/AgentList';
 import { AgentDetails } from './pages/AgentDetails';
+import { AgentProperties } from './pages/AgentProperties';
 import { MapView } from './pages/MapView';
 import { CrmPortal } from './pages/CrmPortal';
+import { Blogs } from './pages/Blogs';
+import { BlogDetails } from './pages/BlogDetails';
+import { PostProperty } from './pages/PostProperty';
 
 const App: React.FC = () => {
   return (
@@ -27,10 +31,14 @@ const App: React.FC = () => {
             <Route path="profile" element={<MyProfile />} />
             <Route path="agents" element={<AgentList />} />
             <Route path="agent/:name" element={<AgentDetails />} />
+            <Route path="agent/:name/properties" element={<AgentProperties />} />
+            <Route path="blogs" element={<Blogs />} />
+            <Route path="blog/:id" element={<BlogDetails />} />
             <Route path="map-view" element={<MapView />} />
             <Route path="map-view/:locationParams" element={<MapView />} />
-            <Route path="crm" element={<CrmPortal />} />
+            <Route path="post-property" element={<PostProperty />} />
           </Route>
+          <Route path="crm" element={<CrmPortal />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

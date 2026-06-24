@@ -1,7 +1,30 @@
 import React from 'react';
 import { ArrowUpRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/context/AuthContext';
 
 export const PromoSidebarCard: React.FC = () => {
+  const navigate = useNavigate();
+  const { user, logout, isAuthenticated, openAuthDialog } = useAuth();
+
+  const handlePostPropertyClick = () => {
+    if (!isAuthenticated) {
+      openAuthDialog('agent');
+    } else if (user?.role !== 'agent') {
+      const confirmSwitch = window.confirm(
+        "Only agents can post properties. Would you like to log in/register as an Agent?"
+      );
+      if (confirmSwitch) {
+        logout();
+        setTimeout(() => {
+          openAuthDialog('agent');
+        }, 100);
+      }
+    } else {
+      navigate('/post-property');
+    }
+  };
+
   return (
     <div className="bg-[#1a1435] rounded-xl overflow-hidden font-poppins relative h-[500px] flex flex-col border border-gray-800 shadow-md">
       {/* Background City Image Overlay */}
@@ -18,7 +41,10 @@ export const PromoSidebarCard: React.FC = () => {
           Reach thousands of buyers and renters by listing your property.
         </p>
         
-        <button className="bg-[#035096] hover:bg-blue-900 text-white px-6 py-2.5 rounded-full text-[14px] font-semibold transition-colors shadow-lg flex items-center gap-2">
+        <button 
+          onClick={handlePostPropertyClick}
+          className="bg-[#035096] hover:bg-blue-900 text-white px-6 py-2.5 rounded-full text-[14px] font-semibold transition-colors shadow-lg flex items-center gap-2"
+        >
           Post Property <ArrowUpRight className="w-4 h-4" />
         </button>
       </div>

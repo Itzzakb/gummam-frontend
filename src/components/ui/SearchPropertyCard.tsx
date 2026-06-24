@@ -64,7 +64,7 @@ export const SearchPropertyCard: React.FC<SearchPropertyCardProps> = ({
             <span className="text-[13px] text-gray-500">{location || 'Apartment, P&T Colony, Dilsukhnagar, Hyderabad.'}</span>
           </div>
 
-          <div className="flex flex-wrap gap-3 mb-4">
+          <div className="grid grid-cols-3 gap-3 mb-4">
             <div className="border border-gray-200 rounded px-2.5 py-1.5 text-[12px] flex items-center overflow-hidden whitespace-nowrap">
               <span className="text-gray-600 mr-1 flex-shrink-0">Rent: </span>
               <span className="text-[#035096] font-bold truncate">{price}</span>

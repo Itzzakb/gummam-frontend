@@ -7,10 +7,45 @@ import { LogOut, Menu, X } from 'lucide-react';
 export const Navbar: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, logout, isAuthenticated } = useAuth();
-  const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false);
+  const { user, logout, isAuthenticated, isAuthDialogOpen, openAuthDialog, closeAuthDialog } = useAuth();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const handlePostPropertyClick = () => {
+    if (!isAuthenticated) {
+      openAuthDialog('agent');
+    } else if (user?.role !== 'agent') {
+      const confirmSwitch = window.confirm(
+        "Only agents can post properties. Would you like to log in/register as an Agent?"
+      );
+      if (confirmSwitch) {
+        logout();
+        setTimeout(() => {
+          openAuthDialog('agent');
+        }, 100);
+      }
+    } else {
+      navigate('/post-property');
+    }
+  };
+
+  const handleCrmClick = () => {
+    if (!isAuthenticated) {
+      openAuthDialog('agent');
+    } else if (user?.role !== 'agent') {
+      const confirmSwitch = window.confirm(
+        "CRM Portal is for agents only. Would you like to log in/register as an Agent?"
+      );
+      if (confirmSwitch) {
+        logout();
+        setTimeout(() => {
+          openAuthDialog('agent');
+        }, 100);
+      }
+    } else {
+      navigate('/crm');
+    }
+  };
 
   const currentPath = location.pathname;
   const stateCategory = location.state?.category;
@@ -62,7 +97,7 @@ export const Navbar: React.FC = () => {
         }
       `}</style>
 
-      <div className="pt-6 px-4 sm:px-6 lg:px-8 font-poppins bg-[#FAFAFA] relative z-40">
+      <div className="sticky top-0 z-50 py-2 px-4 sm:px-6 lg:px-8 font-poppins bg-transparent backdrop-blur-sm">
         <nav className="max-w-7xl mx-auto bg-[#F0F4F9] rounded-full px-6 py-3 flex justify-between items-center shadow-sm">
 
           {/* Logo Section */}
@@ -87,7 +122,7 @@ export const Navbar: React.FC = () => {
               {activeTab === 'commercial' && <div className="absolute -bottom-3 left-0 w-full h-[3px] bg-[#F6931D] rounded-full"></div>}
             </div>
 
-            <div className="relative group cursor-pointer" onClick={() => { /* Don't navigate for now */ }}>
+            <div className="relative group cursor-pointer" onClick={handleCrmClick}>
               <span className={`text-sm ${activeTab === 'crm' ? 'text-[#0B2C5C] font-bold' : 'text-[#173F8D] font-medium hover:text-[#F6931D] transition-colors'}`}>CRM</span>
               {activeTab === 'crm' && <div className="absolute -bottom-3 left-0 w-full h-[3px] bg-[#F6931D] rounded-full"></div>}
             </div>
@@ -107,7 +142,7 @@ export const Navbar: React.FC = () => {
               <>
                 <button
                   type="button"
-                  onClick={() => setIsAuthDialogOpen(true)}
+                  onClick={() => openAuthDialog('user')}
                   className="hidden md:flex items-center gap-1 cursor-pointer"
                 >
                   <img src="/icons/solar_user-broken.png" alt="user" style={{ height: '24px', width: '24px' }} />
@@ -120,7 +155,10 @@ export const Navbar: React.FC = () => {
 
             {/* ✅ Animated rotating border button */}
             <div className="animated-border-btn hidden sm:block">
-              <button className="bg-[#035096] hover:bg-[#024078] text-white px-5 sm:px-6 py-2.5 sm:py-3 rounded-full font-semibold text-xs sm:text-sm transition-colors flex items-center gap-2 h-full w-full">
+              <button
+                onClick={handlePostPropertyClick}
+                className="bg-[#035096] hover:bg-[#024078] text-white px-5 sm:px-6 py-2.5 sm:py-3 rounded-full font-semibold text-xs sm:text-sm transition-colors flex items-center gap-2 h-full w-full"
+              >
                 Post Property
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M5 19L19 5M19 5v10M19 5H9"></path>
@@ -207,7 +245,10 @@ export const Navbar: React.FC = () => {
             <button
               key={item.name}
               onClick={() => {
-                if (item.name === 'CRM') return;
+                if (item.name === 'CRM') {
+                  handleCrmClick();
+                  return;
+                }
                 navigate(item.path, { state: item.state });
               }}
               className={`px-4 py-1.5 rounded-full mb-2 font-medium text-[13px] border transition-all shadow-sm shrink-0 ${
@@ -257,7 +298,7 @@ export const Navbar: React.FC = () => {
                 <button
                   onClick={() => {
                     setIsMobileMenuOpen(false);
-                    setIsAuthDialogOpen(true);
+                    openAuthDialog('user');
                   }}
                   className="w-full flex items-center gap-3 p-4 rounded-xl bg-[#F8FAFC] border border-slate-100 hover:bg-[#F1F5F9] transition-all"
                 >
@@ -297,7 +338,10 @@ export const Navbar: React.FC = () => {
                   key={item.name}
                   onClick={() => {
                     setIsMobileMenuOpen(false);
-                    if (item.name === 'CRM') return;
+                    if (item.name === 'CRM') {
+                      handleCrmClick();
+                      return;
+                    }
                     navigate(item.path, { state: item.state });
                   }}
                   className={`w-full py-3 px-5 rounded-xl font-medium text-[15px] transition-all text-center ${
@@ -335,6 +379,7 @@ export const Navbar: React.FC = () => {
               <button
                 onClick={() => {
                   setIsMobileMenuOpen(false);
+                  handlePostPropertyClick();
                 }}
                 className="bg-[#035096] hover:bg-[#024078] text-white py-4 rounded-full font-bold text-center text-sm transition-colors flex items-center justify-center gap-2 w-full"
               >
@@ -361,7 +406,7 @@ export const Navbar: React.FC = () => {
         </div>
       </div>
 
-      <AuthDialog isOpen={isAuthDialogOpen} onClose={() => setIsAuthDialogOpen(false)} />
+      <AuthDialog isOpen={isAuthDialogOpen} onClose={closeAuthDialog} />
     </>
   );
 };

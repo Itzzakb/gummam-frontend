@@ -43,7 +43,7 @@ export const Navbar: React.FC = () => {
         }, 100);
       }
     } else {
-      navigate('/crm');
+      navigate('/agent-crm');
     }
   };
 
@@ -59,7 +59,7 @@ export const Navbar: React.FC = () => {
     activeTab = 'crm';
   } else if (currentPath === '/search') {
     activeTab = 'projects';
-  } else if (currentPath === '/crm') {
+  } else if (currentPath.startsWith('/agent-crm')) {
     activeTab = 'crm';
   }
 
@@ -240,7 +240,7 @@ export const Navbar: React.FC = () => {
             { name: 'Projects', active: activeTab === 'projects', path: '/search', state: { category: 'Projects' } },
             { name: 'Map-View', active: activeTab === 'map-view', path: '/map-view' },
             { name: 'Commercial', active: activeTab === 'commercial', path: '/search', state: { category: 'Commercial' } },
-            { name: 'CRM', active: activeTab === 'crm', path: '/crm' }
+            { name: 'CRM', active: activeTab === 'crm', path: '/agent-crm' }
           ].map((item) => (
             <button
               key={item.name}
@@ -332,7 +332,7 @@ export const Navbar: React.FC = () => {
                 { name: 'Projects', active: activeTab === 'projects', path: '/search', state: { category: 'Projects' } },
                 { name: 'Map-View', active: activeTab === 'map-view', path: '/map-view' },
                 { name: 'Commercial', active: activeTab === 'commercial', path: '/search', state: { category: 'Commercial' } },
-                { name: 'CRM', active: activeTab === 'crm', path: '/crm' }
+                { name: 'CRM', active: activeTab === 'crm', path: '/agent-crm' }
               ].map((item) => (
                 <button
                   key={item.name}

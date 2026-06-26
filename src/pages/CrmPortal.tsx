@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
+import { LeadManagement } from './LeadManagement';
+import { EmployeeManagement } from './EmployeeManagement';
+import { PropertyListings } from './PropertyListings';
 import {
   LayoutDashboard,
   Users,
@@ -193,8 +196,24 @@ const AnalyticsPeriodDropdown: React.FC<AnalyticsPeriodDropdownProps> = ({ value
 
 export const CrmPortal: React.FC = () => {
   const navigate = useNavigate();
+  const { pagename } = useParams<{ pagename?: string }>();
   const { user, isAuthenticated, logout, openAuthDialog } = useAuth();
-  const [activeMenu, setActiveMenu] = useState('Overview');
+  
+  // Sidebar Menu Items
+  const menuItems = [
+    { name: 'Overview', icon: LayoutDashboard, path: 'overview' },
+    { name: 'Lead Management', icon: Users, path: 'leads' },
+    { name: 'Employee Management', icon: UserCheck, path: 'employees' },
+    { name: 'Property listings', icon: Building2, path: 'properties' },
+    { name: 'CRM Management', icon: FileText, path: 'crm-management' },
+    { name: 'Subscription', icon: Briefcase, path: 'subscription' },
+    { name: 'Settings', icon: Settings, path: 'settings' },
+  ];
+
+  // Derive active menu item from the pagename path parameter, default to 'Overview'
+  const currentMenuItem = menuItems.find(item => item.path === pagename) || menuItems[0];
+  const activeMenu = currentMenuItem.name;
+
   const [showNotifications, setShowNotifications] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState('Jan - Jun 2026');
   const [leadsResPeriod, setLeadsResPeriod] = useState('Last Month');
@@ -225,17 +244,6 @@ export const CrmPortal: React.FC = () => {
   if (!isAuthenticated || user?.role !== 'agent') {
     return null;
   }
-
-  // Sidebar Menu Items
-  const menuItems = [
-    { name: 'Overview', icon: LayoutDashboard },
-    { name: 'Lead Management', icon: Users },
-    { name: 'Employee Management', icon: UserCheck },
-    { name: 'Property listings', icon: Building2 },
-    { name: 'CRM Management', icon: FileText },
-    { name: 'Subscription', icon: Briefcase },
-    { name: 'Settings', icon: Settings },
-  ];
 
   // Dummy statistics and sparklines
   const connectionStatuses = [
@@ -349,7 +357,7 @@ export const CrmPortal: React.FC = () => {
               return (
                 <button
                   key={item.name}
-                  onClick={() => setActiveMenu(item.name)}
+                  onClick={() => navigate(`/agent-crm/${item.path}`)}
                   className={`w-full flex items-center gap-4 py-4 px-3 rounded-none text-[15px] transition-all text-left ${
                     isActive
                       ? 'bg-[#004B8F] text-white'
@@ -460,7 +468,13 @@ export const CrmPortal: React.FC = () => {
         {/* ================= MAIN CONTENT VIEWPORT ================= */}
         <main className="flex-1 overflow-y-auto p-6 space-y-6">
           
-          {activeMenu !== 'Overview' ? (
+          {activeMenu === 'Lead Management' ? (
+            <LeadManagement />
+          ) : activeMenu === 'Employee Management' ? (
+            <EmployeeManagement />
+          ) : activeMenu === 'Property listings' ? (
+            <PropertyListings />
+          ) : activeMenu !== 'Overview' ? (
             <div className="bg-white rounded-[5px] p-8 border border-gray-200/60 shadow-sm text-center py-20">
               <AlertCircle className="w-12 h-12 text-gray-300 mx-auto mb-4" />
               <h3 className="text-xl font-semibold text-gray-800">Under Construction</h3>

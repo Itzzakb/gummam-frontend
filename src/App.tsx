@@ -38,7 +38,8 @@ const App: React.FC = () => {
             <Route path="map-view/:locationParams" element={<MapView />} />
             <Route path="post-property" element={<PostProperty />} />
           </Route>
-          <Route path="crm" element={<CrmPortal />} />
+          <Route path="agent-crm" element={<CrmPortal />} />
+          <Route path="agent-crm/:pagename" element={<CrmPortal />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

@@ -1035,7 +1035,7 @@ export const CrmManagement: React.FC = () => {
                       {['Unassigned', ...agentOptions.slice(1)].map((agent) => (
                         <button
                           key={agent}
-                          type="button;;"
+                          type="button"
                           onClick={() => {
                             handleAssignAgent(selectedLeadForView.id, agent);
                             setViewAgentDropdownOpen(false);

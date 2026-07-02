@@ -310,7 +310,6 @@ export const LeadManagement: React.FC = () => {
   const [filterEndDate, setFilterEndDate] = useState('');
   const [filterMinPrice, setFilterMinPrice] = useState<number>(500000);
   const [filterMaxPrice, setFilterMaxPrice] = useState<number>(10000000);
-  const [filterPriceSlider, setFilterPriceSlider] = useState<number>(500000);
 
   // Mock Leads Data matching the screenshot layout
   const [leads, setLeads] = useState<Lead[]>([
@@ -665,7 +664,6 @@ export const LeadManagement: React.FC = () => {
                     setFilterEndDate('');
                     setFilterMinPrice(500000);
                     setFilterMaxPrice(10000000);
-                    setFilterPriceSlider(500000);
                   }}
                   className="flex-1 px-4 py-2.5 bg-white border border-[#E2E8F0] text-gray-800 text-xs font-semibold rounded-[8px] hover:bg-slate-50 transition-colors shadow-xs"
                 >

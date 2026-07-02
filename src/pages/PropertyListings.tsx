@@ -5,20 +5,13 @@ import {
   Filter,
   Plus,
   MapPin,
-  Maximize2,
   Calendar,
   Users,
-  CheckCircle,
   X,
-  FileImage,
-  Star,
   Award,
-  Sparkles,
   Share2,
   MoreVertical,
-  HelpCircle,
   Info,
-  Sliders,
   ChevronDown,
   TrendingUp,
   Home,
@@ -306,7 +299,6 @@ export const PropertyListings: React.FC = () => {
   const [filterEndDate, setFilterEndDate] = useState('');
   const [filterMinPrice, setFilterMinPrice] = useState<number>(500000);
   const [filterMaxPrice, setFilterMaxPrice] = useState<number>(10000000);
-  const [filterPriceSlider, setFilterPriceSlider] = useState<number>(500000);
 
   // Helper counts
   const countByStatus = (status: 'Active' | 'Pending' | 'Sold' | 'Expired') => {
@@ -346,7 +338,6 @@ export const PropertyListings: React.FC = () => {
     setFilterEndDate('');
     setFilterMinPrice(500000);
     setFilterMaxPrice(10000000);
-    setFilterPriceSlider(500000);
     setProperties(mockProperties);
     setShowFiltersPanel(false);
   };

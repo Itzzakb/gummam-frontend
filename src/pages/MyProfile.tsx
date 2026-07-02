@@ -164,7 +164,7 @@ export const MyProfile: React.FC = () => {
   const [buyerQueries, setBuyerQueries] = useState([
     {
       id: 1,
-      buyerName: 'Amit Sharma',
+      buyerName: 'Shiva Sharma',
       property: 'Premium 3BHK Villa',
       date: '2026-05-25',
       message: 'Hi, I am interested in your property in Kokapet. Can we arrange a site visit?',

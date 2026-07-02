@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Search,
   Filter,
@@ -284,6 +285,7 @@ const mockProperties: Property[] = [
 ];
 
 export const PropertyListings: React.FC = () => {
+  const navigate = useNavigate();
   const [properties, setProperties] = useState<Property[]>(mockProperties);
   const [selectedStatusTab, setSelectedStatusTab] = useState<'Active' | 'Pending' | 'Sold' | 'Expired'>('Active');
   const [searchQuery, setSearchQuery] = useState('');
@@ -380,7 +382,10 @@ export const PropertyListings: React.FC = () => {
           <h1 className="text-2xl md:text-3xl font-semibold text-[#0B2C5C] tracking-tight">Property Listings</h1>
           <p className="text-xs md:text-sm text-gray-500 mt-1">Manage and showcase all your property listings</p>
         </div>
-        <button className="bg-[#035096] hover:bg-[#024076] text-white font-medium text-sm px-5 py-2.5 rounded-lg inline-flex items-center gap-2 transition-colors cursor-pointer shadow-sm">
+        <button 
+          onClick={() => navigate('/post-property')}
+          className="bg-[#035096] hover:bg-[#024076] text-white font-medium text-sm px-5 py-2.5 rounded-lg inline-flex items-center gap-2 transition-colors cursor-pointer shadow-sm"
+        >
           <Plus className="w-4 h-4" />
           <span>Add New Property</span>
         </button>
@@ -416,7 +421,7 @@ export const PropertyListings: React.FC = () => {
                 <span className="font-semibold text-gray-900 text-sm">Filters</span>
                 <button 
                   onClick={() => setShowFiltersPanel(false)}
-                  className="text-gray-400 hover:text-gray-650 transition-colors text-sm font-bold"
+                  className="text-gray-400 hover:text-gray-650 transition-colors text-sm font-semibold"
                 >
                   ✕
                 </button>
@@ -540,7 +545,7 @@ export const PropertyListings: React.FC = () => {
                   <h4 className="text-xs font-semibold text-gray-900 uppercase tracking-wider">Date Range</h4>
                   <div className="grid grid-cols-2 gap-2">
                     <div className="flex flex-col">
-                      <span className="text-[9px] text-gray-400 font-bold mb-1">Start Date</span>
+                      <span className="text-[9px] text-gray-400 font-semibold mb-1">Start Date</span>
                       <input
                         type="date"
                         value={filterStartDate}
@@ -549,7 +554,7 @@ export const PropertyListings: React.FC = () => {
                       />
                     </div>
                     <div className="flex flex-col">
-                      <span className="text-[9px] text-gray-400 font-bold mb-1">End Date</span>
+                      <span className="text-[9px] text-gray-400 font-semibold mb-1">End Date</span>
                       <input
                         type="date"
                         value={filterEndDate}
@@ -565,7 +570,7 @@ export const PropertyListings: React.FC = () => {
                   <h4 className="text-xs font-semibold text-gray-900 uppercase tracking-wider">Price Range</h4>
                   <div className="grid grid-cols-2 gap-2">
                     <div className="relative">
-                      <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-[9px] font-bold">Min:</span>
+                      <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-[9px] font-semibold">Min:</span>
                       <input
                         type="text"
                         value={filterMinPrice.toLocaleString('en-IN')}
@@ -577,7 +582,7 @@ export const PropertyListings: React.FC = () => {
                       />
                     </div>
                     <div className="relative">
-                      <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-[9px] font-bold">Max:</span>
+                      <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-[9px] font-semibold">Max:</span>
                       <input
                         type="text"
                         value={filterMaxPrice.toLocaleString('en-IN')}
@@ -604,7 +609,7 @@ export const PropertyListings: React.FC = () => {
                       }}
                       accentColor="#035096"
                     />
-                    <div className="flex justify-between text-[9px] text-gray-400 font-bold mt-1">
+                    <div className="flex justify-between text-[9px] text-gray-400 font-semibold mt-1">
                       <span>₹ {(500000).toLocaleString('en-IN')}</span>
                       <span>₹ {(100000000).toLocaleString('en-IN')}</span>
                     </div>
@@ -683,7 +688,7 @@ export const PropertyListings: React.FC = () => {
                 />
                 
                 {/* Active Status Badge */}
-                <span className="absolute top-3 left-3 text-[10px] font-bold text-white px-3.5 py-1 rounded-[14px] uppercase tracking-wider bg-[#0F925E]">
+                <span className="absolute top-3 left-3 text-[10px] font-semibold text-white px-3.5 py-1 rounded-[14px] uppercase tracking-wider bg-[#0F925E]">
                   {property.status}
                 </span>
 
@@ -696,7 +701,7 @@ export const PropertyListings: React.FC = () => {
               {/* Card Details */}
               <div className="p-6 flex-1 flex flex-col justify-between">
                 <div>
-                  <h3 className="text-base font-bold text-gray-900 leading-snug font-poppins text-left">{property.title}</h3>
+                  <h3 className="text-base font-semibold text-gray-900 leading-snug font-poppins text-left">{property.title}</h3>
                   
                   <div className="flex items-center gap-1.5 text-xs mt-1.5 font-poppins font-light text-left" style={{ color: '#7A7A7A' }}>
                     <MapPin className="w-4 h-4 shrink-0" style={{ color: '#7A7A7A' }} strokeWidth={1.5} />
@@ -705,11 +710,11 @@ export const PropertyListings: React.FC = () => {
 
                   {/* Price & Area row */}
                   <div className="border border-gray-200 rounded-xl p-3.5 mt-4 flex items-center justify-between bg-white">
-                    <div className="flex items-center justify-center flex-1 text-center font-bold text-lg text-[#0F925E]">
+                    <div className="flex items-center justify-center flex-1 text-center font-semibold text-lg text-[#0F925E]">
                       {property.price}
                     </div>
                     <div className="w-[1px] h-8 bg-gray-200"></div>
-                    <div className="flex items-center justify-center flex-1 gap-2 text-gray-950 font-bold text-sm text-center">
+                    <div className="flex items-center justify-center flex-1 gap-2 text-gray-950 font-semibold text-sm text-center">
                       <svg className="w-5 h-5 text-[#0F925E]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                         <rect x="5" y="5" width="14" height="14" rx="2" />
                         <path d="M5 9h14M9 5v14" />
@@ -723,7 +728,7 @@ export const PropertyListings: React.FC = () => {
                     <div className="flex flex-col items-center justify-center text-center px-1">
                       <span className="text-[9px] font-medium leading-tight text-center" style={{ color: '#7A7A7A' }}>Listing Quality Score</span>
                       <div className="flex items-center justify-center gap-1.5 mt-2">
-                        <span className="border border-[#0F925E] text-[#0F925E] bg-green-100 text-[10px] font-bold rounded-[4px] px-1.5 py-0.5 flex items-center justify-center">
+                        <span className="border border-[#0F925E] text-[#0F925E] bg-green-100 text-[10px] font-semibold rounded-[4px] px-1.5 py-0.5 flex items-center justify-center">
                           {property.qualityScore}
                         </span>
                         <Info className="w-3.5 h-3.5 cursor-help" style={{ color: '#7A7A7A' }} />
@@ -740,7 +745,7 @@ export const PropertyListings: React.FC = () => {
 
                     <div className="flex flex-col items-center justify-center text-center px-1">
                       <span className="text-[9px] font-medium leading-tight" style={{ color: '#7A7A7A' }}>Leads</span>
-                      <div className="flex items-center justify-center gap-1 mt-2.5 text-gray-750 font-bold text-[10px]">
+                      <div className="flex items-center justify-center gap-1 mt-2.5 text-gray-750 font-semibold text-[10px]">
                         <Users className="w-3.5 h-3.5 text-indigo-500" />
                         <span className="text-[#0B2C5C] font-semibold">{property.leads}</span>
                         <svg className="w-3.5 h-3.5 text-indigo-500 cursor-pointer ml-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">

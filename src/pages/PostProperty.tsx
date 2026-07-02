@@ -8,6 +8,7 @@ import {
   Map, 
   User, 
   UserCheck, 
+  Users,
   Hammer, 
   Briefcase, 
   Upload, 
@@ -19,6 +20,16 @@ import {
   Shield,
   ArrowRight
 } from 'lucide-react';
+
+interface RoomSize {
+  length: string;
+  width: string;
+}
+
+interface ShutterSize {
+  length: string;
+  width: string;
+}
 
 // Types for form state
 interface PropertyFormData {
@@ -107,6 +118,7 @@ interface PropertyFormData {
   showAmenitiesOption?: string; 
   boostPostOption?: string; 
   rentPerMonth?: string;
+  rentFor?: string;
   securityDepositType?: string;
   securityDepositVal?: string;
   maintenanceAmountType?: string;
@@ -186,6 +198,13 @@ interface PropertyFormData {
   ventureAmenities?: string[];
   additionalAmenities?: string;
   locationHighlights?: string;
+  roomSizes?: RoomSize[];
+  shutterSizes?: ShutterSize[];
+  available?: string;
+  pg_for?: string;
+  room_type?: string;
+  sharing_room?: string;
+  pg_hostel_name?: string;
 }
 
 const amenityCategories = {
@@ -339,7 +358,7 @@ const CustomSelect: React.FC<{
       </button>
 
       {!disabled && isOpen && (
-        <div className="absolute right-0 mt-1.5 min-w-[120px] bg-white border border-slate-200 rounded-xl shadow-lg z-50 py-1.5 max-h-60 overflow-y-auto">
+        <div className="absolute left-0 mt-1.5 min-w-full w-max bg-white border border-slate-200 rounded-xl shadow-lg z-50 py-1.5 max-h-60 overflow-y-auto">
           {options.map((opt) => (
             <button
               key={opt.value}
@@ -348,11 +367,11 @@ const CustomSelect: React.FC<{
                 onChange({ target: { value: opt.value } });
                 setIsOpen(false);
               }}
-              className={`w-full text-left px-4 py-2.5 text-sm transition-colors hover:bg-slate-50 flex items-center justify-between ${
+              className={`w-full text-left px-4 py-2.5 text-sm transition-colors hover:bg-slate-50 flex items-center justify-between gap-4 ${
                 value === opt.value ? 'bg-[#F0F4F9]/60 font-semibold text-[#035096]' : 'text-slate-700'
               }`}
             >
-              <span className="truncate">{opt.label}</span>
+              <span className="whitespace-nowrap">{opt.label}</span>
               {value === opt.value && (
                 <svg className="w-4 h-4 text-[#035096] shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
@@ -435,6 +454,7 @@ const initialFormData: PropertyFormData = {
   showAmenitiesOption: 'No',
   boostPostOption: 'regular',
   rentPerMonth: '',
+  rentFor: '',
   securityDepositType: 'Months',
   securityDepositVal: '',
   maintenanceAmountType: 'Select M',
@@ -489,6 +509,13 @@ const initialFormData: PropertyFormData = {
   ventureAmenities: [],
   additionalAmenities: '',
   locationHighlights: '',
+  roomSizes: [],
+  shutterSizes: [],
+  available: 'Girls',
+  pg_for: 'Students',
+  room_type: 'Sharing',
+  sharing_room: '1',
+  pg_hostel_name: '',
 };
 
 export const PostProperty: React.FC = () => {
@@ -517,13 +544,31 @@ export const PostProperty: React.FC = () => {
   const isCommercialGodown = formData.category === 'Commercial' && formData.propertyType === 'Warehouse/Godown' && (formData.intent === 'sell' || formData.intent === 'rent');
   const isCommercialShowroom = formData.category === 'Commercial' && formData.propertyType === 'Showrooms' && (formData.intent === 'sell' || formData.intent === 'rent');
   const isCommercialShop = formData.category === 'Commercial' && formData.propertyType === 'Shops' && (formData.intent === 'sell' || formData.intent === 'rent');
-  const isCommercialOfficeSpaceSell = formData.category === 'Commercial' && formData.propertyType === 'Office Space' && formData.intent === 'sell';
-  const isHighRiseAptSell = (formData.category === 'Residential' && (formData.intent === 'sell' || formData.intent === 'rent')) || isCommercialOfficeSpaceSell || isCommercialShop || isCommercialShowroom || isCommercialGodown || isCommercialIndustrial || isCommercialShed || isLandsAcre || isLandsPlots;
+  const isCommercialOfficeSpace = formData.category === 'Commercial' && formData.propertyType === 'Office Space' && (formData.intent === 'sell' || formData.intent === 'rent');
+  const isHighRiseAptSell = (formData.category === 'Residential' && (formData.intent === 'sell' || formData.intent === 'rent')) || isCommercialOfficeSpace || isCommercialShop || isCommercialShowroom || isCommercialGodown || isCommercialIndustrial || isCommercialShed || isLandsAcre || isLandsPlots;
   const isAmenitiesDisabled = formData.propertyType === 'Independent Houses' || formData.propertyType === 'PG/Hostel' || isLandsAcre || isLandsPlots;
 
   const updateFormData = (fields: Partial<PropertyFormData>) => {
     setFormData(prev => ({ ...prev, ...fields }));
     setValidationError('');
+  };
+
+  const handleBedroomCountChange = (value: string) => {
+    const count = parseInt(value) || 0;
+    const newRoomSizes = Array.from({ length: count }, (_, i) => ({
+      length: formData.roomSizes?.[i]?.length || '',
+      width: formData.roomSizes?.[i]?.width || '',
+    }));
+    updateFormData({ bedroomCount: value, roomSizes: newRoomSizes });
+  };
+
+  const handleShuttersCountChange = (value: string) => {
+    const count = parseInt(value) || 0;
+    const newShutterSizes = Array.from({ length: count }, (_, i) => ({
+      length: formData.shutterSizes?.[i]?.length || '',
+      width: formData.shutterSizes?.[i]?.width || '',
+    }));
+    updateFormData({ shuttersCount: value, shutterSizes: newShutterSizes });
   };
 
   const handlePriceOrAreaChange = (field: 'pricePerUnit' | 'totalAreaVal', value: string) => {
@@ -655,7 +700,7 @@ export const PostProperty: React.FC = () => {
           }
         } else {
           if (!formData.locality) return triggerError('Locality is required.');
-          if (!formData.totalAreaVal && (isCommercialOfficeSpaceSell || isCommercialShop || isCommercialShowroom || isCommercialGodown || isCommercialIndustrial || isCommercialShed) && formData.propertyAreaVal) {
+          if (!formData.totalAreaVal && (isCommercialOfficeSpace || isCommercialShop || isCommercialShowroom || isCommercialGodown || isCommercialIndustrial || isCommercialShed) && formData.propertyAreaVal) {
             formData.totalAreaVal = formData.propertyAreaVal;
           }
           if (!formData.totalAreaVal) return triggerError('Total Area is required.');
@@ -667,8 +712,8 @@ export const PostProperty: React.FC = () => {
         }
         
         // Auto-populate required fields for step 4/api compatibility
-        const isComm = isCommercialOfficeSpaceSell || isCommercialShop || isCommercialShowroom || isCommercialGodown || isCommercialIndustrial || isCommercialShed;
-        const bedroomStr = (isCommercialOfficeSpaceSell || isCommercialIndustrial) 
+        const isComm = isCommercialOfficeSpace || isCommercialShop || isCommercialShowroom || isCommercialGodown || isCommercialIndustrial || isCommercialShed;
+        const bedroomStr = (isCommercialOfficeSpace || isCommercialIndustrial) 
           ? `${formData.seatingsCount || '0'} Seats` 
           : isCommercialShop 
           ? `${formData.shuttersCount || '0'} Shutters` 
@@ -693,7 +738,7 @@ export const PostProperty: React.FC = () => {
           : isLandsPlots
           ? `Premium Plot of ${formData.plotAreaSqYds || '0'} Sq.Yds in ${formData.village || 'Locality'}. Facing: ${formData.facing || 'N/A'}, corner plot: ${formData.cornerPlot || 'No'}.`
           : isComm 
-          ? ((isCommercialOfficeSpaceSell || isCommercialIndustrial)
+          ? ((isCommercialOfficeSpace || isCommercialIndustrial)
             ? `Premium Commercial ${propTypeLabel} with ${formData.seatingsCount || '0'} seats and ${formData.cabinsCount || '0'} cabins ${formData.intent === 'rent' ? 'for rent' : 'for sale'} in ${projName}. Features: ${formData.furnishing || 'Unfurnished'}, facing ${formData.facing || 'East'}.`
             : isCommercialShop
             ? `Premium Commercial Shop with ${formData.shuttersCount || '0'} shutters ${formData.intent === 'rent' ? 'for rent' : 'for sale'} in ${projName}. Features: ${formData.furnishing || 'Unfurnished'}, facing ${formData.facing || 'East'}.`
@@ -980,6 +1025,51 @@ export const PostProperty: React.FC = () => {
                 </div>
               </div>
             </div>
+
+            {formData.intent === 'rent' && (
+              <div className="mb-10 pt-4 border-t border-slate-100">
+                <h2 className="text-xl font-bold text-black mb-1">Rent For?</h2>
+                <p className="text-xs text-slate-400 mb-6">Select the target tenants for your property.</p>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                  {[
+                    { key: 'Family', title: 'Family', desc: 'For families and couples', icon: Users },
+                    { key: 'Bachelors', title: 'Bachelors', desc: 'For students/bachelors', icon: User },
+                    { key: 'Company', title: 'Company', desc: 'For corporate/companies', icon: Briefcase },
+                    { key: 'Anyone', title: 'Anyone', desc: 'Open to any tenant type', icon: Check }
+                  ].map(item => {
+                    const IconComponent = item.icon;
+                    const isSelected = formData.rentFor === item.key;
+                    return (
+                      <div 
+                        key={item.key}
+                        onClick={() => updateFormData({ rentFor: item.key })}
+                        className={`flex items-center justify-between p-5 rounded-2xl border cursor-pointer transition-all ${
+                          isSelected 
+                            ? 'border-[#4885FF] bg-[#F0F4F9]/60 shadow-[0_4px_15px_rgba(72,133,255,0.1)]' 
+                            : 'border-slate-100 hover:border-slate-300 bg-white'
+                        }`}
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className={`p-3 rounded-xl ${isSelected ? 'bg-white shadow-sm text-[#035096]' : 'bg-[#F0F4F9] text-slate-500'}`}>
+                            <IconComponent className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <h3 className="font-bold text-sm text-[#0B2C5C]">{item.title}</h3>
+                            <p className="text-[10px] text-slate-400 mt-0.5">{item.desc}</p>
+                          </div>
+                        </div>
+                        <div className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 ${
+                          isSelected ? 'bg-[#4885FF] border-[#4885FF]' : 'border-slate-300'
+                        }`}>
+                          {isSelected && <Check className="w-3.5 h-3.5 text-white" />}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             {/* Role Section */}
             <div className="mb-10">
@@ -2204,7 +2294,7 @@ export const PostProperty: React.FC = () => {
                     {/* --- Locality Details Section --- */}
                 <div>
                   <h3 className="text-lg font-bold text-[#0B2C5C] mb-4 pb-2 border-b border-slate-100">Locality Details</h3>
-                  <div className={`grid grid-cols-1 sm:grid-cols-2 ${(formData.intent === 'rent' && !(isCommercialOfficeSpaceSell || isCommercialIndustrial || isCommercialShed)) ? 'md:grid-cols-3' : 'md:grid-cols-4'} gap-6`}>
+                  <div className={`grid grid-cols-1 sm:grid-cols-2 ${(formData.intent === 'rent' && !(isCommercialOfficeSpace || isCommercialIndustrial || isCommercialShed)) ? 'md:grid-cols-3' : 'md:grid-cols-4'} gap-6`}>
                     <div className="space-y-2">
                       <label className="block text-xs font-semibold text-slate-500 uppercase">(by) Area</label>
                       <input 
@@ -2235,7 +2325,7 @@ export const PostProperty: React.FC = () => {
                         className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800"
                       />
                     </div>
-                    {(isCommercialOfficeSpaceSell || isCommercialShop || isCommercialShowroom || isCommercialGodown || isCommercialIndustrial || isCommercialShed) ? (
+                    {(isCommercialOfficeSpace || isCommercialShop || isCommercialShowroom || isCommercialGodown || isCommercialIndustrial || isCommercialShed) ? (
                       <div className="space-y-2">
                         <label className="block text-xs font-semibold text-slate-500 uppercase">Property at</label>
                         <CustomSelect 
@@ -2271,9 +2361,146 @@ export const PostProperty: React.FC = () => {
                 <div>
                   <h3 className="text-lg font-bold text-[#0B2C5C] mb-4 pb-2 border-b border-slate-100">Property Details</h3>
                   <div className="space-y-6">
-                    {(isCommercialOfficeSpaceSell || isCommercialShop || isCommercialShowroom || isCommercialGodown || isCommercialIndustrial || isCommercialShed) ? (
+                    {formData.propertyType === 'PG/Hostel' ? (
+                      <div className="space-y-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+                          <div className="space-y-2">
+                            <label className="block text-xs font-semibold text-slate-500 uppercase">Available For</label>
+                            <CustomSelect
+                              value={formData.available || 'Girls'}
+                              onChange={e => updateFormData({ available: e.target.value })}
+                              className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm bg-white"
+                            >
+                              <option value="Girls">Girls</option>
+                              <option value="Boys">Boys</option>
+                              <option value="Others">Others</option>
+                            </CustomSelect>
+                          </div>
+
+                          <div className="space-y-2">
+                            <label className="block text-xs font-semibold text-slate-500 uppercase">For</label>
+                            <CustomSelect
+                              value={formData.pg_for || 'Students'}
+                              onChange={e => updateFormData({ pg_for: e.target.value })}
+                              className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm bg-white"
+                            >
+                              <option value="Students">Students</option>
+                              <option value="Working People">Working People</option>
+                              <option value="Both">Both</option>
+                            </CustomSelect>
+                          </div>
+
+                          <div className="space-y-2">
+                            <label className="block text-xs font-semibold text-slate-500 uppercase">Room Type</label>
+                            <CustomSelect
+                              value={formData.room_type || 'Sharing'}
+                              onChange={e => updateFormData({ room_type: e.target.value })}
+                              className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm bg-white"
+                            >
+                              <option value="Sharing">Sharing</option>
+                              <option value="Private">Private</option>
+                            </CustomSelect>
+                          </div>
+
+                          {formData.room_type === 'Sharing' && (
+                            <div className="space-y-2">
+                              <label className="block text-xs font-semibold text-slate-500 uppercase">Sharing in Room</label>
+                              <CustomSelect
+                                value={formData.sharing_room || '1'}
+                                onChange={e => updateFormData({ sharing_room: e.target.value })}
+                                className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm bg-white"
+                              >
+                                {Array.from({ length: 10 }, (_, i) => String(i + 1)).map(num => (
+                                  <option key={num} value={num}>{num} Sharing</option>
+                                ))}
+                              </CustomSelect>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                          <div className="space-y-2">
+                            <label className="block text-xs font-semibold text-slate-500 uppercase">PG/Hostel Name</label>
+                            <input
+                              type="text"
+                              placeholder="PG Name"
+                              value={formData.pg_hostel_name || ''}
+                              onChange={e => updateFormData({ pg_hostel_name: e.target.value })}
+                              className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <label className="block text-xs font-semibold text-slate-500 uppercase">Per Month Fee</label>
+                            <input
+                              type="text"
+                              placeholder="Enter Fee"
+                              value={formData.rentPerMonth || ''}
+                              onChange={e => updateFormData({ rentPerMonth: e.target.value })}
+                              className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <label className="block text-xs font-semibold text-slate-500 uppercase">Deposit</label>
+                            <input
+                              type="text"
+                              placeholder="Enter Deposit"
+                              value={formData.securityDepositVal || ''}
+                              onChange={e => updateFormData({ securityDepositVal: e.target.value })}
+                              className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Includes / Excludes Checklist */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-slate-100">
+                          <div className="space-y-2">
+                            <span className="block text-sm font-semibold text-[#0B2C5C]">Includes</span>
+                            <div className="grid grid-cols-2 gap-2">
+                              {['Laundry', 'WiFi', 'Water', 'Electricity', 'TV', 'Geyser', 'Housekeeping', 'Lockers'].map(item => (
+                                <label key={item} className="flex items-center gap-2 text-xs cursor-pointer">
+                                  <input
+                                    type="checkbox"
+                                    checked={(formData.amenities || []).includes(`inc_${item}`)}
+                                    onChange={() => {
+                                      const current = formData.amenities || [];
+                                      const val = `inc_${item}`;
+                                      const updated = current.includes(val) ? current.filter(x => x !== val) : [...current, val];
+                                      updateFormData({ amenities: updated });
+                                    }}
+                                    className="w-3.5 h-3.5 rounded text-[#035096]"
+                                  />
+                                  {item}
+                                </label>
+                              ))}
+                            </div>
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <span className="block text-sm font-semibold text-[#0B2C5C]">Excludes</span>
+                            <div className="grid grid-cols-2 gap-2">
+                              {['Laundry', 'WiFi', 'Water', 'Electricity', 'TV', 'Geyser', 'Housekeeping', 'Lockers'].map(item => (
+                                <label key={item} className="flex items-center gap-2 text-xs cursor-pointer">
+                                  <input
+                                    type="checkbox"
+                                    checked={(formData.amenities || []).includes(`exc_${item}`)}
+                                    onChange={() => {
+                                      const current = formData.amenities || [];
+                                      const val = `exc_${item}`;
+                                      const updated = current.includes(val) ? current.filter(x => x !== val) : [...current, val];
+                                      updateFormData({ amenities: updated });
+                                    }}
+                                    className="w-3.5 h-3.5 rounded text-[#035096]"
+                                  />
+                                  {item}
+                                </label>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (isCommercialOfficeSpace || isCommercialShop || isCommercialShowroom || isCommercialGodown || isCommercialIndustrial || isCommercialShed) ? (
                       <>
-                        {(isCommercialOfficeSpaceSell || isCommercialShowroom || isCommercialIndustrial) && (
+                        {(isCommercialOfficeSpace || isCommercialShowroom || isCommercialIndustrial) && (
                           <>
                             {/* Commercial Row 1 */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
@@ -2610,7 +2837,7 @@ export const PostProperty: React.FC = () => {
                               <label className="block text-xs font-semibold text-slate-500 uppercase">Shutters Count</label>
                               <CustomSelect 
                                 value={formData.shuttersCount || 'Select'}
-                                onChange={e => updateFormData({ shuttersCount: e.target.value })}
+                                onChange={e => handleShuttersCountChange(e.target.value)}
                                 className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800 bg-white"
                               >
                                 <option value="Select">Select</option>
@@ -2622,6 +2849,56 @@ export const PostProperty: React.FC = () => {
                                 <option value="More than 5">More than 5</option>
                               </CustomSelect>
                             </div>
+
+                            {formData.shutterSizes && formData.shutterSizes.length > 0 && (
+                              <div className="col-span-full mt-4">
+                                <span className="block text-sm font-semibold text-[#0B2C5C] mb-2">Shutter Dimensions (ft)</span>
+                                <div className="border border-slate-100 rounded-xl overflow-hidden">
+                                  <table className="w-full text-sm text-left">
+                                    <thead className="bg-slate-50 text-[#0B2C5C] font-semibold">
+                                      <tr>
+                                        <th className="px-4 py-3">Shutter</th>
+                                        <th className="px-4 py-3">Length (ft)</th>
+                                        <th className="px-4 py-3">Width (ft)</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100">
+                                      {formData.shutterSizes.map((shutter, idx) => (
+                                        <tr key={idx}>
+                                          <td className="px-4 py-3 font-medium text-slate-700">Shutter {idx + 1}</td>
+                                          <td className="px-4 py-3">
+                                            <input
+                                              type="number"
+                                              placeholder="Length"
+                                              value={shutter.length}
+                                              onChange={e => {
+                                                const updated = [...formData.shutterSizes!];
+                                                updated[idx] = { ...updated[idx], length: e.target.value };
+                                                updateFormData({ shutterSizes: updated });
+                                              }}
+                                              className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:border-[#4885FF]"
+                                            />
+                                          </td>
+                                          <td className="px-4 py-3">
+                                            <input
+                                              type="number"
+                                              placeholder="Width"
+                                              value={shutter.width}
+                                              onChange={e => {
+                                                const updated = [...formData.shutterSizes!];
+                                                updated[idx] = { ...updated[idx], width: e.target.value };
+                                                updateFormData({ shutterSizes: updated });
+                                              }}
+                                              className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:border-[#4885FF]"
+                                            />
+                                          </td>
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                </div>
+                              </div>
+                            )}
                           </div>
                         )}
 
@@ -2779,7 +3056,7 @@ export const PostProperty: React.FC = () => {
                             <label className="block text-xs font-semibold text-slate-500 uppercase">Number of Bedrooms</label>
                             <CustomSelect 
                               value={formData.bedroomCount || ''}
-                              onChange={e => updateFormData({ bedroomCount: e.target.value })}
+                              onChange={e => handleBedroomCountChange(e.target.value)}
                               className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800 bg-white"
                             >
                               <option value="">Select</option>
@@ -2790,6 +3067,56 @@ export const PostProperty: React.FC = () => {
                               <option value="5 BHK">5 BHK</option>
                             </CustomSelect>
                           </div>
+
+                          {formData.roomSizes && formData.roomSizes.length > 0 && (
+                            <div className="col-span-full mt-4">
+                              <span className="block text-sm font-semibold text-[#0B2C5C] mb-2">Room Dimensions (ft)</span>
+                              <div className="border border-slate-100 rounded-xl overflow-hidden">
+                                <table className="w-full text-sm text-left">
+                                  <thead className="bg-slate-50 text-[#0B2C5C] font-semibold">
+                                    <tr>
+                                      <th className="px-4 py-3">Room</th>
+                                      <th className="px-4 py-3">Length (ft)</th>
+                                      <th className="px-4 py-3">Width (ft)</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody className="divide-y divide-slate-100">
+                                    {formData.roomSizes.map((room, idx) => (
+                                      <tr key={idx}>
+                                        <td className="px-4 py-3 font-medium text-slate-700">Bedroom {idx + 1}</td>
+                                        <td className="px-4 py-3">
+                                          <input
+                                            type="number"
+                                            placeholder="Length"
+                                            value={room.length}
+                                            onChange={e => {
+                                              const updated = [...formData.roomSizes!];
+                                              updated[idx] = { ...updated[idx], length: e.target.value };
+                                              updateFormData({ roomSizes: updated });
+                                            }}
+                                            className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:border-[#4885FF]"
+                                          />
+                                        </td>
+                                        <td className="px-4 py-3">
+                                          <input
+                                            type="number"
+                                            placeholder="Width"
+                                            value={room.width}
+                                            onChange={e => {
+                                              const updated = [...formData.roomSizes!];
+                                              updated[idx] = { ...updated[idx], width: e.target.value };
+                                              updateFormData({ roomSizes: updated });
+                                            }}
+                                            className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:border-[#4885FF]"
+                                          />
+                                        </td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            </div>
+                          )}
                           <div className="space-y-2">
                             <label className="block text-xs font-semibold text-slate-500 uppercase">Additional Rooms</label>
                             <input 
@@ -2825,7 +3152,7 @@ export const PostProperty: React.FC = () => {
                     )}
 
                     {/* Other Rooms checkboxes */}
-                    {(!isCommercialOfficeSpaceSell && !isCommercialShop && !isCommercialShowroom && !isCommercialGodown && !isCommercialShed) && (
+                    {(!isCommercialOfficeSpace && !isCommercialShop && !isCommercialShowroom && !isCommercialGodown && !isCommercialShed) && (
                       <div className="space-y-2 pt-2">
                         <span className="block text-base font-bold text-[#0B2C5C]">Other Rooms</span>
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -2848,7 +3175,7 @@ export const PostProperty: React.FC = () => {
                     )}
 
                     {/* Distance Fields */}
-                    {(!isCommercialOfficeSpaceSell && !isCommercialShop && !isCommercialShowroom && !isCommercialGodown && !isCommercialShed) && (
+                    {(!isCommercialOfficeSpace && !isCommercialShop && !isCommercialShowroom && !isCommercialGodown && !isCommercialShed) && (
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
                         <div className="space-y-2">
                           <label className="block text-xs font-semibold text-slate-500 uppercase">Bus Stop</label>
@@ -2885,7 +3212,7 @@ export const PostProperty: React.FC = () => {
 
                     {/* Areas and UDS */}
                     {(!isCommercialShop && !isCommercialShowroom && !isCommercialGodown && !isCommercialShed) && (
-                      <div className={`grid grid-cols-1 ${(isCommercialOfficeSpaceSell || isCommercialIndustrial) ? 'md:grid-cols-3' : 'md:grid-cols-4'} gap-6 pt-2`}>
+                      <div className={`grid grid-cols-1 ${(isCommercialOfficeSpace || isCommercialIndustrial) ? 'md:grid-cols-3' : 'md:grid-cols-4'} gap-6 pt-2`}>
                         <div className="space-y-2">
                           <label className="block text-xs font-semibold text-slate-500 uppercase">Property Carpet Area</label>
                           <div className="flex rounded-xl border border-slate-200 focus-within:border-[#4885FF] relative">
@@ -2949,7 +3276,7 @@ export const PostProperty: React.FC = () => {
                             </CustomSelect>
                           </div>
                         </div>
-                        {!(isCommercialOfficeSpaceSell || isCommercialIndustrial) && (
+                        {!(isCommercialOfficeSpace || isCommercialIndustrial) && (
                           <div className="space-y-2">
                             <label className="block text-xs font-semibold text-slate-500 uppercase">UDS</label>
                             <input 
@@ -3049,71 +3376,14 @@ export const PostProperty: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* Rental specific pricing inputs */}
-                    {formData.intent === 'rent' && (
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
-                        <div className="space-y-2">
-                          <label className="block text-xs font-semibold text-slate-500 uppercase">Rent per Month <span className="text-red-500">*</span></label>
-                          <input 
-                            type="text" 
-                            placeholder="Enter Rent"
-                            value={formData.rentPerMonth || ''}
-                            onChange={e => updateFormData({ rentPerMonth: e.target.value })}
-                            className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800"
-                          />
-                        </div>
-                        
-                        <div className="space-y-2">
-                          <label className="block text-xs font-semibold text-slate-500 uppercase">Security Deposit</label>
-                          <div className="flex rounded-xl border border-slate-200 focus-within:border-[#4885FF] relative">
-                            <CustomSelect 
-                              value={formData.securityDepositType || 'Months'}
-                              onChange={e => updateFormData({ securityDepositType: e.target.value })}
-                              className="px-2 bg-slate-50 border-r border-slate-200 focus:outline-none text-xs text-slate-600 bg-white"
-                            >
-                              <option value="Months">Months</option>
-                              <option value="Amount">Amount</option>
-                            </CustomSelect>
-                            <input 
-                              type="text" 
-                              placeholder="Enter Amount"
-                              value={formData.securityDepositVal || ''}
-                              onChange={e => updateFormData({ securityDepositVal: e.target.value })}
-                              className="w-full px-4 py-3 rounded-l-xl focus:outline-none text-sm text-slate-800"
-                            />
-                          </div>
-                        </div>
 
-                        <div className="space-y-2">
-                          <label className="block text-xs font-semibold text-slate-500 uppercase">Maintenance Amount</label>
-                          <div className="flex rounded-xl border border-slate-200 focus-within:border-[#4885FF] relative">
-                            <CustomSelect 
-                              value={formData.maintenanceAmountType || 'Select M'}
-                              onChange={e => updateFormData({ maintenanceAmountType: e.target.value })}
-                              className="px-2 bg-slate-50 border-r border-slate-200 focus:outline-none text-xs text-slate-600 bg-white"
-                            >
-                              <option value="Select M">Select M</option>
-                              <option value="Select Month">Select Month</option>
-                              <option value="Select Year">Select Year</option>
-                            </CustomSelect>
-                            <input 
-                              type="text" 
-                              placeholder="Enter Amount"
-                              value={formData.maintenanceAmountVal || ''}
-                              onChange={e => updateFormData({ maintenanceAmountVal: e.target.value })}
-                              className="w-full px-4 py-3 rounded-l-xl focus:outline-none text-sm text-slate-800"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    )}
 
                     {/* Pricing block */}
                     {formData.intent !== 'rent' && (
                       <div className="grid grid-cols-1 md:grid-cols-5 gap-6 pt-2">
                         <div className="space-y-2">
                           <label className="block text-xs font-semibold text-slate-500 uppercase">
-                            {(isCommercialOfficeSpaceSell || isCommercialIndustrial) ? 'Property Price' : 'Property Price Per'}
+                            {(isCommercialOfficeSpace || isCommercialIndustrial) ? 'Property Price' : 'Property Price Per'}
                           </label>
                           <div className="flex rounded-xl border border-slate-200 focus-within:border-[#4885FF] relative">
                             <input 
@@ -3214,372 +3484,376 @@ export const PostProperty: React.FC = () => {
                 <div>
                   <h3 className="text-lg font-bold text-[#0B2C5C] mb-4 pb-2 border-b border-slate-100">Amenities & Features</h3>
                   <div className="space-y-6">
-                    <div className="space-y-2">
-                      <span className="block text-sm font-semibold text-slate-600">Do you want to select amenities?</span>
-                      <div className="flex gap-6 mt-1">
-                        {['Yes', 'No'].map(item => {
-                          const isChecked = isAmenitiesDisabled ? item === 'No' : formData.showAmenitiesOption === item;
-                          return (
-                            <label key={item} className={`flex items-center gap-2 text-sm text-slate-800 ${isAmenitiesDisabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}>
-                              <input 
-                                type="radio"
-                                name="showAmenitiesOption"
-                                checked={isChecked}
-                                disabled={isAmenitiesDisabled}
-                                onChange={() => !isAmenitiesDisabled && updateFormData({ showAmenitiesOption: item })}
-                                className="w-4 h-4 text-[#035096] border-slate-300 focus:ring-[#035096]"
-                              />
-                              {item}
-                            </label>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    {/* Detailed Nested Checkboxes if "Yes" */}
-                    {formData.showAmenitiesOption === 'Yes' && (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4 border-t border-slate-100">
-                        {/* Column 1 */}
-                        <div className="space-y-6">
-                          {/* Children's Play Area */}
-                          <div className="space-y-2">
-                            <label className="flex items-center gap-2 cursor-pointer">
-                              <input 
-                                type="checkbox"
-                                checked={isCategoryChecked("Children's Play Area")}
-                                onChange={() => toggleCategoryAmenities("Children's Play Area")}
-                                className="w-4 h-4 rounded text-[#035096] border-slate-300 focus:ring-[#035096]"
-                              />
-                              <span className="font-bold text-sm text-[#0B2C5C]">Children's Play Area</span>
-                            </label>
-                            <div className="pl-6 space-y-2">
-                              {["Dedicated, safe playgrounds with swings, slides etc", "Sandpits"].map(item => (
-                                <label key={item} className="flex items-start gap-2 cursor-pointer text-xs text-slate-800">
+                    {formData.propertyType !== 'PG/Hostel' && (
+                      <>
+                        <div className="space-y-2">
+                          <span className="block text-sm font-semibold text-slate-600">Do you want to select amenities?</span>
+                          <div className="flex gap-6 mt-1">
+                            {['Yes', 'No'].map(item => {
+                              const isChecked = isAmenitiesDisabled ? item === 'No' : formData.showAmenitiesOption === item;
+                              return (
+                                <label key={item} className={`flex items-center gap-2 text-sm text-slate-800 ${isAmenitiesDisabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}>
                                   <input 
-                                    type="checkbox"
-                                    checked={formData.amenities.includes(item)}
-                                    onChange={() => toggleSelection('amenities', item)}
-                                    className="w-3.5 h-3.5 mt-0.5 rounded text-[#035096] border-slate-300 focus:ring-[#035096]"
+                                    type="radio"
+                                    name="showAmenitiesOption"
+                                    checked={isChecked}
+                                    disabled={isAmenitiesDisabled}
+                                    onChange={() => !isAmenitiesDisabled && updateFormData({ showAmenitiesOption: item })}
+                                    className="w-4 h-4 text-[#035096] border-slate-300 focus:ring-[#035096]"
                                   />
-                                  <span>{item}</span>
+                                  {item}
                                 </label>
-                              ))}
-                            </div>
-                          </div>
-
-                          {/* Community Services & Management */}
-                          <div className="space-y-2">
-                            <label className="flex items-center gap-2 cursor-pointer">
-                              <input 
-                                type="checkbox"
-                                checked={isCategoryChecked("Community Services & Management")}
-                                onChange={() => toggleCategoryAmenities("Community Services & Management")}
-                                className="w-4 h-4 rounded text-[#035096] border-slate-300 focus:ring-[#035096]"
-                              />
-                              <span className="font-bold text-sm text-[#0B2C5C]">Community Services & Management</span>
-                            </label>
-                            <div className="pl-6 space-y-2">
-                              {[
-                                "Resident Association/Management Committee: For smooth functioning and decision-making",
-                                "Community Events: Organized festivals, sports tournaments and social gathering",
-                                "App-Based Community Management: For communication, raising requests and payments"
-                              ].map(item => (
-                                <label key={item} className="flex items-start gap-2 cursor-pointer text-xs text-slate-800">
-                                  <input 
-                                    type="checkbox"
-                                    checked={formData.amenities.includes(item)}
-                                    onChange={() => toggleSelection('amenities', item)}
-                                    className="w-3.5 h-3.5 mt-0.5 rounded text-[#035096] border-slate-300 focus:ring-[#035096]"
-                                  />
-                                  <span>{item}</span>
-                                </label>
-                              ))}
-                            </div>
-                          </div>
-
-                          {/* Convenience & Lifestyle */}
-                          <div className="space-y-2">
-                            <label className="flex items-center gap-2 cursor-pointer">
-                              <input 
-                                type="checkbox"
-                                checked={isCategoryChecked("Convenience & Lifestyle")}
-                                onChange={() => toggleCategoryAmenities("Convenience & Lifestyle")}
-                                className="w-4 h-4 rounded text-[#035096] border-slate-300 focus:ring-[#035096]"
-                              />
-                              <span className="font-bold text-sm text-[#0B2C5C]">Convenience & Lifestyle</span>
-                            </label>
-                            <div className="pl-6 space-y-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
-                              {[
-                                "Business Center",
-                                "Library/Reading Room",
-                                "Retail/Commercial Spaces (within the community)",
-                                "Power backup: 24/7 generator backup",
-                                "Water Supply",
-                                "Intercom",
-                                "Video Door Phone",
-                                "High Speed Internet / wi-fi",
-                                "Ample Parking",
-                                "Maintenance Staff",
-                                "Convenience stores/ Supermarket",
-                                "Cafeteria/Restaurant",
-                                "Salon/Spa",
-                                "Pharmacy",
-                                "Service Apartments",
-                                "Guest Rooms",
-                                "Amphitheater/Mini-Theater",
-                                "Creche/Daycare facility",
-                                "Co-working Spaces"
-                              ].map(item => (
-                                <label key={item} className="flex items-start gap-2 cursor-pointer text-xs text-slate-800">
-                                  <input 
-                                    type="checkbox"
-                                    checked={formData.amenities.includes(item)}
-                                    onChange={() => toggleSelection('amenities', item)}
-                                    className="w-3.5 h-3.5 mt-0.5 rounded text-[#035096] border-slate-300 focus:ring-[#035096]"
-                                  />
-                                  <span>{item}</span>
-                                </label>
-                              ))}
-                            </div>
-                          </div>
-
-                          {/* Indoor Games */}
-                          <div className="space-y-2">
-                            <label className="flex items-center gap-2 cursor-pointer">
-                              <input 
-                                type="checkbox"
-                                checked={isCategoryChecked("Indoor Games")}
-                                onChange={() => toggleCategoryAmenities("Indoor Games")}
-                                className="w-4 h-4 rounded text-[#035096] border-slate-300 focus:ring-[#035096]"
-                              />
-                              <span className="font-bold text-sm text-[#0B2C5C]">Indoor Games</span>
-                            </label>
-                            <div className="pl-6 space-y-2">
-                              {[
-                                "Carrom, Chess, and other board games.",
-                                "Billiards/Pool Table",
-                                "Table Tennis"
-                              ].map(item => (
-                                <label key={item} className="flex items-start gap-2 cursor-pointer text-xs text-slate-800">
-                                  <input 
-                                    type="checkbox"
-                                    checked={formData.amenities.includes(item)}
-                                    onChange={() => toggleSelection('amenities', item)}
-                                    className="w-3.5 h-3.5 mt-0.5 rounded text-[#035096] border-slate-300 focus:ring-[#035096]"
-                                  />
-                                  <span>{item}</span>
-                                </label>
-                              ))}
-                            </div>
-                          </div>
-
-                          {/* Landscaped Gardens & Parks */}
-                          <div className="space-y-2">
-                            <label className="flex items-center gap-2 cursor-pointer">
-                              <input 
-                                type="checkbox"
-                                checked={isCategoryChecked("Landscaped Gardens & Parks")}
-                                onChange={() => toggleCategoryAmenities("Landscaped Gardens & Parks")}
-                                className="w-4 h-4 rounded text-[#035096] border-slate-300 focus:ring-[#035096]"
-                              />
-                              <span className="font-bold text-sm text-[#0B2C5C]">Landscaped Gardens & Parks</span>
-                            </label>
-                            <div className="pl-6 space-y-2">
-                              {[
-                                "Seating areas, gazebos.",
-                                "Green spaces for relaxation and strolls"
-                              ].map(item => (
-                                <label key={item} className="flex items-start gap-2 cursor-pointer text-xs text-slate-800">
-                                  <input 
-                                    type="checkbox"
-                                    checked={formData.amenities.includes(item)}
-                                    onChange={() => toggleSelection('amenities', item)}
-                                    className="w-3.5 h-3.5 mt-0.5 rounded text-[#035096] border-slate-300 focus:ring-[#035096]"
-                                  />
-                                  <span>{item}</span>
-                                </label>
-                              ))}
-                            </div>
+                              );
+                            })}
                           </div>
                         </div>
 
-                        {/* Column 2 */}
-                        <div className="space-y-6">
-                          {/* Outdoor Sports Facilities */}
-                          <div className="space-y-2">
-                            <label className="flex items-center gap-2 cursor-pointer">
-                              <input 
-                                type="checkbox"
-                                checked={isCategoryChecked("Outdoor Sports Facilities")}
-                                onChange={() => toggleCategoryAmenities("Outdoor Sports Facilities")}
-                                className="w-4 h-4 rounded text-[#035096] border-slate-300 focus:ring-[#035096]"
-                              />
-                              <span className="font-bold text-sm text-[#0B2C5C]">Outdoor Sports Facilities</span>
-                            </label>
-                            <div className="pl-6 space-y-2">
-                              {[
-                                "Badminton Courts",
-                                "Basketball Courts",
-                                "Cricket Practice Net",
-                                "Football/ Multi-purpose Sports Field",
-                                "Jogging/Walking Tracks",
-                                "Themed gardens (e.g., sensory gardens, herbs gardens)",
-                                "Tennis Courts"
-                              ].map(item => (
-                                <label key={item} className="flex items-start gap-2 cursor-pointer text-xs text-slate-800">
+                        {/* Detailed Nested Checkboxes if "Yes" */}
+                        {formData.showAmenitiesOption === 'Yes' && (
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4 border-t border-slate-100">
+                            {/* Column 1 */}
+                            <div className="space-y-6">
+                              {/* Children's Play Area */}
+                              <div className="space-y-2">
+                                <label className="flex items-center gap-2 cursor-pointer">
                                   <input 
                                     type="checkbox"
-                                    checked={formData.amenities.includes(item)}
-                                    onChange={() => toggleSelection('amenities', item)}
-                                    className="w-3.5 h-3.5 mt-0.5 rounded text-[#035096] border-slate-300 focus:ring-[#035096]"
+                                    checked={isCategoryChecked("Children's Play Area")}
+                                    onChange={() => toggleCategoryAmenities("Children's Play Area")}
+                                    className="w-4 h-4 rounded text-[#035096] border-slate-300 focus:ring-[#035096]"
                                   />
-                                  <span>{item}</span>
+                                  <span className="font-bold text-sm text-[#0B2C5C]">Children's Play Area</span>
                                 </label>
-                              ))}
+                                <div className="pl-6 space-y-2">
+                                  {["Dedicated, safe playgrounds with swings, slides etc", "Sandpits"].map(item => (
+                                    <label key={item} className="flex items-start gap-2 cursor-pointer text-xs text-slate-800">
+                                      <input 
+                                        type="checkbox"
+                                        checked={formData.amenities.includes(item)}
+                                        onChange={() => toggleSelection('amenities', item)}
+                                        className="w-3.5 h-3.5 mt-0.5 rounded text-[#035096] border-slate-300 focus:ring-[#035096]"
+                                      />
+                                      <span>{item}</span>
+                                    </label>
+                                  ))}
+                                </div>
+                              </div>
+
+                              {/* Community Services & Management */}
+                              <div className="space-y-2">
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                  <input 
+                                    type="checkbox"
+                                    checked={isCategoryChecked("Community Services & Management")}
+                                    onChange={() => toggleCategoryAmenities("Community Services & Management")}
+                                    className="w-4 h-4 rounded text-[#035096] border-slate-300 focus:ring-[#035096]"
+                                  />
+                                  <span className="font-bold text-sm text-[#0B2C5C]">Community Services & Management</span>
+                                </label>
+                                <div className="pl-6 space-y-2">
+                                  {[
+                                    "Resident Association/Management Committee: For smooth functioning and decision-making",
+                                    "Community Events: Organized festivals, sports tournaments and social gathering",
+                                    "App-Based Community Management: For communication, raising requests and payments"
+                                  ].map(item => (
+                                    <label key={item} className="flex items-start gap-2 cursor-pointer text-xs text-slate-800">
+                                      <input 
+                                        type="checkbox"
+                                        checked={formData.amenities.includes(item)}
+                                        onChange={() => toggleSelection('amenities', item)}
+                                        className="w-3.5 h-3.5 mt-0.5 rounded text-[#035096] border-slate-300 focus:ring-[#035096]"
+                                      />
+                                      <span>{item}</span>
+                                    </label>
+                                  ))}
+                                </div>
+                              </div>
+
+                              {/* Convenience & Lifestyle */}
+                              <div className="space-y-2">
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                  <input 
+                                    type="checkbox"
+                                    checked={isCategoryChecked("Convenience & Lifestyle")}
+                                    onChange={() => toggleCategoryAmenities("Convenience & Lifestyle")}
+                                    className="w-4 h-4 rounded text-[#035096] border-slate-300 focus:ring-[#035096]"
+                                  />
+                                  <span className="font-bold text-sm text-[#0B2C5C]">Convenience & Lifestyle</span>
+                                </label>
+                                <div className="pl-6 space-y-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                  {[
+                                    "Business Center",
+                                    "Library/Reading Room",
+                                    "Retail/Commercial Spaces (within the community)",
+                                    "Power backup: 24/7 generator backup",
+                                    "Water Supply",
+                                    "Intercom",
+                                    "Video Door Phone",
+                                    "High Speed Internet / wi-fi",
+                                    "Ample Parking",
+                                    "Maintenance Staff",
+                                    "Convenience stores/ Supermarket",
+                                    "Cafeteria/Restaurant",
+                                    "Salon/Spa",
+                                    "Pharmacy",
+                                    "Service Apartments",
+                                    "Guest Rooms",
+                                    "Amphitheater/Mini-Theater",
+                                    "Creche/Daycare facility",
+                                    "Co-working Spaces"
+                                  ].map(item => (
+                                    <label key={item} className="flex items-start gap-2 cursor-pointer text-xs text-slate-800">
+                                      <input 
+                                        type="checkbox"
+                                        checked={formData.amenities.includes(item)}
+                                        onChange={() => toggleSelection('amenities', item)}
+                                        className="w-3.5 h-3.5 mt-0.5 rounded text-[#035096] border-slate-300 focus:ring-[#035096]"
+                                      />
+                                      <span>{item}</span>
+                                    </label>
+                                  ))}
+                                </div>
+                              </div>
+
+                              {/* Indoor Games */}
+                              <div className="space-y-2">
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                  <input 
+                                    type="checkbox"
+                                    checked={isCategoryChecked("Indoor Games")}
+                                    onChange={() => toggleCategoryAmenities("Indoor Games")}
+                                    className="w-4 h-4 rounded text-[#035096] border-slate-300 focus:ring-[#035096]"
+                                  />
+                                  <span className="font-bold text-sm text-[#0B2C5C]">Indoor Games</span>
+                                </label>
+                                <div className="pl-6 space-y-2">
+                                  {[
+                                    "Carrom, Chess, and other board games.",
+                                    "Billiards/Pool Table",
+                                    "Table Tennis"
+                                  ].map(item => (
+                                    <label key={item} className="flex items-start gap-2 cursor-pointer text-xs text-slate-800">
+                                      <input 
+                                        type="checkbox"
+                                        checked={formData.amenities.includes(item)}
+                                        onChange={() => toggleSelection('amenities', item)}
+                                        className="w-3.5 h-3.5 mt-0.5 rounded text-[#035096] border-slate-300 focus:ring-[#035096]"
+                                      />
+                                      <span>{item}</span>
+                                    </label>
+                                  ))}
+                                </div>
+                              </div>
+
+                              {/* Landscaped Gardens & Parks */}
+                              <div className="space-y-2">
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                  <input 
+                                    type="checkbox"
+                                    checked={isCategoryChecked("Landscaped Gardens & Parks")}
+                                    onChange={() => toggleCategoryAmenities("Landscaped Gardens & Parks")}
+                                    className="w-4 h-4 rounded text-[#035096] border-slate-300 focus:ring-[#035096]"
+                                  />
+                                  <span className="font-bold text-sm text-[#0B2C5C]">Landscaped Gardens & Parks</span>
+                                </label>
+                                <div className="pl-6 space-y-2">
+                                  {[
+                                    "Seating areas, gazebos.",
+                                    "Green spaces for relaxation and strolls"
+                                  ].map(item => (
+                                    <label key={item} className="flex items-start gap-2 cursor-pointer text-xs text-slate-800">
+                                      <input 
+                                        type="checkbox"
+                                        checked={formData.amenities.includes(item)}
+                                        onChange={() => toggleSelection('amenities', item)}
+                                        className="w-3.5 h-3.5 mt-0.5 rounded text-[#035096] border-slate-300 focus:ring-[#035096]"
+                                      />
+                                      <span>{item}</span>
+                                    </label>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Column 2 */}
+                            <div className="space-y-6">
+                              {/* Outdoor Sports Facilities */}
+                              <div className="space-y-2">
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                  <input 
+                                    type="checkbox"
+                                    checked={isCategoryChecked("Outdoor Sports Facilities")}
+                                    onChange={() => toggleCategoryAmenities("Outdoor Sports Facilities")}
+                                    className="w-4 h-4 rounded text-[#035096] border-slate-300 focus:ring-[#035096]"
+                                  />
+                                  <span className="font-bold text-sm text-[#0B2C5C]">Outdoor Sports Facilities</span>
+                                </label>
+                                <div className="pl-6 space-y-2">
+                                  {[
+                                    "Badminton Courts",
+                                    "Basketball Courts",
+                                    "Cricket Practice Net",
+                                    "Football/ Multi-purpose Sports Field",
+                                    "Jogging/Walking Tracks",
+                                    "Themed gardens (e.g., sensory gardens, herbs gardens)",
+                                    "Tennis Courts"
+                                  ].map(item => (
+                                    <label key={item} className="flex items-start gap-2 cursor-pointer text-xs text-slate-800">
+                                      <input 
+                                        type="checkbox"
+                                        checked={formData.amenities.includes(item)}
+                                        onChange={() => toggleSelection('amenities', item)}
+                                        className="w-3.5 h-3.5 mt-0.5 rounded text-[#035096] border-slate-300 focus:ring-[#035096]"
+                                      />
+                                      <span>{item}</span>
+                                    </label>
+                                  ))}
+                                </div>
+                              </div>
+
+                              {/* Recreational & Leisure/Clubhouse/Community Hall */}
+                              <div className="space-y-2">
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                  <input 
+                                    type="checkbox"
+                                    checked={isCategoryChecked("Recreational & Leisure/Clubhouse/Community Hall")}
+                                    onChange={() => toggleCategoryAmenities("Recreational & Leisure/Clubhouse/Community Hall")}
+                                    className="w-4 h-4 rounded text-[#035096] border-slate-300 focus:ring-[#035096]"
+                                  />
+                                  <span className="font-bold text-sm text-[#0B2C5C]">Recreational & Leisure/Clubhouse/Community Hall</span>
+                                </label>
+                                <div className="pl-6 space-y-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                  {[
+                                    "Aerobics / Zumba Studio",
+                                    "Lounge areas and seating.",
+                                    "Party lawns or banquet facilities",
+                                    "Swimming Pool",
+                                    "Fitness & Wellness",
+                                    "Gymnasium / Fitness Center",
+                                    "Yoga / Meditation Room",
+                                    "Spa/ Sauna/ Steam Room",
+                                    "Multipurpose halls for events and gatherings."
+                                  ].map(item => (
+                                    <label key={item} className="flex items-start gap-2 cursor-pointer text-xs text-slate-800">
+                                      <input 
+                                        type="checkbox"
+                                        checked={formData.amenities.includes(item)}
+                                        onChange={() => toggleSelection('amenities', item)}
+                                        className="w-3.5 h-3.5 mt-0.5 rounded text-[#035096] border-slate-300 focus:ring-[#035096]"
+                                      />
+                                      <span>{item}</span>
+                                    </label>
+                                  ))}
+                                </div>
+                              </div>
+
+                              {/* Security & Safety */}
+                              <div className="space-y-2">
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                  <input 
+                                    type="checkbox"
+                                    checked={isCategoryChecked("Security & Safety")}
+                                    onChange={() => toggleCategoryAmenities("Security & Safety")}
+                                    className="w-4 h-4 rounded text-[#035096] border-slate-300 focus:ring-[#035096]"
+                                  />
+                                  <span className="font-bold text-sm text-[#0B2C5C]">Security & Safety</span>
+                                </label>
+                                <div className="pl-6 space-y-2">
+                                  {[
+                                    "Intercom Facility",
+                                    "Boom Barriers",
+                                    "24/7 Manned Security",
+                                    "CCTV Surveillance",
+                                    "Controlled Access points",
+                                    "Perimeter Fencing/ Walls"
+                                  ].map(item => (
+                                    <label key={item} className="flex items-start gap-2 cursor-pointer text-xs text-slate-800">
+                                      <input 
+                                        type="checkbox"
+                                        checked={formData.amenities.includes(item)}
+                                        onChange={() => toggleSelection('amenities', item)}
+                                        className="w-3.5 h-3.5 mt-0.5 rounded text-[#035096] border-slate-300 focus:ring-[#035096]"
+                                      />
+                                      <span>{item}</span>
+                                    </label>
+                                  ))}
+                                </div>
+                              </div>
+
+                              {/* Sustainable & Eco-Friendly */}
+                              <div className="space-y-2">
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                  <input 
+                                    type="checkbox"
+                                    checked={isCategoryChecked("Sustainable & Eco-Friendly")}
+                                    onChange={() => toggleCategoryAmenities("Sustainable & Eco-Friendly")}
+                                    className="w-4 h-4 rounded text-[#035096] border-slate-300 focus:ring-[#035096]"
+                                  />
+                                  <span className="font-bold text-sm text-[#0B2C5C]">Sustainable & Eco-Friendly</span>
+                                </label>
+                                <div className="pl-6 space-y-2">
+                                  {[
+                                    "Electric Vehicle charging stations",
+                                    "Waste Segregation and Composting Facilities",
+                                    "Sewage Treatment Plant",
+                                    "Solar Panels for Common Area Lighting",
+                                    "Rainwater Harvesting System"
+                                  ].map(item => (
+                                    <label key={item} className="flex items-start gap-2 cursor-pointer text-xs text-slate-800">
+                                      <input 
+                                        type="checkbox"
+                                        checked={formData.amenities.includes(item)}
+                                        onChange={() => toggleSelection('amenities', item)}
+                                        className="w-3.5 h-3.5 mt-0.5 rounded text-[#035096] border-slate-300 focus:ring-[#035096]"
+                                      />
+                                      <span>{item}</span>
+                                    </label>
+                                  ))}
+                                </div>
+                              </div>
                             </div>
                           </div>
+                        )}
 
-                          {/* Recreational & Leisure/Clubhouse/Community Hall */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-slate-100">
                           <div className="space-y-2">
-                            <label className="flex items-center gap-2 cursor-pointer">
-                              <input 
-                                type="checkbox"
-                                checked={isCategoryChecked("Recreational & Leisure/Clubhouse/Community Hall")}
-                                onChange={() => toggleCategoryAmenities("Recreational & Leisure/Clubhouse/Community Hall")}
-                                className="w-4 h-4 rounded text-[#035096] border-slate-300 focus:ring-[#035096]"
-                              />
-                              <span className="font-bold text-sm text-[#0B2C5C]">Recreational & Leisure/Clubhouse/Community Hall</span>
-                            </label>
-                            <div className="pl-6 space-y-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
-                              {[
-                                "Aerobics / Zumba Studio",
-                                "Lounge areas and seating.",
-                                "Party lawns or banquet facilities",
-                                "Swimming Pool",
-                                "Fitness & Wellness",
-                                "Gymnasium / Fitness Center",
-                                "Yoga / Meditation Room",
-                                "Spa/ Sauna/ Steam Room",
-                                "Multipurpose halls for events and gatherings."
-                              ].map(item => (
-                                <label key={item} className="flex items-start gap-2 cursor-pointer text-xs text-slate-800">
-                                  <input 
-                                    type="checkbox"
-                                    checked={formData.amenities.includes(item)}
-                                    onChange={() => toggleSelection('amenities', item)}
-                                    className="w-3.5 h-3.5 mt-0.5 rounded text-[#035096] border-slate-300 focus:ring-[#035096]"
-                                  />
-                                  <span>{item}</span>
-                                </label>
-                              ))}
-                            </div>
+                            <label className="block text-sm font-semibold text-[#0B2C5C]">More Amenities</label>
+                            <input 
+                              type="text" 
+                              placeholder={isAmenitiesDisabled ? "Amenities selection disabled" : "If more amenities add few more"}
+                              value={isAmenitiesDisabled ? '' : formData.landmark || ''}
+                              disabled={isAmenitiesDisabled}
+                              onChange={e => !isAmenitiesDisabled && updateFormData({ landmark: e.target.value })}
+                              className={`w-full px-4 py-3 rounded-xl border focus:outline-none text-sm ${
+                                isAmenitiesDisabled 
+                                  ? 'bg-slate-50 border-slate-100 cursor-not-allowed text-slate-400' 
+                                  : 'border-slate-200 focus:border-[#035096] text-slate-800'
+                              }`}
+                            />
                           </div>
-
-                          {/* Security & Safety */}
                           <div className="space-y-2">
-                            <label className="flex items-center gap-2 cursor-pointer">
-                              <input 
-                                type="checkbox"
-                                checked={isCategoryChecked("Security & Safety")}
-                                onChange={() => toggleCategoryAmenities("Security & Safety")}
-                                className="w-4 h-4 rounded text-[#035096] border-slate-300 focus:ring-[#035096]"
-                              />
-                              <span className="font-bold text-sm text-[#0B2C5C]">Security & Safety</span>
-                            </label>
-                            <div className="pl-6 space-y-2">
-                              {[
-                                "Intercom Facility",
-                                "Boom Barriers",
-                                "24/7 Manned Security",
-                                "CCTV Surveillance",
-                                "Controlled Access points",
-                                "Perimeter Fencing/ Walls"
-                              ].map(item => (
-                                <label key={item} className="flex items-start gap-2 cursor-pointer text-xs text-slate-800">
-                                  <input 
-                                    type="checkbox"
-                                    checked={formData.amenities.includes(item)}
-                                    onChange={() => toggleSelection('amenities', item)}
-                                    className="w-3.5 h-3.5 mt-0.5 rounded text-[#035096] border-slate-300 focus:ring-[#035096]"
-                                  />
-                                  <span>{item}</span>
-                                </label>
-                              ))}
-                            </div>
+                            <label className="block text-sm font-semibold text-[#0B2C5C]">More about your Property</label>
+                            <textarea 
+                              rows={2}
+                              placeholder="How unique your property add few words"
+                              value={formData.description || ''}
+                              onChange={e => updateFormData({ description: e.target.value })}
+                              className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#035096] text-sm text-slate-800"
+                            />
                           </div>
-
-                          {/* Sustainable & Eco-Friendly */}
-                          <div className="space-y-2">
-                            <label className="flex items-center gap-2 cursor-pointer">
-                              <input 
-                                type="checkbox"
-                                checked={isCategoryChecked("Sustainable & Eco-Friendly")}
-                                onChange={() => toggleCategoryAmenities("Sustainable & Eco-Friendly")}
-                                className="w-4 h-4 rounded text-[#035096] border-slate-300 focus:ring-[#035096]"
-                              />
-                              <span className="font-bold text-sm text-[#0B2C5C]">Sustainable & Eco-Friendly</span>
-                            </label>
-                            <div className="pl-6 space-y-2">
-                              {[
-                                "Electric Vehicle charging stations",
-                                "Waste Segregation and Composting Facilities",
-                                "Sewage Treatment Plant",
-                                "Solar Panels for Common Area Lighting",
-                                "Rainwater Harvesting System"
-                              ].map(item => (
-                                <label key={item} className="flex items-start gap-2 cursor-pointer text-xs text-slate-800">
-                                  <input 
-                                    type="checkbox"
-                                    checked={formData.amenities.includes(item)}
-                                    onChange={() => toggleSelection('amenities', item)}
-                                    className="w-3.5 h-3.5 mt-0.5 rounded text-[#035096] border-slate-300 focus:ring-[#035096]"
-                                  />
-                                  <span>{item}</span>
-                                </label>
-                              ))}
-                            </div>
+                          <div className="md:col-span-2 space-y-2">
+                            <label className="block text-sm font-semibold text-[#0B2C5C]">Property Location</label>
+                            <input 
+                              type="text" 
+                              placeholder="Google map location"
+                              value={formData.floorPlanUrl || ''}
+                              onChange={e => updateFormData({ floorPlanUrl: e.target.value })}
+                              className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#035096] text-sm text-slate-800"
+                            />
                           </div>
                         </div>
-                      </div>
+                      </>
                     )}
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-slate-100">
-                      <div className="space-y-2">
-                        <label className="block text-sm font-semibold text-[#0B2C5C]">More Amenities</label>
-                        <input 
-                          type="text" 
-                          placeholder={isAmenitiesDisabled ? "Amenities selection disabled" : "If more amenities add few more"}
-                          value={isAmenitiesDisabled ? '' : formData.landmark || ''}
-                          disabled={isAmenitiesDisabled}
-                          onChange={e => !isAmenitiesDisabled && updateFormData({ landmark: e.target.value })}
-                          className={`w-full px-4 py-3 rounded-xl border focus:outline-none text-sm ${
-                            isAmenitiesDisabled 
-                              ? 'bg-slate-50 border-slate-100 cursor-not-allowed text-slate-400' 
-                              : 'border-slate-200 focus:border-[#035096] text-slate-800'
-                          }`}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="block text-sm font-semibold text-[#0B2C5C]">More about your Property</label>
-                        <textarea 
-                          rows={2}
-                          placeholder="How unique your property add few words"
-                          value={formData.description || ''}
-                          onChange={e => updateFormData({ description: e.target.value })}
-                          className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#035096] text-sm text-slate-800"
-                        />
-                      </div>
-                      <div className="md:col-span-2 space-y-2">
-                        <label className="block text-sm font-semibold text-[#0B2C5C]">Property Location</label>
-                        <input 
-                          type="text" 
-                          placeholder="Google map location"
-                          value={formData.floorPlanUrl || ''}
-                          onChange={e => updateFormData({ floorPlanUrl: e.target.value })}
-                          className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#035096] text-sm text-slate-800"
-                        />
-                      </div>
-                    </div>
                   </div>
                 </div>
 
@@ -3915,8 +4189,12 @@ export const PostProperty: React.FC = () => {
                 )}
 
                 {/* SECTION: Price Details */}
-                <div className="mb-10">
-                  <h3 className="text-lg font-bold text-[#0B2C5C] mb-4 pb-2 border-b border-slate-100">Price Details</h3>
+                {formData.propertyType !== 'PG/Hostel' && (
+                  <>
+                    <div className="mb-10">
+                      <h3 className="text-lg font-bold text-[#0B2C5C] mb-4 pb-2 border-b border-slate-100">
+                        {formData.intent === 'rent' ? 'Rental Details' : 'Price Details'}
+                      </h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {formData.category === 'Lands' ? (
                       <>
@@ -3939,6 +4217,62 @@ export const PostProperty: React.FC = () => {
                             onChange={e => updateFormData({ pricePerSqft: e.target.value })}
                             className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800"
                           />
+                        </div>
+                      </>
+                    ) : formData.intent === 'rent' ? (
+                      <>
+                        <div className="space-y-2">
+                          <label className="block text-sm font-semibold text-[#0B2C5C]">Rent per Month <span className="text-red-500">*</span></label>
+                          <input 
+                            type="text" 
+                            placeholder="Enter Rent"
+                            value={formData.rentPerMonth || ''}
+                            onChange={e => updateFormData({ rentPerMonth: e.target.value })}
+                            className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800"
+                          />
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <label className="block text-sm font-semibold text-[#0B2C5C]">Security Deposit</label>
+                          <div className="flex rounded-xl border border-slate-200 focus-within:border-[#4885FF] relative">
+                            <CustomSelect 
+                              value={formData.securityDepositType || 'Months'}
+                              onChange={e => updateFormData({ securityDepositType: e.target.value })}
+                              className="px-2 bg-slate-50 border-r border-slate-200 focus:outline-none text-xs text-slate-600 bg-white"
+                            >
+                              <option value="Months">Months</option>
+                              <option value="Amount">Amount</option>
+                            </CustomSelect>
+                            <input 
+                              type="text" 
+                              placeholder="Enter Amount"
+                              value={formData.securityDepositVal || ''}
+                              onChange={e => updateFormData({ securityDepositVal: e.target.value })}
+                              className="w-full px-4 py-3 rounded-l-xl focus:outline-none text-sm text-slate-800"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <label className="block text-sm font-semibold text-[#0B2C5C]">Maintenance Amount</label>
+                          <div className="flex rounded-xl border border-slate-200 focus-within:border-[#4885FF] relative">
+                            <CustomSelect 
+                              value={formData.maintenanceAmountType || 'Select M'}
+                              onChange={e => updateFormData({ maintenanceAmountType: e.target.value })}
+                              className="px-2 bg-slate-50 border-r border-slate-200 focus:outline-none text-xs text-slate-600 bg-white"
+                            >
+                              <option value="Select M">Select M</option>
+                              <option value="Select Month">Select Month</option>
+                              <option value="Select Year">Select Year</option>
+                            </CustomSelect>
+                            <input 
+                              type="text" 
+                              placeholder="Enter Amount"
+                              value={formData.maintenanceAmountVal || ''}
+                              onChange={e => updateFormData({ maintenanceAmountVal: e.target.value })}
+                              className="w-full px-4 py-3 rounded-l-xl focus:outline-none text-sm text-slate-800"
+                            />
+                          </div>
                         </div>
                       </>
                     ) : (
@@ -4006,6 +4340,8 @@ export const PostProperty: React.FC = () => {
                     </div>
                   </div>
                 )}
+              </>
+            )}
 
                 {/* SECTION: Location Details */}
                 <div className="mb-10">

@@ -4,6 +4,9 @@ import { useAuth } from '@/context/AuthContext';
 import { LeadManagement } from './LeadManagement';
 import { EmployeeManagement } from './EmployeeManagement';
 import { PropertyListings } from './PropertyListings';
+import { CrmManagement } from './CrmManagement';
+import { Subscription } from './Subscription';
+import { CrmSettings } from './CrmSettings';
 import {
   LayoutDashboard,
   Users,
@@ -30,7 +33,7 @@ import {
   Legend as ChartLegend,
   ArcElement
 } from 'chart.js';
-import { Pie as ChartPie } from 'react-chartjs-2';
+import { Pie as ChartPie, Bar as ChartBar } from 'react-chartjs-2';
 
 ChartJS.register(
   CategoryScale,
@@ -337,6 +340,74 @@ export const CrmPortal: React.FC = () => {
   const totalConversions = monthlyData.reduce((sum, item) => sum + item.Conversions, 0);
   const overallConversionRate = totalLeads > 0 ? Math.round((totalConversions / totalLeads) * 100) : 0;
 
+  const barChartData = {
+    labels: monthlyData.map(d => d.name),
+    datasets: [
+      {
+        label: 'Leads',
+        data: monthlyData.map(d => d.Leads),
+        backgroundColor: '#2563EB',
+        hoverBackgroundColor: '#2563EB',
+        borderRadius: 4,
+        barThickness: 14,
+      },
+      {
+        label: 'Conversions',
+        data: monthlyData.map(d => d.Conversions),
+        backgroundColor: '#10B981',
+        hoverBackgroundColor: '#10B981',
+        borderRadius: 4,
+        barThickness: 14,
+      }
+    ]
+  };
+
+  const barChartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        display: false
+      },
+      tooltip: {
+        enabled: true
+      }
+    },
+    scales: {
+      x: {
+        grid: {
+          display: false
+        },
+        ticks: {
+          color: '#94A3B8',
+          font: {
+            family: "'Poppins', sans-serif",
+            size: 11,
+            weight: 500
+          }
+        }
+      },
+      y: {
+        border: {
+          dash: [3, 3]
+        },
+        grid: {
+          color: '#E2E8F0',
+        },
+        ticks: {
+          color: '#94A3B8',
+          font: {
+            family: "'Poppins', sans-serif",
+            size: 11,
+            weight: 500
+          },
+          stepSize: 15,
+          max: 75
+        }
+      }
+    }
+  };
+
 
   return (
     <div className="crm-portal min-h-screen bg-[#F3F4F6] font-poppins flex text-[#1F2937]">
@@ -474,6 +545,12 @@ export const CrmPortal: React.FC = () => {
             <EmployeeManagement />
           ) : activeMenu === 'Property listings' ? (
             <PropertyListings />
+          ) : activeMenu === 'CRM Management' ? (
+            <CrmManagement />
+          ) : activeMenu === 'Subscription' ? (
+            <Subscription />
+          ) : activeMenu === 'Settings' ? (
+            <CrmSettings />
           ) : activeMenu !== 'Overview' ? (
             <div className="bg-white rounded-[5px] p-8 border border-gray-200/60 shadow-sm text-center py-20">
               <AlertCircle className="w-12 h-12 text-gray-300 mx-auto mb-4" />
@@ -891,117 +968,9 @@ export const CrmPortal: React.FC = () => {
                         </div>
                       </div>
 
-                      {/* Custom SVG Bar Chart */}
+                      {/* Chart wrapper */}
                       <div className="w-full relative h-[320px]">
-                        <svg className="w-full h-full overflow-visible" viewBox="0 0 800 320" preserveAspectRatio="none">
-                          {/* Grid Lines & Labels */}
-                          {[75, 60, 45, 30, 15, 0].map((val, idx) => {
-                            const y = 30 + idx * 44; // Total height area for grid lines is 220px (from y=30 to y=250)
-                            return (
-                              <g key={val}>
-                                {/* Y-axis Label */}
-                                <text
-                                  x="30"
-                                  y={y + 4}
-                                  textAnchor="end"
-                                  className="text-[13px] font-medium fill-gray-900"
-                                  style={{ fontFamily: "'Poppins', sans-serif" }}
-                                >
-                                  {val}
-                                </text>
-                                {/* Grid Line */}
-                                <line
-                                  x1="50"
-                                  y1={y}
-                                  x2="780"
-                                  y2={y}
-                                  stroke={val === 0 ? "#111827" : "#E2E8F0"}
-                                  strokeWidth={val === 0 ? "1.5" : "1"}
-                                  strokeDasharray={val === 0 ? "none" : "3,3"}
-                                />
-                              </g>
-                            );
-                          })}
-
-                          {/* Bars and Values */}
-                          {monthlyData.map((data, i) => {
-                            const segmentWidth = (730 / 12);
-                            const xCenter = 50 + i * segmentWidth + segmentWidth / 2;
-                            const barWidth = 14;
-                            const barGap = 2;
-
-                            const maxVal = 75;
-                            const chartAreaHeight = 220; // from y=30 to y=250
-                            const yScale = chartAreaHeight / maxVal;
-
-                            const leadsHeight = data.Leads * yScale;
-                            const leadsY = 250 - leadsHeight;
-                            const leadsX = xCenter - barWidth - barGap;
-
-                            const convHeight = data.Conversions * yScale;
-                            const convY = 250 - convHeight;
-                            const convX = xCenter + barGap;
-
-                            // SVG Path for top-rounded bar
-                            const getRoundedBarPath = (x: number, y: number, w: number, r: number) => {
-                              return `M ${x} 250 
-                                      L ${x} ${y + r} 
-                                      A ${r} ${r} 0 0 1 ${x + r} ${y} 
-                                      L ${x + w - r} ${y} 
-                                      A ${r} ${r} 0 0 1 ${x + w} ${y + r} 
-                                      L ${x + w} 250 Z`;
-                            };
-
-                            return (
-                              <g key={data.name} className="group">
-                                {/* Leads Bar */}
-                                <path
-                                  d={getRoundedBarPath(leadsX, leadsY, barWidth, 3)}
-                                  fill="#2563EB"
-                                  className="transition-all duration-200 hover:opacity-85 hover:brightness-95 cursor-pointer"
-                                />
-                                {/* Leads Label */}
-                                <text
-                                  x={leadsX + barWidth / 2}
-                                  y={leadsY - 6}
-                                  textAnchor="middle"
-                                  className="text-[10px] font-bold fill-[#2563EB] opacity-90 transition-opacity duration-200 group-hover:scale-110 origin-bottom"
-                                  style={{ fontFamily: "'Poppins', sans-serif" }}
-                                >
-                                  {data.Leads}
-                                </text>
-
-                                {/* Conversions Bar */}
-                                <path
-                                  d={getRoundedBarPath(convX, convY, barWidth, 3)}
-                                  fill="#10B981"
-                                  className="transition-all duration-200 hover:opacity-85 hover:brightness-95 cursor-pointer"
-                                />
-                                {/* Conversions Label */}
-                                <text
-                                  x={convX + barWidth / 2}
-                                  y={convY - 6}
-                                  textAnchor="middle"
-                                  className="text-[10px] font-bold fill-[#10B981] opacity-90 transition-opacity duration-200 group-hover:scale-110 origin-bottom"
-                                  style={{ fontFamily: "'Poppins', sans-serif" }}
-                                >
-                                  {data.Conversions}
-                                </text>
-
-                                {/* X-axis Label (Month) */}
-                                <text
-                                  x={xCenter}
-                                  y="278"
-                                  textAnchor="middle"
-                                  className="text-[12px] font-medium fill-gray-900"
-                                  style={{ fontFamily: "'Poppins', sans-serif" }}
-                                >
-                                  {data.name}
-                                </text>
-                              </g>
-                            );
-                          })}
-                        </svg>
+                        <ChartBar data={barChartData} options={barChartOptions} />
                       </div>
                     </div>
 

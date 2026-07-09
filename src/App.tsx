@@ -16,6 +16,8 @@ import { CrmPortal } from './pages/CrmPortal';
 import { Blogs } from './pages/Blogs';
 import { BlogDetails } from './pages/BlogDetails';
 import { PostProperty } from './pages/PostProperty';
+import { AdminLogin } from './pages/AdminLogin';
+import { AdminPortal } from './pages/AdminPortal';
 
 const App: React.FC = () => {
   return (
@@ -40,6 +42,9 @@ const App: React.FC = () => {
           </Route>
           <Route path="agent-crm" element={<CrmPortal />} />
           <Route path="agent-crm/:pagename" element={<CrmPortal />} />
+          <Route path="admin/login" element={<AdminLogin />} />
+          <Route path="admin" element={<AdminPortal />} />
+          <Route path="admin/:pagename" element={<AdminPortal />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

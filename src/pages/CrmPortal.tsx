@@ -21,7 +21,9 @@ import {
   FileText,
   CheckCircle,
   AlertCircle,
-  ShieldCheck
+  ShieldCheck,
+  Menu,
+  X
 } from 'lucide-react';
 import {
   Chart as ChartJS,
@@ -201,6 +203,7 @@ export const CrmPortal: React.FC = () => {
   const navigate = useNavigate();
   const { pagename } = useParams<{ pagename?: string }>();
   const { user, isAuthenticated, logout, openAuthDialog } = useAuth();
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   
   // Sidebar Menu Items
   const menuItems = [
@@ -467,9 +470,12 @@ export const CrmPortal: React.FC = () => {
         {/* ================= TOP HEADER ================= */}
         <header className="bg-white border-b border-gray-200 h-16 flex items-center justify-between px-6 sticky top-0 z-30 shadow-sm">
           <div className="flex items-center gap-4">
-            {/* Mobile Menu Toggle */}
-            <button className="md:hidden p-1 text-gray-500 hover:bg-gray-100 rounded-lg">
-              <img src="/images/main-logo-2.png" alt="Gummaam" className="h-8 w-auto" />
+            <button
+              onClick={() => setMobileSidebarOpen(true)}
+              className="md:hidden p-1.5 text-gray-500 hover:bg-gray-100 rounded-lg flex items-center justify-center cursor-pointer"
+              title="Open Menu"
+            >
+              <Menu className="w-6 h-6 text-slate-700" />
             </button>
             <h2 className="text-lg font-semibold text-[#0B2C5C] font-poppins hidden md:block">
               {activeMenu}
@@ -846,22 +852,22 @@ export const CrmPortal: React.FC = () => {
                     </span>
                   </div>
 
-                  <div className="flex items-center gap-6">
+                  <div className="flex flex-col md:flex-row items-center gap-6">
                     {/* Legend list in two sub-columns */}
-                    <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 flex-1">
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 w-full md:flex-1">
                       {pieLegend.map((item, index) => (
-                        <div key={index} className="flex items-center justify-between text-[16px] font-medium text-gray-500">
-                          <div className="flex items-center gap-3">
+                        <div key={index} className="flex items-center justify-between text-xs font-semibold text-gray-500 whitespace-nowrap">
+                          <div className="flex items-center gap-2">
                             <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: item.color }}></span>
                             <span>{item.name} :</span>
                           </div>
-                          <span className="font-medium text-gray-950 ml-1">{item.count}</span>
+                          <span className="font-semibold text-gray-950 ml-1">{item.count}</span>
                         </div>
                       ))}
                     </div>
 
                     {/* Chart.js Pie Chart */}
-                    <div className="relative w-32 h-32 shrink-0 flex items-center justify-center">
+                    <div className="relative w-32 h-32 shrink-0 flex items-center justify-center mx-auto md:mx-0">
                       <ChartPie
                         data={{
                           labels: pieLegend.map(item => item.name),
@@ -969,8 +975,10 @@ export const CrmPortal: React.FC = () => {
                       </div>
 
                       {/* Chart wrapper */}
-                      <div className="w-full relative h-[320px]">
-                        <ChartBar data={barChartData} options={barChartOptions} />
+                      <div className="w-full overflow-x-auto [scrollbar-width:none]">
+                        <div className="min-w-[500px] h-[320px] relative">
+                          <ChartBar data={barChartData} options={barChartOptions} />
+                        </div>
                       </div>
                     </div>
 
@@ -1104,6 +1112,76 @@ export const CrmPortal: React.FC = () => {
 
         </main>
       </div>
+
+      {/* Mobile Sidebar Navigation Drawer */}
+      {mobileSidebarOpen && (
+        <div className="fixed inset-0 z-[2000] md:hidden flex">
+          {/* Backdrop */}
+          <div
+            onClick={() => setMobileSidebarOpen(false)}
+            className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs transition-opacity"
+          />
+          {/* Sidebar drawer content */}
+          <aside className="relative w-64 bg-white flex flex-col justify-between h-full shadow-2xl z-10 animate-in slide-in-from-left duration-200">
+            <div>
+              {/* Logo Area */}
+              <div className="h-16 px-6 flex items-center shrink-0 justify-between border-b border-gray-100">
+                <img src="/images/main-logo-2.png" alt="Gummaam" className="h-8 w-auto" />
+                <button
+                  onClick={() => setMobileSidebarOpen(false)}
+                  className="p-1 rounded-lg hover:bg-slate-100 text-slate-500 cursor-pointer"
+                  title="Close Menu"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Navigation Links */}
+              <nav className="flex flex-col space-y-0 mt-2">
+                {menuItems.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = activeMenu === item.name;
+                  return (
+                    <button
+                      key={item.name}
+                      onClick={() => {
+                        navigate(`/agent-crm/${item.path}`);
+                        setMobileSidebarOpen(false);
+                      }}
+                      className={`w-full flex items-center gap-4 py-4 px-6 text-[15px] transition-all text-left ${
+                        isActive
+                          ? 'bg-[#004B8F] text-white'
+                          : 'text-black bg-white hover:bg-gray-50/80'
+                      }`}
+                      style={{ fontWeight: 400 }}
+                    >
+                      <Icon className={`w-5 h-5 ${isActive ? 'text-white' : 'text-black'}`} />
+                      <span>{item.name}</span>
+                    </button>
+                  );
+                })}
+              </nav>
+            </div>
+
+            {/* Logout at bottom */}
+            <div className="pb-6">
+              <div className="border-t border-gray-200/80 my-4 mx-6"></div>
+              <button
+                onClick={() => {
+                  logout();
+                  navigate('/');
+                  setMobileSidebarOpen(false);
+                }}
+                className="w-full flex items-center gap-4 py-4 px-6 text-[15px] text-black hover:bg-gray-50/80 transition-colors text-left"
+                style={{ fontWeight: 400 }}
+              >
+                <LogOut className="w-5 h-5 text-black" />
+                <span>Logout</span>
+              </button>
+            </div>
+          </aside>
+        </div>
+      )}
     </div>
   );
 };

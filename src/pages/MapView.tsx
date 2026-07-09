@@ -577,10 +577,10 @@ export const MapView: React.FC = () => {
         {/* Top Floating Controls */}
         <div className="absolute top-4 left-4 right-4 z-10 pointer-events-none flex flex-col gap-3">
           {/* Row 1: Search, Filters, My Requirements, Layers */}
-          <div className="flex flex-wrap items-center gap-3 pointer-events-auto">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 w-full">
             {/* Address Search Bar */}
             {!isListSidebarOpen && (
-              <div className="flex items-center bg-white rounded-full px-4 py-2.5 shadow-lg border border-gray-200/80 w-full sm:w-[320px] md:w-[360px]">
+              <div className="flex items-center bg-white rounded-full px-4 py-2.5 shadow-lg border border-gray-200/80 w-full sm:w-[320px] md:w-[360px] shrink-0 pointer-events-auto">
                 <Search className="w-5 h-5 text-gray-400 mr-2 shrink-0" />
                 <input 
                   type="text" 
@@ -600,83 +600,86 @@ export const MapView: React.FC = () => {
               </div>
             )}
 
-            {/* Floating Filters Button on Map (Visible only when List view is closed) */}
-            {!isListSidebarOpen && (
-              <button 
-                onClick={() => {
-                  setIsFiltersOpen(!isFiltersOpen);
-                  setIsLayersOpen(false);
-                  setIsRequirementsOpen(false);
-                }}
-                className={`flex items-center gap-2 bg-white px-5 py-2.5 rounded-full shadow-lg border text-[13px] font-semibold text-gray-700 transition-all hover:bg-gray-50 active:scale-95 ${
-                  isFiltersOpen ? 'border-[#0B2C5C] text-[#0B2C5C] ring-2 ring-blue-500/20' : 'border-gray-200'
-                }`}
-              >
-                <SlidersHorizontal className="w-4 h-4 text-[#0B2C5C]" />
-                Filters
-              </button>
-            )}
-
-            {/* My Requirements Button */}
-            <div className="relative">
-              <button 
-                onClick={() => {
-                  setIsRequirementsOpen(!isRequirementsOpen);
-                  setIsFiltersOpen(false);
-                  setIsLayersOpen(false);
-                }}
-                className="flex items-center gap-2 bg-white px-5 py-2.5 rounded-full shadow-lg border border-gray-200 text-[13px] font-semibold text-gray-700 transition-all hover:bg-gray-50 active:scale-95"
-              >
-                <List className="w-4 h-4 text-orange-500" />
-                My Requirements
-              </button>
-              {isRequirementsOpen && (
-                <div className="absolute top-full left-0 mt-2 w-[240px] bg-white rounded-2xl shadow-xl border border-gray-100 p-4 z-50">
-                  <h4 className="text-sm font-bold text-[#0B2C5C] mb-2">Saved Criteria</h4>
-                  <p className="text-[12px] text-gray-500 mb-3">Filter listings based on your saved property profiles.</p>
-                  <button className="w-full py-2 bg-[#0B2C5C] text-white rounded-lg text-xs font-semibold hover:bg-blue-900">Manage Requirements</button>
-                </div>
+            {/* Scrollable button group for mobile / flex row for desktop */}
+            <div className="flex items-center gap-2.5 overflow-x-auto pb-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden pointer-events-auto w-full">
+              {/* Floating Filters Button on Map (Visible only when List view is closed) */}
+              {!isListSidebarOpen && (
+                <button 
+                  onClick={() => {
+                    setIsFiltersOpen(!isFiltersOpen);
+                    setIsLayersOpen(false);
+                    setIsRequirementsOpen(false);
+                  }}
+                  className={`flex items-center gap-2 bg-white px-5 py-2.5 rounded-full shadow-lg border text-[13px] font-semibold text-gray-700 transition-all hover:bg-gray-50 active:scale-95 shrink-0 ${
+                    isFiltersOpen ? 'border-[#0B2C5C] text-[#0B2C5C] ring-2 ring-blue-500/20' : 'border-gray-200'
+                  }`}
+                >
+                  <SlidersHorizontal className="w-4 h-4 text-[#0B2C5C]" />
+                  Filters
+                </button>
               )}
-            </div>
 
-            {/* Layers Button */}
-            <div className="relative ml-auto sm:ml-0">
-              <button 
-                onClick={() => {
-                  setIsLayersOpen(!isLayersOpen);
-                  setIsFiltersOpen(false);
-                  setIsRequirementsOpen(false);
-                }}
-                className={`flex items-center gap-2 bg-white px-5 py-2.5 rounded-full shadow-lg border text-[13px] font-semibold text-gray-700 transition-all hover:bg-gray-50 active:scale-95 ${
-                  isLayersOpen ? 'border-[#0B2C5C] text-[#0B2C5C]' : 'border-gray-200'
-                }`}
-              >
-                <Layers className="w-4 h-4 text-blue-500" />
-                Layers
-              </button>
-              {isLayersOpen && (
-                <div className="absolute top-full right-0 sm:left-0 mt-2 w-[160px] bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-50">
-                  {(['hybrid', 'satellite', 'roadmap'] as const).map((layer) => (
-                    <button 
-                      key={layer}
-                      onClick={() => {
-                        setActiveLayer(layer);
-                        setIsLayersOpen(false);
-                      }}
-                      className="w-full flex items-center justify-between px-4 py-2.5 text-left text-[13px] text-gray-700 hover:bg-gray-50 font-medium capitalize"
-                    >
-                      {layer}
-                      {activeLayer === layer && <Check className="w-4 h-4 text-[#0B2C5C]" />}
-                    </button>
-                  ))}
-                </div>
-              )}
+              {/* My Requirements Button */}
+              <div className="relative shrink-0">
+                <button 
+                  onClick={() => {
+                    setIsRequirementsOpen(!isRequirementsOpen);
+                    setIsFiltersOpen(false);
+                    setIsLayersOpen(false);
+                  }}
+                  className="flex items-center gap-2 bg-white px-5 py-2.5 rounded-full shadow-lg border border-gray-200 text-[13px] font-semibold text-gray-700 transition-all hover:bg-gray-50 active:scale-95"
+                >
+                  <List className="w-4 h-4 text-orange-500" />
+                  My Requirements
+                </button>
+                {isRequirementsOpen && (
+                  <div className="absolute top-full left-0 mt-2 w-[240px] bg-white rounded-2xl shadow-xl border border-gray-100 p-4 z-50">
+                    <h4 className="text-sm font-bold text-[#0B2C5C] mb-2">Saved Criteria</h4>
+                    <p className="text-[12px] text-gray-500 mb-3">Filter listings based on your saved property profiles.</p>
+                    <button className="w-full py-2 bg-[#0B2C5C] text-white rounded-lg text-xs font-semibold hover:bg-blue-900">Manage Requirements</button>
+                  </div>
+                )}
+              </div>
+
+              {/* Layers Button */}
+              <div className="relative shrink-0">
+                <button 
+                  onClick={() => {
+                    setIsLayersOpen(!isLayersOpen);
+                    setIsFiltersOpen(false);
+                    setIsRequirementsOpen(false);
+                  }}
+                  className={`flex items-center gap-2 bg-white px-5 py-2.5 rounded-full shadow-lg border text-[13px] font-semibold text-gray-700 transition-all hover:bg-gray-50 active:scale-95 ${
+                    isLayersOpen ? 'border-[#0B2C5C] text-[#0B2C5C]' : 'border-gray-200'
+                  }`}
+                >
+                  <Layers className="w-4 h-4 text-blue-500" />
+                  Layers
+                </button>
+                {isLayersOpen && (
+                  <div className="absolute top-full right-0 sm:left-0 mt-2 w-[160px] bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-50">
+                    {(['hybrid', 'satellite', 'roadmap'] as const).map((layer) => (
+                      <button 
+                        key={layer}
+                        onClick={() => {
+                          setActiveLayer(layer);
+                          setIsLayersOpen(false);
+                        }}
+                        className="w-full flex items-center justify-between px-4 py-2.5 text-left text-[13px] text-gray-700 hover:bg-gray-50 font-medium capitalize"
+                      >
+                        {layer}
+                        {activeLayer === layer && <Check className="w-4 h-4 text-[#0B2C5C]" />}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
           {/* Row 2: Category Pills (Visible only when List view is closed) */}
           {!isListSidebarOpen && (
-            <div className="flex flex-wrap items-center gap-2 pointer-events-auto">
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden pointer-events-auto w-full">
               {[
                 { name: 'Lands', icon: '🌱' },
                 { name: 'Plots', icon: '📐' },

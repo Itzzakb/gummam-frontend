@@ -1,5 +1,17 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Icon } from '@iconify/react';
+import { createPortal } from 'react-dom';
+import {
+  Search,
+  Download,
+  Eye,
+  X,
+  Plus,
+  ChevronDown,
+  Check,
+  Mail,
+  Phone,
+  MapPin
+} from 'lucide-react';
 
 // Interfaces for our Lead data
 interface LeadTimelineItem {
@@ -31,6 +43,213 @@ interface Lead {
   };
 }
 
+// Period Dropdown Component to match User Management Stat Cards Dropdown
+interface PeriodDropdownProps {
+  value: string;
+  onChange: (value: string) => void;
+}
+
+const PeriodDropdown: React.FC<PeriodDropdownProps> = ({ value, onChange }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const [coords, setCoords] = useState({ top: 0, left: 0, width: 0 });
+  const options = ['Last Week', 'Last Month', 'Three Months', 'Six Months', 'Last Years'];
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    if (isOpen && triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      setCoords({
+        top: rect.bottom + window.scrollY + 4,
+        left: rect.right + window.scrollX - 112, // width is 112px
+        width: 112
+      });
+    }
+  }, [isOpen]);
+
+  return (
+    <div className="relative inline-block text-left" ref={dropdownRef}>
+      <button
+        ref={triggerRef}
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-1 bg-[#E2F5EC] hover:bg-[#d4f0e2] rounded-full px-2.5 py-1 text-[10px] font-semibold text-slate-800 transition-all focus:outline-none cursor-pointer"
+      >
+        <span>{value}</span>
+        <ChevronDown
+          className={`w-2.5 h-2.5 shrink-0 transition-transform duration-200 ${
+            isOpen ? 'rotate-180 text-slate-800' : 'text-slate-600'
+          }`}
+        />
+      </button>
+
+      {isOpen && createPortal(
+        <div
+          className="bg-white border border-slate-200 rounded-lg shadow-lg z-[9999] py-1 flex flex-col"
+          style={{
+            position: 'absolute',
+            top: coords.top,
+            left: coords.left,
+            width: coords.width
+          }}
+        >
+          {options.map((option) => (
+            <button
+              key={option}
+              type="button"
+              onClick={() => {
+                onChange(option);
+                setIsOpen(false);
+              }}
+              className={`w-full text-left px-3 py-1.5 text-[10px] transition-colors flex items-center justify-between cursor-pointer ${
+                option === value
+                  ? 'bg-[#F0F4F9]/60 font-semibold text-[#035096]'
+                  : 'text-slate-700 hover:bg-slate-50'
+              }`}
+            >
+              <span>{option}</span>
+              {option === value && (
+                <Check className="w-3 h-3 text-[#035096] shrink-0" />
+              )}
+            </button>
+          ))}
+        </div>,
+        document.body
+      )}
+    </div>
+  );
+};
+
+// Custom Filter Dropdown Component to match Table Filter Bar Dropdown
+interface CustomFilterDropdownProps {
+  value: string;
+  onChange: (value: string) => void;
+  options: { label: string; value: string }[];
+  placeholder: string;
+  hasSearch?: boolean;
+  searchText?: string;
+  onSearchChange?: (val: string) => void;
+}
+
+const CustomFilterDropdown: React.FC<CustomFilterDropdownProps> = ({
+  value,
+  onChange,
+  options,
+  placeholder,
+  hasSearch = false,
+  searchText = '',
+  onSearchChange
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const [coords, setCoords] = useState({ top: 0, left: 0, width: 0 });
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    if (isOpen && triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      setCoords({
+        top: rect.bottom + window.scrollY + 4,
+        left: rect.left + window.scrollX,
+        width: Math.max(rect.width, 160)
+      });
+    }
+  }, [isOpen]);
+
+  const activeLabel = options.find(o => o.value === value)?.label || placeholder;
+
+  return (
+    <div className="relative w-full lg:w-auto lg:min-w-[130px] text-left" ref={dropdownRef}>
+      <button
+        ref={triggerRef}
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className={`w-full flex items-center justify-between gap-2 bg-white border rounded-[8px] px-3.5 py-2 text-xs font-semibold transition-all focus:outline-none cursor-pointer ${
+          isOpen
+            ? 'border-[#035096] text-[#035096] ring-1/2 ring-[#035096]/20'
+            : 'border-slate-200 hover:border-slate-300 text-slate-700'
+        }`}
+      >
+        <span className="truncate">{activeLabel}</span>
+        <ChevronDown
+          className={`w-3.5 h-3.5 shrink-0 transition-transform duration-200 ${
+            isOpen ? 'rotate-180 text-[#035096]' : 'text-slate-500'
+          }`}
+        />
+      </button>
+
+      {isOpen && createPortal(
+        <div
+          className="bg-white border border-slate-200 rounded-[8px] shadow-lg z-[9999] py-1 flex flex-col min-w-[160px]"
+          style={{
+            position: 'absolute',
+            top: coords.top,
+            left: coords.left,
+            width: coords.width
+          }}
+        >
+          {hasSearch && onSearchChange && (
+            <div className="p-2 border-b border-slate-100 bg-white sticky top-0">
+              <input
+                type="text"
+                placeholder="Search"
+                value={searchText}
+                onChange={(e) => onSearchChange(e.target.value)}
+                className="w-full bg-slate-50 border border-slate-200 rounded-md px-3 py-1.5 text-xs focus:outline-none focus:border-[#035096] text-slate-700"
+                onClick={(e) => e.stopPropagation()}
+              />
+            </div>
+          )}
+          <div className="max-h-60 overflow-y-auto">
+            {options.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => {
+                  onChange(option.value);
+                  setIsOpen(false);
+                  if (onSearchChange) onSearchChange('');
+                }}
+                className={`w-full text-left px-3.5 py-2 text-xs transition-colors flex items-center justify-between cursor-pointer ${
+                  option.value === value
+                    ? 'bg-[#F0F4F9]/60 font-semibold text-[#035096]'
+                    : 'text-slate-700 hover:bg-slate-50'
+                }`}
+              >
+                <span>{option.label}</span>
+                {option.value === value && (
+                  <Check className="w-3.5 h-3.5 text-[#035096] shrink-0" />
+                )}
+              </button>
+            ))}
+          </div>
+        </div>,
+        document.body
+      )}
+    </div>
+  );
+};
+
 export const CrmManagement: React.FC = () => {
   // Stat periods
   const [periodTotalInquiries, setPeriodTotalInquiries] = useState('Last Month');
@@ -39,23 +258,57 @@ export const CrmManagement: React.FC = () => {
   const [periodContacted, setPeriodContacted] = useState('Last Month');
   const [periodConversion, setPeriodConversion] = useState('Last Month');
 
-  // Active dropdown states for stat tiles
-  const [openStatDropdown, setOpenStatDropdown] = useState<string | null>(null);
-
   // Filters state
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('All Status');
   const [selectedSource, setSelectedSource] = useState('All Source');
   const [selectedAssigned, setSelectedAssigned] = useState('All Leads');
 
-  // Dropdown open states
-  const [statusDropdownOpen, setStatusDropdownOpen] = useState(false);
-  const [sourceDropdownOpen, setSourceDropdownOpen] = useState(false);
-  const [assignedDropdownOpen, setAssignedDropdownOpen] = useState(false);
   const [assignedSearchText, setAssignedSearchText] = useState('');
   const [viewAgentDropdownOpen, setViewAgentDropdownOpen] = useState(false);
+  const viewAgentTriggerRef = useRef<HTMLButtonElement>(null);
+  const [viewAgentCoords, setViewAgentCoords] = useState({ top: 0, left: 0, width: 0 });
+
+  useEffect(() => {
+    if (viewAgentDropdownOpen && viewAgentTriggerRef.current) {
+      const rect = viewAgentTriggerRef.current.getBoundingClientRect();
+      setViewAgentCoords({
+        top: rect.bottom + window.scrollY + 4,
+        left: rect.left + window.scrollX,
+        width: rect.width
+      });
+    }
+  }, [viewAgentDropdownOpen]);
+
   const [scheduleAgentDropdownOpen, setScheduleAgentDropdownOpen] = useState(false);
+  const scheduleAgentTriggerRef = useRef<HTMLButtonElement>(null);
+  const [scheduleAgentCoords, setScheduleAgentCoords] = useState({ top: 0, left: 0, width: 0 });
+
+  useEffect(() => {
+    if (scheduleAgentDropdownOpen && scheduleAgentTriggerRef.current) {
+      const rect = scheduleAgentTriggerRef.current.getBoundingClientRect();
+      setScheduleAgentCoords({
+        top: rect.bottom + window.scrollY + 4,
+        left: rect.left + window.scrollX,
+        width: rect.width
+      });
+    }
+  }, [scheduleAgentDropdownOpen]);
+
   const [scheduleReminderDropdownOpen, setScheduleReminderDropdownOpen] = useState(false);
+  const scheduleReminderTriggerRef = useRef<HTMLButtonElement>(null);
+  const [scheduleReminderCoords, setScheduleReminderCoords] = useState({ top: 0, left: 0, width: 0 });
+
+  useEffect(() => {
+    if (scheduleReminderDropdownOpen && scheduleReminderTriggerRef.current) {
+      const rect = scheduleReminderTriggerRef.current.getBoundingClientRect();
+      setScheduleReminderCoords({
+        top: rect.bottom + window.scrollY + 4,
+        left: rect.left + window.scrollX,
+        width: rect.width
+      });
+    }
+  }, [scheduleReminderDropdownOpen]);
 
   // Modals state
   const [selectedLeadForView, setSelectedLeadForView] = useState<Lead | null>(null);
@@ -85,12 +338,12 @@ export const CrmManagement: React.FC = () => {
     reason: ''
   });
 
-  // Mock initial leads data from screenshots
+  // Mock initial leads data to match screen mock exactly
   const [leads, setLeads] = useState<Lead[]>([
     {
       id: 'L01',
-      name: 'Shiva Sharma',
-      email: 'shiva@email.com',
+      name: 'Amit Sharma',
+      email: 'amit@email.com',
       phone: '+91 98765 43210',
       city: 'Hyderabad',
       property: '3BHK Apartment',
@@ -98,14 +351,14 @@ export const CrmManagement: React.FC = () => {
       bedrooms: '3',
       source: 'Website',
       status: 'New',
-      assigned: 'Unassigned',
+      assigned: 'Rajesh Kumar',
       followUp: '2026-5-27',
       budget: '₹15L',
       note: 'Interested in premium properties, first-time buyer',
       timeline: {
         inquiry: { type: 'Inquiry Date', date: '2026-05-16', time: '01:00PM', notes: 'Interested in premium properties, first-time buyer' },
         lastFollowUp: { type: 'Last Follow-up', date: '-', time: '-', notes: '-' },
-        nextFollowUp: { type: 'Next Follow-up', date: '2026-05-30', time: '01:00PM', notes: 'Notes' }
+        nextFollowUp: { type: 'Next Follow-up', date: '2026-05-27', time: '01:00PM', notes: 'Notes' }
       }
     },
     {
@@ -126,7 +379,7 @@ export const CrmManagement: React.FC = () => {
       timeline: {
         inquiry: { type: 'Inquiry Date', date: '2026-05-18', time: '11:00AM', notes: 'Inquired from app' },
         lastFollowUp: { type: 'Last Follow-up', date: '2026-05-20', time: '03:30PM', notes: 'Discussed project details' },
-        nextFollowUp: { type: 'Next Follow-up', date: '2026-05-28', time: '10:00AM', notes: 'Site visit scheduling' }
+        nextFollowUp: { type: 'Next Follow-up', date: '2026-05-27', time: '10:00AM', notes: 'Site visit scheduling' }
       }
     },
     {
@@ -189,7 +442,7 @@ export const CrmManagement: React.FC = () => {
       timeline: {
         inquiry: { type: 'Inquiry Date', date: '2026-05-20', time: '09:00AM', notes: 'Website inquiry' },
         lastFollowUp: { type: 'Last Follow-up', date: '2026-05-22', time: '12:00PM', notes: 'Information brochure shared' },
-        nextFollowUp: { type: 'Next Follow-up', date: '2026-05-29', time: '11:00AM', notes: 'Follow up call on budget' }
+        nextFollowUp: { type: 'Next Follow-up', date: '2026-05-27', time: '11:00AM', notes: 'Follow up call on budget' }
       }
     },
     {
@@ -210,7 +463,7 @@ export const CrmManagement: React.FC = () => {
       timeline: {
         inquiry: { type: 'Inquiry Date', date: '2026-04-15', time: '06:00PM', notes: 'Instagram ad lead' },
         lastFollowUp: { type: 'Last Follow-up', date: '2026-05-02', time: '03:00PM', notes: 'Payment terms agreed' },
-        nextFollowUp: { type: 'Next Follow-up', date: '-', time: '-', notes: 'Deal Closed successfully' }
+        nextFollowUp: { type: 'Next Follow-up', date: '2026-05-27', time: '-', notes: 'Deal Closed successfully' }
       }
     },
     {
@@ -231,7 +484,7 @@ export const CrmManagement: React.FC = () => {
       timeline: {
         inquiry: { type: 'Inquiry Date', date: '2026-05-05', time: '02:00PM', notes: 'App lead' },
         lastFollowUp: { type: 'Last Follow-up', date: '2026-05-08', time: '11:00AM', notes: 'Declined current offers due to budget limits' },
-        nextFollowUp: { type: 'Next Follow-up', date: '-', time: '-', notes: 'Archived - Not interested for now' }
+        nextFollowUp: { type: 'Next Follow-up', date: '2026-05-27', time: '-', notes: 'Archived - Not interested for now' }
       }
     },
     {
@@ -252,48 +505,39 @@ export const CrmManagement: React.FC = () => {
       timeline: {
         inquiry: { type: 'Inquiry Date', date: '2026-05-25', time: '04:30PM', notes: 'Walk-in office visit' },
         lastFollowUp: { type: 'Last Follow-up', date: '-', time: '-', notes: '-' },
-        nextFollowUp: { type: 'Next Follow-up', date: '2026-06-01', time: '10:00AM', notes: 'Site visit scheduling call' }
+        nextFollowUp: { type: 'Next Follow-up', date: '2026-05-27', time: '10:00AM', notes: 'Site visit scheduling call' }
       }
     }
   ]);
 
-  // Dropdown list options
-  const statusOptions = ['All Status', 'New', 'Contacted', 'Follow-up', 'Site Visit', 'Negotiation', 'Closed', 'Not Interested'];
-  const sourceOptions = ['All Source', 'Website', 'Call', 'App', 'Social Media', 'Referral', 'Walk-in'];
+  // Options lists
+  const statusOptions = [
+    { label: 'All Status', value: 'All Status' },
+    { label: 'New', value: 'New' },
+    { label: 'Contacted', value: 'Contacted' },
+    { label: 'Follow-up', value: 'Follow-up' },
+    { label: 'Site Visit', value: 'Site Visit' },
+    { label: 'Negotiation', value: 'Negotiation' },
+    { label: 'Closed', value: 'Closed' },
+    { label: 'Not Interested', value: 'Not Interested' }
+  ];
+
+  const sourceOptions = [
+    { label: 'All Source', value: 'All Source' },
+    { label: 'Website', value: 'Website' },
+    { label: 'Call', value: 'Call' },
+    { label: 'App', value: 'App' },
+    { label: 'Social Media', value: 'Social Media' },
+    { label: 'Referral', value: 'Referral' },
+    { label: 'Walk-in', value: 'Walk-in' }
+  ];
+
   const agentOptions = ['Unassigned', 'Rajesh Kumar', 'Deepak Verma', 'Priya Singh'];
-  const periodOptions = ['Last Week', 'Last Month', 'Three Months', 'Six Months', 'Last Years'];
 
-  // Ref hooks to close dropdowns when clicking outside
-  const statRef = useRef<HTMLDivElement>(null);
-  const statusRef = useRef<HTMLDivElement>(null);
-  const sourceRef = useRef<HTMLDivElement>(null);
-  const assignedRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleOutsideClick = (e: MouseEvent) => {
-      if (statRef.current && !statRef.current.contains(e.target as Node)) {
-        setOpenStatDropdown(null);
-      }
-      if (statusRef.current && !statusRef.current.contains(e.target as Node)) {
-        setStatusDropdownOpen(false);
-      }
-      if (sourceRef.current && !sourceRef.current.contains(e.target as Node)) {
-        sourceDropdownOpen && setSourceDropdownOpen(false);
-      }
-      if (assignedRef.current && !assignedRef.current.contains(e.target as Node)) {
-        assignedDropdownOpen && setAssignedDropdownOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleOutsideClick);
-    return () => document.removeEventListener('mousedown', handleOutsideClick);
-  }, [sourceDropdownOpen, assignedDropdownOpen]);
-
-  // Export data as simple alert download or CSV
   const handleExport = () => {
     alert("Exporting lead listings data. Downloading file: gummam_crm_leads.csv");
   };
 
-  // Click handler to open reschedule modal from lead details modal
   const triggerRescheduleFromView = (lead: Lead) => {
     setRescheduleLead(lead);
     setRescheduleForm({
@@ -305,7 +549,6 @@ export const CrmManagement: React.FC = () => {
     setShowRescheduleModal(true);
   };
 
-  // Submit rescheduling
   const handleRescheduleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!rescheduleLead) return;
@@ -333,11 +576,8 @@ export const CrmManagement: React.FC = () => {
     setRescheduleLead(null);
   };
 
-  // Submit new visit scheduling
   const handleScheduleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Create new lead/visit from schedule form
     const newLeadId = `L0${leads.length + 1}`;
     const newLead: Lead = {
       id: newLeadId,
@@ -357,19 +597,17 @@ export const CrmManagement: React.FC = () => {
       timeline: {
         inquiry: { type: 'Inquiry Date', date: '2026-07-01', time: '10:00AM', notes: 'Scheduled via dashboard' },
         lastFollowUp: { type: 'Last Follow-up', date: '-', time: '-', notes: '-' },
-        nextFollowUp: { 
-          type: 'Next Follow-up', 
-          date: scheduleForm.visitDate || '2026-05-27', 
-          time: scheduleForm.visitTime || '12:00PM', 
-          notes: scheduleForm.note || 'Scheduled visit' 
+        nextFollowUp: {
+          type: 'Next Follow-up',
+          date: scheduleForm.visitDate || '2026-05-27',
+          time: scheduleForm.visitTime || '12:00PM',
+          notes: scheduleForm.note || 'Scheduled visit'
         }
       }
     };
 
     setLeads([newLead, ...leads]);
     setShowScheduleModal(false);
-    
-    // Reset form
     setScheduleForm({
       propertyTitle: '',
       location: '',
@@ -385,7 +623,6 @@ export const CrmManagement: React.FC = () => {
     });
   };
 
-  // Change lead status from view modal
   const handleUpdateStatus = (leadId: string, newStatus: string) => {
     setLeads(leads.map(l => {
       if (l.id === leadId) {
@@ -393,13 +630,11 @@ export const CrmManagement: React.FC = () => {
       }
       return l;
     }));
-    // Also update current view state
     if (selectedLeadForView && selectedLeadForView.id === leadId) {
       setSelectedLeadForView({ ...selectedLeadForView, status: newStatus });
     }
   };
 
-  // Change lead assigned agent from view modal
   const handleAssignAgent = (leadId: string, agentName: string) => {
     setLeads(leads.map(l => {
       if (l.id === leadId) {
@@ -407,147 +642,85 @@ export const CrmManagement: React.FC = () => {
       }
       return l;
     }));
-    // Also update current view state
     if (selectedLeadForView && selectedLeadForView.id === leadId) {
       setSelectedLeadForView({ ...selectedLeadForView, assigned: agentName });
     }
   };
 
-  // Render Status Badge with correct colors (as seen in screenshots)
   const renderStatusBadge = (status: string) => {
     let classes = '';
     switch(status) {
       case 'New':
-        classes = 'bg-[#E3EFFF] text-[#035096]';
+        classes = 'bg-blue-50 text-blue-700 border border-blue-200';
         break;
       case 'Contacted':
-        classes = 'bg-[#D2F3FC] text-[#006699]';
+        classes = 'bg-cyan-50 text-cyan-700 border border-cyan-200';
         break;
       case 'Follow-up':
-        classes = 'bg-[#FFF2D4] text-[#E08A00]';
+        classes = 'bg-amber-50 text-amber-700 border border-amber-200';
         break;
       case 'Site Visit':
-        classes = 'bg-[#F2E5FF] text-[#8000FF]';
+        classes = 'bg-purple-50 text-purple-700 border border-purple-200';
         break;
       case 'Negotiation':
-        classes = 'bg-[#FFE2E2] text-[#CC0000]';
+        classes = 'bg-rose-50 text-rose-700 border border-rose-200';
         break;
       case 'Closed':
-        classes = 'bg-[#D5F9DF] text-[#1E7D32]';
+        classes = 'bg-emerald-50 text-emerald-700 border border-emerald-200';
         break;
       case 'Not Interested':
-        classes = 'bg-[#FCE3F5] text-[#A6006E]';
+        classes = 'bg-slate-100 text-slate-600 border border-slate-200';
         break;
       default:
-        classes = 'bg-gray-100 text-gray-700';
+        classes = 'bg-slate-50 text-slate-600 border border-slate-200';
     }
-    return <span className={`px-3 py-1 rounded-full text-xs font-semibold select-none ${classes}`}>{status}</span>;
+    return <span className={`px-2.5 py-0.5 rounded-[5px] text-[10px] font-semibold select-none ${classes}`}>{status}</span>;
   };
 
-  // Render Source Badge with correct colors (as seen in screenshots)
   const renderSourceBadge = (source: string) => {
     let classes = '';
     switch(source) {
       case 'Website':
-        classes = 'bg-[#E6F0FF] text-[#0A58CA]';
+        classes = 'bg-blue-100 text-blue-800';
         break;
       case 'App':
-        classes = 'bg-[#E1FFE9] text-[#198754]';
+        classes = 'bg-emerald-100 text-emerald-800';
         break;
       case 'Referral':
-        classes = 'bg-[#F3E8FF] text-[#6F42C1]';
+        classes = 'bg-purple-100 text-purple-800';
         break;
       case 'Call':
-        classes = 'bg-[#FEE2E2] text-[#DC3545]';
+        classes = 'bg-rose-100 text-rose-800';
         break;
       case 'Social Media':
-        classes = 'bg-[#FFEAF3] text-[#D63384]';
+        classes = 'bg-pink-100 text-pink-850';
         break;
       case 'Walk-in':
-        classes = 'bg-[#FFF3CD] text-[#FD7E14]';
+        classes = 'bg-amber-100 text-amber-800';
         break;
       default:
-        classes = 'bg-gray-100 text-gray-700';
+        classes = 'bg-slate-100 text-slate-700';
     }
-    return <span className={`px-2.5 py-0.5 rounded text-[10px] font-semibold select-none ${classes}`}>{source}</span>;
+    return <span className={`px-2.5 py-0.5 rounded-[5px] text-[10px] font-semibold select-none ${classes}`}>{source}</span>;
   };
 
-  // Render Assigned text colors
   const renderAssigned = (assigned: string) => {
     if (assigned === 'Unassigned') {
-      return <span className="text-[#CC0000] font-semibold text-sm">{assigned}</span>;
+      return <span className="text-[#D92D20] font-semibold text-xs">{assigned}</span>;
     }
-    return <span className="text-gray-700 font-semibold text-sm">{assigned}</span>;
+    return <span className="text-slate-600 font-semibold text-xs">{assigned}</span>;
   };
 
-  // Stat tile Period Dropdown renderer
-  const renderPeriodDropdown = (id: string, currentVal: string, setter: (val: string) => void) => {
-    const isThisOpen = openStatDropdown === id;
-    return (
-      <div className="relative inline-block text-left">
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            setOpenStatDropdown(isThisOpen ? null : id);
-          }}
-          className={`flex items-center gap-1 bg-white border rounded-full px-2.5 py-1 text-[10px] font-semibold transition-all focus:outline-none cursor-pointer ${
-            isThisOpen
-              ? 'border-[#035096] text-[#035096] ring-1/2 ring-[#035096]'
-              : 'border-slate-200 hover:border-slate-350 text-slate-700'
-          }`}
-        >
-          <span>{currentVal}</span>
-          <Icon 
-            icon="ri:arrow-down-s-line" 
-            className={`w-2.5 h-2.5 shrink-0 transition-transform duration-200 ${
-              isThisOpen ? 'rotate-180 text-[#035096]' : 'text-slate-400'
-            }`} 
-          />
-        </button>
-
-        {isThisOpen && (
-          <div className="absolute right-0 mt-1.5 w-28 bg-white border border-slate-200 rounded-lg shadow-lg z-50 py-1 flex flex-col">
-            {periodOptions.map((option) => (
-              <button
-                key={option}
-                type="button"
-                onClick={() => {
-                  setter(option);
-                  setOpenStatDropdown(null);
-                }}
-                className={`w-full text-left px-3 py-1.5 text-[10px] transition-colors flex items-center justify-between cursor-pointer ${
-                  option === currentVal 
-                    ? 'bg-[#F0F4F9]/60 font-semibold text-[#035096]' 
-                    : 'text-slate-700 hover:bg-slate-50'
-                }`}
-              >
-                <span>{option}</span>
-                {option === currentVal && <Icon icon="ri:check-line" className="w-3 h-3 text-[#035096] shrink-0" />}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  // Filtered Leads
   const filteredLeads = leads.filter(lead => {
-    // Search filter
-    const matchesSearch = 
+    const matchesSearch =
       lead.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       lead.property.toLowerCase().includes(searchQuery.toLowerCase()) ||
       lead.email.toLowerCase().includes(searchQuery.toLowerCase());
 
-    // Status filter
     const matchesStatus = selectedStatus === 'All Status' || lead.status === selectedStatus;
-
-    // Source filter
     const matchesSource = selectedSource === 'All Source' || lead.source === selectedSource;
-
-    // Agent assignment filter
-    const matchesAssigned = selectedAssigned === 'All Leads' || 
+    
+    const matchesAssigned = selectedAssigned === 'All Leads' ||
       (selectedAssigned === 'Unassigned' && lead.assigned === 'Unassigned') ||
       (selectedAssigned !== 'Unassigned' && lead.assigned === selectedAssigned);
 
@@ -555,299 +728,180 @@ export const CrmManagement: React.FC = () => {
   });
 
   return (
-    <div className="bg-white rounded-[5px] border border-gray-200/60 p-6 md:p-8 shadow-sm space-y-6 animate-fade-in font-poppins text-left" ref={statRef}>
+    <div className="space-y-6 text-left">
       
       {/* ================= HEADER SECTION ================= */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div className="text-left">
-          <h1 className="text-2xl md:text-3xl font-semibold text-[#0B2C5C] tracking-tight">CRM Management</h1>
-          <p className="text-xs md:text-sm text-gray-500 mt-1">Deep lead tracking system with status management, follow-ups, and lead source tracking.</p>
+      <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center">
+        <div>
+          <h1 className="text-2xl font-semibold text-slate-900">Inquiries & CRM Management</h1>
+          <p className="text-xs font-medium text-slate-500 mt-1">
+            Deep lead tracking system with status management, follow-ups, and lead source tracking.
+          </p>
         </div>
-        <button 
+        <button
           onClick={() => setShowScheduleModal(true)}
-          className="bg-[#035096] hover:bg-[#024076] text-white font-semibold text-sm px-5 py-2.5 rounded-lg inline-flex items-center gap-2 transition-colors cursor-pointer shadow-sm ml-auto md:ml-0"
+          className="h-10 px-4 bg-[#035096] hover:bg-[#024078] text-white text-xs font-semibold rounded-[8px] flex items-center justify-center gap-2 transition cursor-pointer w-full sm:w-auto"
         >
-          <Icon icon="ri:add-line" className="w-4 h-4" />
+          <Plus className="h-4 w-4" />
           <span>Schedule Visit</span>
         </button>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      {/* ================= KPI CARDS GRID ================= */}
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
         {/* Total Inquiries */}
-        <div className="bg-white rounded-xl p-4 flex flex-col justify-between shadow-sm min-h-[90px]">
-          <span className="text-xs text-slate-500 font-medium font-poppins">Total Inquiries</span>
-          <div className="flex items-center justify-between mt-2.5">
-            <span className="text-2xl font-semibold text-slate-900 font-poppins">08</span>
-            {renderPeriodDropdown('inquiries', periodTotalInquiries, setPeriodTotalInquiries)}
+        <div className="bg-white border border-[#dddddd] rounded-[16px] p-6 flex flex-col justify-between min-h-[140px] shadow-none">
+          <span className="text-sm font-medium text-slate-500">Total Inquiries</span>
+          <div className="flex items-end justify-between mt-2">
+            <span className="text-3xl font-semibold text-slate-900 leading-none">08</span>
+            <PeriodDropdown value={periodTotalInquiries} onChange={setPeriodTotalInquiries} />
           </div>
         </div>
 
         {/* New Leads */}
-        <div className="bg-white rounded-xl p-4 flex flex-col justify-between shadow-sm min-h-[90px]">
-          <span className="text-xs text-slate-500 font-medium font-poppins">New Leads</span>
-          <div className="flex items-center justify-between mt-2.5">
-            <span className="text-2xl font-semibold text-amber-600 font-poppins">02</span>
-            {renderPeriodDropdown('newLeads', periodNewLeads, setPeriodNewLeads)}
+        <div className="bg-white border border-[#dddddd] rounded-[16px] p-6 flex flex-col justify-between min-h-[140px] shadow-none">
+          <span className="text-sm font-medium text-slate-500">New Leads</span>
+          <div className="flex items-end justify-between mt-2">
+            <span className="text-3xl font-semibold text-amber-500 leading-none">02</span>
+            <PeriodDropdown value={periodNewLeads} onChange={setPeriodNewLeads} />
           </div>
         </div>
 
         {/* Closed Deals */}
-        <div className="bg-white rounded-xl p-4 flex flex-col justify-between shadow-sm min-h-[90px]">
-          <span className="text-xs text-slate-500 font-medium font-poppins">Closed Deals</span>
-          <div className="flex items-center justify-between mt-2.5">
-            <span className="text-2xl font-semibold text-green-600 font-poppins">05</span>
-            {renderPeriodDropdown('closedDeals', periodClosedDeals, setPeriodClosedDeals)}
+        <div className="bg-white border border-[#dddddd] rounded-[16px] p-6 flex flex-col justify-between min-h-[140px] shadow-none">
+          <span className="text-sm font-medium text-slate-500">Closed Deals</span>
+          <div className="flex items-end justify-between mt-2">
+            <span className="text-3xl font-semibold text-[#0F8043] leading-none">05</span>
+            <PeriodDropdown value={periodClosedDeals} onChange={setPeriodClosedDeals} />
           </div>
         </div>
 
         {/* Contacted */}
-        <div className="bg-white rounded-xl p-4 flex flex-col justify-between shadow-sm min-h-[90px]">
-          <span className="text-xs text-slate-500 font-medium font-poppins">Contacted</span>
-          <div className="flex items-center justify-between mt-2.5">
-            <span className="text-2xl font-semibold text-red-500 font-poppins">01</span>
-            {renderPeriodDropdown('contacted', periodContacted, setPeriodContacted)}
+        <div className="bg-white border border-[#dddddd] rounded-[16px] p-6 flex flex-col justify-between min-h-[140px] shadow-none">
+          <span className="text-sm font-medium text-slate-500">Contacted</span>
+          <div className="flex items-end justify-between mt-2">
+            <span className="text-3xl font-semibold text-[#D92D20] leading-none">01</span>
+            <PeriodDropdown value={periodContacted} onChange={setPeriodContacted} />
           </div>
         </div>
 
         {/* Conversion Rate */}
-        <div className="bg-white rounded-xl p-4 flex flex-col justify-between shadow-sm min-h-[90px]">
-          <span className="text-xs text-slate-500 font-medium font-poppins">Conversion Rate</span>
-          <div className="flex items-center justify-between mt-2.5">
-            <span className="text-2xl font-semibold text-blue-600 font-poppins">12.5%</span>
-            {renderPeriodDropdown('conversion', periodConversion, setPeriodConversion)}
+        <div className="bg-white border border-[#dddddd] rounded-[16px] p-6 flex flex-col justify-between min-h-[140px] shadow-none">
+          <span className="text-sm font-medium text-slate-500">Conversion Rate</span>
+          <div className="flex items-end justify-between mt-2">
+            <span className="text-3xl font-semibold text-[#035096] leading-none">12.5%</span>
+            <PeriodDropdown value={periodConversion} onChange={setPeriodConversion} />
           </div>
         </div>
       </div>
 
-      {/* ================= SEARCH & CUSTOM DROPDOWN FILTERS ================= */}
-      <div className="flex flex-col sm:flex-row gap-3 bg-white p-3 rounded-lg border border-gray-200">
+      {/* ================= FILTERS & ACTIONS CONTROLS BAR ================= */}
+      <div className="bg-white border border-[#dddddd] rounded-[16px] p-4 flex flex-col lg:flex-row gap-4 justify-between items-center shadow-none">
         
         {/* Search */}
-        <div className="relative flex-1">
-          <Icon icon="ri:search-line" className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+        <div className="relative w-full lg:max-w-md">
+          <Search className="absolute left-3.5 my-auto inset-y-0 h-4 w-4 text-slate-400" />
           <input
             type="text"
             placeholder="Search by title or address...."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-white border border-gray-200 rounded-lg pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:border-[#035096] transition-colors"
+            className="w-full h-10 pl-10 pr-4 bg-white border border-slate-200 rounded-[8px] text-xs outline-none transition placeholder:text-slate-400 focus:border-[#035096]"
           />
         </div>
 
-        {/* Custom Status Dropdown */}
-        <div className="relative" ref={statusRef}>
-          <button
-            onClick={() => {
-              setStatusDropdownOpen(!statusDropdownOpen);
-              setSourceDropdownOpen(false);
-              setAssignedDropdownOpen(false);
-            }}
-            className="w-full md:w-auto bg-white border border-gray-300 rounded-lg px-4 py-2.5 text-sm font-medium text-gray-700 inline-flex items-center justify-between gap-3 transition-colors cursor-pointer"
-          >
-            <span>{selectedStatus}</span>
-            <Icon 
-              icon="ri:arrow-down-s-line" 
-              className={`w-4 h-4 transition-transform duration-200 ${
-                statusDropdownOpen ? 'rotate-180 text-[#035096]' : 'text-gray-500'
-              }`} 
-            />
-          </button>
+        {/* Filters */}
+        <div className="grid grid-cols-2 gap-3 w-full lg:flex lg:flex-wrap lg:items-center lg:w-auto lg:justify-end">
           
-          {statusDropdownOpen && (
-            <div className="absolute left-0 sm:right-0 mt-1.5 w-48 bg-white border border-slate-200 rounded-lg shadow-lg z-50 py-1 flex flex-col font-poppins">
-              <div className="max-h-60 overflow-y-auto bg-white">
-                {statusOptions.map((opt) => (
-                  <button
-                    key={opt}
-                    onClick={() => {
-                      setSelectedStatus(opt);
-                      setStatusDropdownOpen(false);
-                    }}
-                    className={`w-full text-left px-4 py-2.5 text-xs transition-colors flex items-center justify-between cursor-pointer ${
-                      opt === selectedStatus 
-                        ? 'bg-[#F0F4F9]/60 font-semibold text-[#035096]' 
-                        : 'text-slate-700 hover:bg-slate-50'
-                    }`}
-                  >
-                    <span>{opt === 'All Status' ? 'All Status' : opt}</span>
-                    {opt === selectedStatus && <Icon icon="ri:check-line" className="w-3.5 h-3.5 text-[#035096] shrink-0" />}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
+          {/* Custom Status Dropdown */}
+          <CustomFilterDropdown
+            value={selectedStatus}
+            onChange={setSelectedStatus}
+            placeholder="All Status"
+            options={statusOptions}
+          />
 
-        {/* Custom Source Dropdown */}
-        <div className="relative" ref={sourceRef}>
+          {/* Custom Source Dropdown */}
+          <CustomFilterDropdown
+            value={selectedSource}
+            onChange={setSelectedSource}
+            placeholder="All Source"
+            options={sourceOptions}
+          />
+
+          {/* Custom Agent Dropdown with search inside */}
+          <CustomFilterDropdown
+            value={selectedAssigned}
+            onChange={setSelectedAssigned}
+            placeholder="All Leads"
+            hasSearch={true}
+            searchText={assignedSearchText}
+            onSearchChange={setAssignedSearchText}
+            options={['All Leads', 'Unassigned', ...agentOptions.slice(1)]
+              .filter(opt => opt.toLowerCase().includes(assignedSearchText.toLowerCase()))
+              .map(opt => ({ label: opt, value: opt }))
+            }
+          />
+
+          {/* Export Button */}
           <button
-            onClick={() => {
-              setSourceDropdownOpen(!sourceDropdownOpen);
-              setStatusDropdownOpen(false);
-              setAssignedDropdownOpen(false);
-            }}
-            className="w-full md:w-auto bg-white border border-gray-300 rounded-lg px-4 py-2.5 text-sm font-medium text-gray-700 inline-flex items-center justify-between gap-3 transition-colors cursor-pointer"
+            onClick={handleExport}
+            className="h-10 px-4 bg-[#035096] hover:bg-[#024078] text-white text-xs font-semibold rounded-[8px] flex items-center justify-center gap-2 transition cursor-pointer w-full lg:w-auto"
           >
-            <span>{selectedSource}</span>
-            <Icon 
-              icon="ri:arrow-down-s-line" 
-              className={`w-4 h-4 transition-transform duration-200 ${
-                sourceDropdownOpen ? 'rotate-180 text-[#035096]' : 'text-gray-500'
-              }`} 
-            />
+            <Download className="h-4 w-4 shrink-0" />
+            <span>Export</span>
           </button>
-
-          {sourceDropdownOpen && (
-            <div className="absolute left-0 sm:right-0 mt-1.5 w-48 bg-white border border-slate-200 rounded-lg shadow-lg z-50 py-1 flex flex-col font-poppins">
-              <div className="max-h-60 overflow-y-auto bg-white">
-                {sourceOptions.map((opt) => (
-                  <button
-                    key={opt}
-                    onClick={() => {
-                      setSelectedSource(opt);
-                      setSourceDropdownOpen(false);
-                    }}
-                    className={`w-full text-left px-4 py-2.5 text-xs transition-colors flex items-center justify-between cursor-pointer ${
-                      opt === selectedSource 
-                        ? 'bg-[#F0F4F9]/60 font-semibold text-[#035096]' 
-                        : 'text-slate-700 hover:bg-slate-50'
-                    }`}
-                  >
-                    <span>{opt === 'All Source' ? 'All Source' : opt}</span>
-                    {opt === selectedSource && <Icon icon="ri:check-line" className="w-3.5 h-3.5 text-[#035096] shrink-0" />}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
-
-        {/* Custom Agent / Lead Assigned Dropdown */}
-        <div className="relative" ref={assignedRef}>
-          <button
-            onClick={() => {
-              setAssignedDropdownOpen(!assignedDropdownOpen);
-              setStatusDropdownOpen(false);
-              setSourceDropdownOpen(false);
-            }}
-            className="w-full md:w-auto bg-white border border-gray-300 rounded-lg px-4 py-2.5 text-sm font-medium text-gray-700 inline-flex items-center justify-between gap-3 transition-colors cursor-pointer"
-          >
-            <span>{selectedAssigned}</span>
-            <Icon 
-              icon="ri:arrow-down-s-line" 
-              className={`w-4 h-4 transition-transform duration-200 ${
-                assignedDropdownOpen ? 'rotate-180 text-[#035096]' : 'text-gray-500'
-              }`} 
-            />
-          </button>
-
-          {assignedDropdownOpen && (
-            <div className="absolute left-0 sm:right-0 mt-1.5 w-52 bg-white border border-slate-200 rounded-lg shadow-lg z-50 py-1 flex flex-col font-poppins">
-              {/* Search input in dropdown */}
-              <div className="p-2 border-b border-gray-150 bg-white">
-                <input
-                  type="text"
-                  placeholder="Search"
-                  value={assignedSearchText}
-                  onChange={(e) => setAssignedSearchText(e.target.value)}
-                  className="w-full bg-slate-50 border border-gray-200 rounded-md px-3 py-1.5 text-xs focus:outline-none focus:border-[#035096] text-gray-700"
-                  onClick={(e) => e.stopPropagation()}
-                />
-              </div>
-              <div className="max-h-60 overflow-y-auto bg-white">
-                {['All Leads', 'Unassigned', ...agentOptions.slice(1)]
-                  .filter(opt => opt.toLowerCase().includes(assignedSearchText.toLowerCase()))
-                  .map((opt) => (
-                    <button
-                      key={opt}
-                      onClick={() => {
-                        setSelectedAssigned(opt);
-                        setAssignedDropdownOpen(false);
-                        setAssignedSearchText('');
-                      }}
-                      className={`w-full text-left px-4 py-2.5 text-xs transition-colors flex items-center justify-between cursor-pointer ${
-                        opt === selectedAssigned 
-                          ? 'bg-[#F0F4F9]/60 font-semibold text-[#035096]' 
-                          : 'text-slate-700 hover:bg-slate-50'
-                      }`}
-                    >
-                      <span>{opt}</span>
-                      {opt === selectedAssigned && <Icon icon="ri:check-line" className="w-3.5 h-3.5 text-[#035096] shrink-0" />}
-                    </button>
-                  ))}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Export Button */}
-        <button
-          onClick={handleExport}
-          className="bg-[#035096] text-white hover:bg-[#024076] font-medium text-sm px-5 py-2.5 rounded-lg inline-flex items-center gap-2 transition-colors cursor-pointer ml-auto shadow-sm"
-        >
-          <Icon icon="ri:download-line" className="w-4 h-4" />
-          <span>Export</span>
-        </button>
       </div>
 
       {/* ================= TABLE LISTINGS SECTION ================= */}
-      <div className="bg-[#F8FAFC] border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+      <div className="bg-white rounded-[16px] overflow-hidden border border-[#dddddd] shadow-none">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full border-collapse text-left">
             <thead>
-              <tr className="bg-slate-100 border-b border-gray-200 text-xs font-semibold text-gray-700 font-poppins">
-                <th className="px-6 py-4">Buyers Name</th>
-                <th className="px-6 py-4">Property</th>
-                <th className="px-6 py-4">Source</th>
-                <th className="px-6 py-4">Status</th>
-                <th className="px-6 py-4">Assigned</th>
-                <th className="px-6 py-4">Follow-up</th>
-                <th className="px-6 py-4">Budget</th>
-                <th className="px-6 py-4 text-center">Actions</th>
+              <tr className="bg-[#F0F2F3] border-b border-[#dddddd] text-xs font-semibold text-slate-700">
+                <th className="p-4 pl-6">Buyers Name</th>
+                <th className="p-4">Property</th>
+                <th className="p-4">Source</th>
+                <th className="p-4">Status</th>
+                <th className="p-4">Agent</th>
+                <th className="p-4">Follow-up</th>
+                <th className="p-4">Budget</th>
+                <th className="p-4 text-center pr-6">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 bg-white">
+            <tbody className="divide-y divide-[#dddddd] text-xs text-slate-700 font-medium">
               {filteredLeads.length > 0 ? (
                 filteredLeads.map((lead) => (
-                  <tr key={lead.id} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap">
+                  <tr key={lead.id} className="hover:bg-slate-50/30 transition-colors">
+                    <td className="p-4 pl-6 font-semibold text-slate-900">
                       <div className="flex flex-col">
-                        <span className="font-semibold text-gray-900 text-sm">{lead.name}</span>
-                        <span className="text-xs text-gray-400 font-normal mt-0.5">{lead.email}</span>
+                        <span className="font-semibold text-slate-900">{lead.name}</span>
+                        <span className="text-[10px] text-slate-400 mt-0.5 font-normal">{lead.email}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-medium">
-                      {lead.property}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {renderSourceBadge(lead.source)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {renderStatusBadge(lead.status)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {renderAssigned(lead.assigned)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-medium">
-                      {lead.followUp}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {lead.budget}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center">
-                      <button 
-                        onClick={() => setSelectedLeadForView(lead)}
-                        className="text-[#035096] hover:text-[#024076] p-1.5 transition-colors cursor-pointer inline-flex items-center justify-center"
-                        title="View Lead Details"
-                      >
-                        <Icon icon="ri:eye-line" className="w-4.5 h-4.5" />
-                      </button>
+                    <td className="p-4 text-slate-550 font-medium">{lead.property}</td>
+                    <td className="p-4">{renderSourceBadge(lead.source)}</td>
+                    <td className="p-4">{renderStatusBadge(lead.status)}</td>
+                    <td className="p-4">{renderAssigned(lead.assigned)}</td>
+                    <td className="p-4 text-slate-450">{lead.followUp}</td>
+                    <td className="p-4 text-slate-900 font-semibold">{lead.budget}</td>
+                    <td className="p-4 pr-6">
+                      <div className="flex items-center justify-center">
+                        <button
+                          onClick={() => setSelectedLeadForView(lead)}
+                          className="w-8 h-8 rounded-[5px] hover:bg-slate-100 flex items-center justify-center text-blue-600 transition cursor-pointer"
+                          title="View Lead Details"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={8} className="px-6 py-12 text-center text-gray-500 text-sm font-medium">
+                  <td colSpan={8} className="p-8 text-center text-slate-400">
                     No inquiries found matching your filters.
                   </td>
                 </tr>
@@ -857,182 +911,138 @@ export const CrmManagement: React.FC = () => {
         </div>
 
         {/* Footer info */}
-        <div className="bg-slate-50 px-6 py-4 border-t border-gray-150 flex items-center justify-between text-xs text-gray-500 font-medium">
+        <div className="bg-[#F8FAFC] px-6 py-4 border-t border-[#dddddd] flex items-center justify-between text-xs text-slate-400 font-medium">
           <span>Showing {filteredLeads.length} of {leads.length} Inquiries</span>
         </div>
       </div>
 
       {/* ================= MODAL 1: VIEW DETAILS MODAL ================= */}
       {selectedLeadForView && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4 overflow-y-auto animate-fade-in">
-          <div className="bg-white rounded-2xl w-full max-w-2xl border border-gray-200 shadow-2xl flex flex-col overflow-hidden max-h-[90vh]">
-            {/* Header */}
-            <div className="px-6 py-5 border-b border-gray-150 flex justify-between items-center bg-slate-50">
-              <h3 className="text-xl font-semibold text-gray-900 font-poppins">{selectedLeadForView.name}</h3>
-              <button 
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center z-[1000] p-4">
+          <div className="bg-white w-full max-w-[460px] rounded-[5px] overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200 text-left flex flex-col max-h-[90vh]">
+            {/* Modal Header */}
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+              <h2 className="text-base font-semibold text-slate-900">{selectedLeadForView.name}</h2>
+              <button
                 onClick={() => setSelectedLeadForView(null)}
-                className="text-gray-400 hover:text-gray-650 p-1.5 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
+                className="w-8 h-8 rounded-[5px] hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-600 transition cursor-pointer"
               >
-                <Icon icon="ri:close-line" className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
 
-            {/* Content */}
-            <div className="p-6 overflow-y-auto space-y-6 text-left">
+            {/* Modal Content */}
+            <div className="p-6 overflow-y-auto space-y-5 text-xs text-slate-600">
               {/* Buyer Contact Grid */}
-              <div className="grid grid-cols-2 gap-4 border-b border-gray-150 pb-5">
+              <div className="grid grid-cols-2 gap-4 border-b border-slate-100 pb-4">
                 <div>
-                  <span className="text-[10px] uppercase font-medium text-gray-400 tracking-wider">Email</span>
-                  <div className="text-sm font-medium text-gray-800 mt-1 flex items-center gap-1.5">
-                    <Icon icon="ri:mail-line" className="w-4 h-4 text-gray-400" />
-                    <span>{selectedLeadForView.email}</span>
+                  <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Email</span>
+                  <div className="text-slate-800 font-semibold mt-1 flex items-center gap-1.5">
+                    <Mail className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                    <span className="truncate">{selectedLeadForView.email}</span>
                   </div>
                 </div>
                 <div>
-                  <span className="text-[10px] uppercase font-medium text-gray-400 tracking-wider">Phone</span>
-                  <div className="text-sm font-medium text-gray-800 mt-1 flex items-center gap-1.5">
-                    <Icon icon="ri:phone-line" className="w-4 h-4 text-gray-400" />
+                  <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Phone</span>
+                  <div className="text-slate-800 font-semibold mt-1 flex items-center gap-1.5">
+                    <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                     <span>{selectedLeadForView.phone}</span>
                   </div>
                 </div>
                 <div className="mt-2">
-                  <span className="text-[10px] uppercase font-medium text-gray-400 tracking-wider">City</span>
-                  <div className="text-sm font-semibold text-gray-700 mt-1 flex items-center gap-1.5">
-                    <Icon icon="ri:map-pin-line" className="w-4 h-4 text-gray-400" />
+                  <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">City</span>
+                  <div className="text-slate-800 font-semibold mt-1 flex items-center gap-1.5">
+                    <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                     <span>{selectedLeadForView.city}</span>
                   </div>
                 </div>
                 <div className="mt-2">
-                  <span className="text-[10px] uppercase font-medium text-gray-400 tracking-wider">Budget</span>
-                  <div className="text-sm font-medium text-gray-900 mt-1 flex items-center gap-1.5">
-                    <span className="text-gray-400 font-medium">₹</span>
-                    <span>{selectedLeadForView.budget.replace('₹', '')}</span>
+                  <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Budget</span>
+                  <div className="text-slate-900 font-bold mt-1">
+                    {selectedLeadForView.budget}
                   </div>
                 </div>
               </div>
 
-              {/* Property Interest */}
-              <div className="space-y-3">
-                <h4 className="text-sm font-semibold text-[#035096] uppercase tracking-wider">Property Interest</h4>
+              {/* Property Interest Section */}
+              <div className="space-y-2.5">
+                <h4 className="text-xs font-bold text-[#035096] uppercase tracking-wider">Property Interest</h4>
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-blue-50/55 border border-blue-100 rounded-lg p-3">
-                    <span className="text-[10px] text-gray-400 uppercase font-semibold">Property</span>
-                    <p className="text-sm font-medium text-gray-900 mt-0.5">{selectedLeadForView.property}</p>
+                  <div className="bg-blue-50/50 border border-blue-100/50 rounded-[5px] p-3">
+                    <span className="text-[9px] text-slate-400 uppercase font-semibold">Property</span>
+                    <p className="text-slate-800 font-semibold mt-0.5">{selectedLeadForView.property}</p>
                   </div>
-                  <div className="bg-[#E1FFE9] border border-emerald-100 rounded-lg p-3">
-                    <span className="text-[10px] text-gray-400 uppercase font-semibold">Type</span>
-                    <p className="text-sm font-semibold text-gray-800 mt-0.5">{selectedLeadForView.propertyType}</p>
+                  <div className="bg-[#E1FFE9]/60 border border-emerald-100/50 rounded-[5px] p-3">
+                    <span className="text-[9px] text-slate-400 uppercase font-semibold">Type</span>
+                    <p className="text-emerald-800 font-semibold mt-0.5">{selectedLeadForView.propertyType}</p>
                   </div>
-                  <div className="bg-[#F3E8FF] border border-purple-150 rounded-lg p-3">
-                    <span className="text-[10px] text-gray-400 uppercase font-semibold">Preferred Bedrooms</span>
-                    <p className="text-sm font-medium text-gray-800 mt-0.5">{selectedLeadForView.bedrooms}</p>
+                  <div className="bg-[#F3E8FF]/60 border border-purple-100/50 rounded-[5px] p-3">
+                    <span className="text-[9px] text-slate-400 uppercase font-semibold">Preferred Bedrooms</span>
+                    <p className="text-purple-800 font-semibold mt-0.5">{selectedLeadForView.bedrooms}</p>
                   </div>
-                  <div className="bg-[#FFF3CD] border border-amber-150 rounded-lg p-3">
-                    <span className="text-[10px] text-gray-400 uppercase font-semibold">Lead Source</span>
-                    <p className="text-sm font-medium text-gray-800 mt-0.5">{selectedLeadForView.source}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Lead Timeline */}
-              <div className="space-y-3">
-                <h4 className="text-sm font-semibold text-[#035096] uppercase tracking-wider">Lead Timeline</h4>
-                <div className="space-y-2">
-                  {/* Inquiry Date */}
-                  <div className="bg-[#F1F3F6] rounded-lg p-3.5 flex flex-col sm:flex-row sm:items-center justify-between text-xs text-gray-700 font-medium gap-3">
-                    <div className="flex items-center gap-2.5 min-w-[140px]">
-                      <Icon icon="ri:time-line" className="w-4 h-4 text-blue-500" />
-                      <span className="text-gray-500">Inquiry Date</span>
-                    </div>
-                    <div className="flex-1 grid grid-cols-3 gap-2">
-                      <span className="text-gray-650">{selectedLeadForView.timeline.inquiry.date}</span>
-                      <span className="text-gray-650">{selectedLeadForView.timeline.inquiry.time}</span>
-                      <span className="text-gray-550 truncate">{selectedLeadForView.timeline.inquiry.notes}</span>
-                    </div>
-                  </div>
-
-                  {/* Last Follow-up */}
-                  <div className="bg-[#F1F3F6] rounded-lg p-3.5 flex flex-col sm:flex-row sm:items-center justify-between text-xs text-gray-700 font-medium gap-3">
-                    <div className="flex items-center gap-2.5 min-w-[140px]">
-                      <Icon icon="ri:chat-3-line" className="w-4 h-4 text-blue-500" />
-                      <span className="text-gray-500">Last Follow-up</span>
-                    </div>
-                    <div className="flex-1 grid grid-cols-3 gap-2">
-                      <span className="text-gray-650">{selectedLeadForView.timeline.lastFollowUp.date}</span>
-                      <span className="text-gray-650">{selectedLeadForView.timeline.lastFollowUp.time}</span>
-                      <span className="text-gray-550 truncate">{selectedLeadForView.timeline.lastFollowUp.notes}</span>
-                    </div>
-                  </div>
-
-                  {/* Next Follow-up */}
-                  <div className="bg-[#F1F3F6] rounded-lg p-3.5 flex flex-col sm:flex-row sm:items-center justify-between text-xs text-gray-700 font-medium gap-3">
-                    <div className="flex items-center gap-2.5 min-w-[140px]">
-                      <Icon icon="ri:notification-3-line" className="w-4 h-4 text-red-500" />
-                      <span className="text-gray-500">Next Follow-up</span>
-                    </div>
-                    <div className="flex-1 grid grid-cols-3 gap-2">
-                      <span className="text-gray-650">{selectedLeadForView.timeline.nextFollowUp.date}</span>
-                      <span className="text-gray-650">{selectedLeadForView.timeline.nextFollowUp.time}</span>
-                      <span className="text-gray-550 truncate">{selectedLeadForView.timeline.nextFollowUp.notes}</span>
-                    </div>
+                  <div className="bg-[#FFF3CD]/60 border border-amber-100/50 rounded-[5px] p-3">
+                    <span className="text-[9px] text-slate-400 uppercase font-semibold">Lead Source</span>
+                    <p className="text-amber-800 font-semibold mt-0.5">{selectedLeadForView.source}</p>
                   </div>
                 </div>
               </div>
 
               {/* Note */}
-              <div className="space-y-2">
-                <h4 className="text-sm font-semibold text-[#035096] uppercase tracking-wider">Note</h4>
-                <div className="bg-[#F1F3F6] rounded-lg p-3.5 text-xs text-gray-800 font-medium">
+              <div className="space-y-1.5">
+                <h4 className="text-xs font-bold text-[#035096] uppercase tracking-wider">Note</h4>
+                <div className="bg-slate-50 border border-slate-100 rounded-[5px] p-3 text-slate-700 font-medium">
                   {selectedLeadForView.note}
                 </div>
               </div>
 
-              {/* Update Lead Status */}
-              <div className="space-y-3">
-                <h4 className="text-sm font-semibold text-[#035096] uppercase tracking-wider">Update Lead Status</h4>
+              {/* Update Status */}
+              <div className="space-y-2">
+                <h4 className="text-xs font-bold text-[#035096] uppercase tracking-wider">Update Lead Status</h4>
                 <div className="grid grid-cols-4 gap-2">
-                  {statusOptions.slice(1).map((status) => {
-                    const isActive = selectedLeadForView.status === status;
+                  {statusOptions.slice(1).map((opt) => {
+                    const isActive = selectedLeadForView.status === opt.value;
                     return (
                       <button
-                        key={status}
+                        key={opt.value}
                         type="button"
-                        onClick={() => handleUpdateStatus(selectedLeadForView.id, status)}
-                        className={`py-2 text-xs font-semibold rounded-lg transition-colors text-center cursor-pointer ${
-                          isActive 
-                            ? 'bg-[#D2E7FF] text-[#035096]' 
-                            : 'bg-[#ECEEF2] hover:bg-slate-200 text-gray-700'
+                        onClick={() => handleUpdateStatus(selectedLeadForView.id, opt.value)}
+                        className={`py-1.5 text-[10px] font-semibold rounded-[5px] transition-colors text-center cursor-pointer ${
+                          isActive
+                            ? 'bg-[#035096] text-white'
+                            : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
                         }`}
                       >
-                        {status}
+                        {opt.label}
                       </button>
                     );
                   })}
                 </div>
               </div>
 
-              {/* Assign Agent */}
+              {/* Assign Agent Dropdown */}
               <div className="space-y-2">
-                <h4 className="text-sm font-semibold text-[#035096] uppercase tracking-wider">Assign Agent</h4>
+                <h4 className="text-xs font-bold text-[#035096] uppercase tracking-wider">Assign Agent</h4>
                 <div className="relative">
                   <button
+                    ref={viewAgentTriggerRef}
                     type="button"
                     onClick={() => setViewAgentDropdownOpen(!viewAgentDropdownOpen)}
-                    className={`w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-700 focus:outline-none flex items-center justify-between transition-all cursor-pointer ${
-                      viewAgentDropdownOpen ? 'ring-1 ring-[#035096] border-[#035096]' : ''
-                    }`}
+                    className="w-full bg-white border border-slate-200 rounded-[5px] px-3 py-2 text-xs font-semibold text-slate-700 flex items-center justify-between hover:border-slate-350 cursor-pointer"
                   >
                     <span>{selectedLeadForView.assigned}</span>
-                    <Icon 
-                      icon="ri:arrow-down-s-line" 
-                      className={`w-4 h-4 text-gray-700 transition-transform duration-200 ${
-                        viewAgentDropdownOpen ? 'rotate-180 text-[#035096]' : ''
-                      }`} 
-                    />
+                    <ChevronDown className="w-3.5 h-3.5 text-slate-500" />
                   </button>
-                  {viewAgentDropdownOpen && (
-                    <div className="absolute left-0 mt-1.5 w-full bg-white border border-slate-200 rounded-lg shadow-lg z-50 py-1 flex flex-col font-poppins max-h-48 overflow-y-auto">
-                      {['Unassigned', ...agentOptions.slice(1)].map((agent) => (
+                  {viewAgentDropdownOpen && createPortal(
+                    <div
+                      className="bg-white border border-slate-200 rounded-[5px] shadow-lg z-[9999] py-1 max-h-36 overflow-y-auto"
+                      style={{
+                        position: 'absolute',
+                        top: viewAgentCoords.top,
+                        left: viewAgentCoords.left,
+                        width: viewAgentCoords.width
+                      }}
+                    >
+                      {agentOptions.map((agent) => (
                         <button
                           key={agent}
                           type="button"
@@ -1040,35 +1050,38 @@ export const CrmManagement: React.FC = () => {
                             handleAssignAgent(selectedLeadForView.id, agent);
                             setViewAgentDropdownOpen(false);
                           }}
-                          className={`w-full text-left px-4 py-2.5 text-xs transition-colors flex items-center justify-between cursor-pointer ${
-                            agent === selectedLeadForView.assigned 
-                              ? 'bg-[#F0F4F9]/60 font-semibold text-[#035096]' 
+                          className={`w-full text-left px-3 py-1.5 text-xs transition-colors flex items-center justify-between cursor-pointer ${
+                            agent === selectedLeadForView.assigned
+                              ? 'bg-[#F0F4F9]/60 font-semibold text-[#035096]'
                               : 'text-slate-700 hover:bg-slate-50'
                           }`}
                         >
                           <span>{agent}</span>
-                          {agent === selectedLeadForView.assigned && <Icon icon="ri:check-line" className="w-3.5 h-3.5 text-[#035096] shrink-0" />}
+                          {agent === selectedLeadForView.assigned && (
+                            <Check className="w-3.5 h-3.5 text-[#035096] shrink-0" />
+                          )}
                         </button>
                       ))}
-                    </div>
+                    </div>,
+                    document.body
                   )}
                 </div>
               </div>
             </div>
 
-            {/* Footer */}
-            <div className="px-6 py-4 bg-white border-t border-gray-150 flex items-center justify-between gap-3">
+            {/* Modal Footer */}
+            <div className="px-6 py-4 border-t border-slate-100 flex items-center gap-3">
               <button
                 type="button"
                 onClick={() => triggerRescheduleFromView(selectedLeadForView)}
-                className="bg-[#035096] hover:bg-[#024076] text-white font-semibold text-sm py-2.5 flex-1 rounded-lg transition-colors cursor-pointer text-center"
+                className="flex-1 h-9 bg-[#035096] hover:bg-[#024078] text-white text-xs font-semibold rounded-[5px] cursor-pointer"
               >
                 Reschedule
               </button>
               <button
                 type="button"
                 onClick={() => setSelectedLeadForView(null)}
-                className="bg-[#ECEEF2] hover:bg-slate-200 text-gray-750 font-semibold text-sm py-2.5 flex-1 rounded-lg transition-colors cursor-pointer text-center"
+                className="flex-1 h-9 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-[5px] cursor-pointer"
               >
                 Close
               </button>
@@ -1079,136 +1092,137 @@ export const CrmManagement: React.FC = () => {
 
       {/* ================= MODAL 2: SCHEDULE NEW VISIT ================= */}
       {showScheduleModal && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4 overflow-y-auto animate-fade-in">
-          <div className="bg-white rounded-2xl w-full max-w-lg border border-gray-200 shadow-2xl flex flex-col overflow-hidden max-h-[90vh]">
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center z-[1000] p-4">
+          <div className="bg-white w-full max-w-[460px] rounded-[5px] overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200 text-left flex flex-col max-h-[90vh]">
             {/* Header */}
-            <div className="px-6 py-4 border-b border-gray-150 flex justify-between items-center bg-white">
-              <h3 className="text-lg font-semibold text-gray-900 font-poppins">Schedule New Visit</h3>
-              <button 
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+              <h2 className="text-base font-semibold text-slate-900">Schedule New Visit</h2>
+              <button
                 onClick={() => setShowScheduleModal(false)}
-                className="text-gray-400 hover:text-gray-650 p-1.5 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
+                className="w-8 h-8 rounded-[5px] hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-600 transition cursor-pointer"
               >
-                <Icon icon="ri:close-line" className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
 
             {/* Form */}
             <form onSubmit={handleScheduleSubmit} className="flex flex-col overflow-hidden">
-              <div className="p-6 overflow-y-auto space-y-5 text-left text-sm max-h-[65vh]">
-                
-                {/* Section: Property Info */}
-                <div className="space-y-3">
-                  <h4 className="text-xs font-semibold text-[#035096] uppercase tracking-wider border-b border-gray-100 pb-1">Property Information</h4>
+              <div className="p-6 overflow-y-auto space-y-4 text-xs text-slate-600">
+                {/* Property Info */}
+                <div className="space-y-2.5">
+                  <h4 className="text-[10px] font-bold text-[#035096] uppercase tracking-wider border-b border-slate-100 pb-1">Property Information</h4>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-xs font-semibold text-gray-700 mb-1">Property Title <span className="text-red-500">*</span></label>
+                      <label className="block text-[10px] font-semibold text-slate-500 mb-1">Property Title *</label>
                       <input
                         type="text"
                         required
                         placeholder="e.g. 3BHK Apartment"
                         value={scheduleForm.propertyTitle}
                         onChange={(e) => setScheduleForm({...scheduleForm, propertyTitle: e.target.value})}
-                        className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-[#035096]"
+                        className="w-full h-8 px-2.5 bg-white border border-slate-200 rounded-[5px] text-xs outline-none focus:border-[#035096]"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-gray-700 mb-1">Location <span className="text-red-500">*</span></label>
+                      <label className="block text-[10px] font-semibold text-slate-500 mb-1">Location *</label>
                       <input
                         type="text"
                         required
                         placeholder="e.g. Hyderabad"
                         value={scheduleForm.location}
                         onChange={(e) => setScheduleForm({...scheduleForm, location: e.target.value})}
-                        className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-[#035096]"
+                        className="w-full h-8 px-2.5 bg-white border border-slate-200 rounded-[5px] text-xs outline-none focus:border-[#035096]"
                       />
                     </div>
                   </div>
                 </div>
 
-                {/* Section: Buyer Info */}
-                <div className="space-y-3 mt-4">
-                  <h4 className="text-xs font-semibold text-[#035096] uppercase tracking-wider border-b border-gray-100 pb-1">Buyer Information</h4>
+                {/* Buyer Info */}
+                <div className="space-y-2.5">
+                  <h4 className="text-[10px] font-bold text-[#035096] uppercase tracking-wider border-b border-slate-100 pb-1">Buyer Information</h4>
                   <div>
-                    <label className="block text-xs font-semibold text-gray-700 mb-1">Buyer Name <span className="text-red-500">*</span></label>
+                    <label className="block text-[10px] font-semibold text-slate-500 mb-1">Buyer Name *</label>
                     <input
                       type="text"
                       required
                       placeholder="Full name"
                       value={scheduleForm.buyerName}
                       onChange={(e) => setScheduleForm({...scheduleForm, buyerName: e.target.value})}
-                      className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-[#035096]"
+                      className="w-full h-8 px-2.5 bg-white border border-slate-200 rounded-[5px] text-xs outline-none focus:border-[#035096]"
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-xs font-semibold text-gray-700 mb-1">Email</label>
+                      <label className="block text-[10px] font-semibold text-slate-500 mb-1">Email</label>
                       <input
                         type="email"
                         placeholder="email@gmail.com"
                         value={scheduleForm.email}
                         onChange={(e) => setScheduleForm({...scheduleForm, email: e.target.value})}
-                        className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-[#035096]"
+                        className="w-full h-8 px-2.5 bg-white border border-slate-200 rounded-[5px] text-xs outline-none focus:border-[#035096]"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-gray-700 mb-1">Phone</label>
+                      <label className="block text-[10px] font-semibold text-slate-500 mb-1">Phone</label>
                       <input
                         type="text"
                         placeholder="e.g. 98765..."
                         value={scheduleForm.phone}
                         onChange={(e) => setScheduleForm({...scheduleForm, phone: e.target.value})}
-                        className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-[#035096]"
+                        className="w-full h-8 px-2.5 bg-white border border-slate-200 rounded-[5px] text-xs outline-none focus:border-[#035096]"
                       />
                     </div>
                   </div>
                 </div>
 
-                {/* Section: Visit Schedule */}
-                <div className="space-y-3 mt-4">
-                  <h4 className="text-xs font-semibold text-[#035096] uppercase tracking-wider border-b border-gray-100 pb-1">Visit Schedule</h4>
+                {/* Visit Schedule */}
+                <div className="space-y-2.5">
+                  <h4 className="text-[10px] font-bold text-[#035096] uppercase tracking-wider border-b border-slate-100 pb-1">Visit Schedule</h4>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-xs font-semibold text-gray-700 mb-1">Visit Date <span className="text-red-500">*</span></label>
+                      <label className="block text-[10px] font-semibold text-slate-500 mb-1">Visit Date *</label>
                       <input
                         type="date"
                         required
                         value={scheduleForm.visitDate}
                         onChange={(e) => setScheduleForm({...scheduleForm, visitDate: e.target.value})}
-                        className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-[#035096]"
+                        className="w-full h-8 px-2.5 bg-white border border-slate-200 rounded-[5px] text-xs outline-none focus:border-[#035096]"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-gray-700 mb-1">Visit Time <span className="text-red-500">*</span></label>
+                      <label className="block text-[10px] font-semibold text-slate-500 mb-1">Visit Time *</label>
                       <input
                         type="time"
                         required
                         value={scheduleForm.visitTime}
                         onChange={(e) => setScheduleForm({...scheduleForm, visitTime: e.target.value})}
-                        className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-[#035096]"
+                        className="w-full h-8 px-2.5 bg-white border border-slate-200 rounded-[5px] text-xs outline-none focus:border-[#035096]"
                       />
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-3 mt-2">
+                  <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-xs font-semibold text-gray-700 mb-1">Assigned</label>
+                      <label className="block text-[10px] font-semibold text-slate-500 mb-1">Assigned Agent</label>
                       <div className="relative">
                         <button
+                          ref={scheduleAgentTriggerRef}
                           type="button"
                           onClick={() => setScheduleAgentDropdownOpen(!scheduleAgentDropdownOpen)}
-                          className={`w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-xs font-medium text-gray-700 focus:outline-none flex items-center justify-between transition-all cursor-pointer ${
-                            scheduleAgentDropdownOpen ? 'border-[#035096]' : ''
-                          }`}
+                          className="w-full bg-white border border-slate-200 rounded-[5px] h-8 px-2.5 text-xs text-slate-700 flex items-center justify-between hover:border-slate-350 cursor-pointer"
                         >
                           <span className="truncate">{scheduleForm.assignedAgent}</span>
-                          <Icon 
-                            icon="ri:arrow-down-s-line" 
-                            className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${
-                              scheduleAgentDropdownOpen ? 'rotate-180 text-[#035096]' : ''
-                            }`} 
-                          />
+                          <ChevronDown className="w-3.5 h-3.5 text-slate-500 shrink-0" />
                         </button>
-                        {scheduleAgentDropdownOpen && (
-                          <div className="absolute left-0 mt-1.5 w-full bg-white border border-slate-200 rounded-lg shadow-lg z-50 py-1 flex flex-col font-poppins max-h-40 overflow-y-auto">
+                        {scheduleAgentDropdownOpen && createPortal(
+                          <div
+                            className="bg-white border border-slate-200 rounded-[5px] shadow-lg z-[9999] py-1 max-h-36 overflow-y-auto"
+                            style={{
+                              position: 'absolute',
+                              top: scheduleAgentCoords.top,
+                              left: scheduleAgentCoords.left,
+                              width: scheduleAgentCoords.width
+                            }}
+                          >
                             {['Select Agent', ...agentOptions.slice(1)].map((agent) => (
                               <button
                                 key={agent}
@@ -1217,40 +1231,45 @@ export const CrmManagement: React.FC = () => {
                                   setScheduleForm({...scheduleForm, assignedAgent: agent});
                                   setScheduleAgentDropdownOpen(false);
                                 }}
-                                className={`w-full text-left px-3 py-2 text-xs transition-colors flex items-center justify-between cursor-pointer ${
-                                  agent === scheduleForm.assignedAgent 
-                                    ? 'bg-[#F0F4F9]/60 font-semibold text-[#035096]' 
+                                className={`w-full text-left px-3 py-1.5 text-xs transition-colors flex items-center justify-between cursor-pointer ${
+                                  agent === scheduleForm.assignedAgent
+                                    ? 'bg-[#F0F4F9]/60 font-semibold text-[#035096]'
                                     : 'text-slate-700 hover:bg-slate-50'
                                 }`}
                               >
-                                <span className="truncate">{agent}</span>
-                                {agent === scheduleForm.assignedAgent && <Icon icon="ri:check-line" className="w-3.5 h-3.5 text-[#035096] shrink-0" />}
+                                <span>{agent}</span>
+                                {agent === scheduleForm.assignedAgent && (
+                                  <Check className="w-3.5 h-3.5 text-[#035096] shrink-0" />
+                                )}
                               </button>
                             ))}
-                          </div>
+                          </div>,
+                          document.body
                         )}
                       </div>
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-gray-700 mb-1">Reminder</label>
+                      <label className="block text-[10px] font-semibold text-slate-500 mb-1">Reminder</label>
                       <div className="relative">
                         <button
+                          ref={scheduleReminderTriggerRef}
                           type="button"
                           onClick={() => setScheduleReminderDropdownOpen(!scheduleReminderDropdownOpen)}
-                          className={`w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-xs font-medium text-gray-700 focus:outline-none flex items-center justify-between transition-all cursor-pointer ${
-                            scheduleReminderDropdownOpen ? 'border-[#035096]' : ''
-                          }`}
+                          className="w-full bg-white border border-slate-200 rounded-[5px] h-8 px-2.5 text-xs text-slate-700 flex items-center justify-between hover:border-slate-350 cursor-pointer"
                         >
                           <span className="truncate">{scheduleForm.reminder}</span>
-                          <Icon 
-                            icon="ri:arrow-down-s-line" 
-                            className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${
-                              scheduleReminderDropdownOpen ? 'rotate-180 text-[#035096]' : ''
-                            }`} 
-                          />
+                          <ChevronDown className="w-3.5 h-3.5 text-slate-500 shrink-0" />
                         </button>
-                        {scheduleReminderDropdownOpen && (
-                          <div className="absolute left-0 mt-1.5 w-full bg-white border border-slate-200 rounded-lg shadow-lg z-50 py-1 flex flex-col font-poppins max-h-40 overflow-y-auto">
+                        {scheduleReminderDropdownOpen && createPortal(
+                          <div
+                            className="bg-white border border-slate-200 rounded-[5px] shadow-lg z-[9999] py-1 max-h-36 overflow-y-auto"
+                            style={{
+                              position: 'absolute',
+                              top: scheduleReminderCoords.top,
+                              left: scheduleReminderCoords.left,
+                              width: scheduleReminderCoords.width
+                            }}
+                          >
                             {['1 day before', '2 hours before', '1 hour before', '3 days before'].map((rem) => (
                               <button
                                 key={rem}
@@ -1259,80 +1278,80 @@ export const CrmManagement: React.FC = () => {
                                   setScheduleForm({...scheduleForm, reminder: rem});
                                   setScheduleReminderDropdownOpen(false);
                                 }}
-                                className={`w-full text-left px-3 py-2 text-xs transition-colors flex items-center justify-between cursor-pointer ${
-                                  rem === scheduleForm.reminder 
-                                    ? 'bg-[#F0F4F9]/60 font-semibold text-[#035096]' 
+                                className={`w-full text-left px-3 py-1.5 text-xs transition-colors flex items-center justify-between cursor-pointer ${
+                                  rem === scheduleForm.reminder
+                                    ? 'bg-[#F0F4F9]/60 font-semibold text-[#035096]'
                                     : 'text-slate-700 hover:bg-slate-50'
                                 }`}
                               >
-                                <span className="truncate">{rem}</span>
-                                {rem === scheduleForm.reminder && <Icon icon="ri:check-line" className="w-3.5 h-3.5 text-[#035096] shrink-0" />}
+                                <span>{rem}</span>
+                                {rem === scheduleForm.reminder && (
+                                  <Check className="w-3.5 h-3.5 text-[#035096] shrink-0" />
+                                )}
                               </button>
                             ))}
-                          </div>
+                          </div>,
+                          document.body
                         )}
                       </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Section: Choose notification platform */}
-                <div className="space-y-2 mt-4">
-                  <label className="block text-xs font-semibold text-gray-700">Choose notification platform</label>
-                  <div className="flex gap-2.5">
+                {/* Choose platform */}
+                <div className="space-y-1.5">
+                  <label className="block text-[10px] font-semibold text-slate-500">Choose notification platform</label>
+                  <div className="flex gap-2">
                     <button
                       type="button"
                       onClick={() => setScheduleForm({...scheduleForm, notificationPlatform: 'Whatsapp'})}
-                      className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-lg font-semibold text-xs cursor-pointer transition-all border ${
+                      className={`px-3 py-1.5 rounded-[5px] font-semibold text-xs transition-all border cursor-pointer ${
                         scheduleForm.notificationPlatform === 'Whatsapp'
-                          ? 'bg-[#25D366] border-[#25D366] text-white shadow-sm'
-                          : 'bg-white hover:bg-slate-50 border-gray-300 text-gray-700'
+                          ? 'bg-[#25D366] border-[#25D366] text-white'
+                          : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
                       }`}
                     >
-                      <Icon icon="ri:whatsapp-line" className="w-4 h-4" />
-                      <span>Whatsapp</span>
+                      Whatsapp
                     </button>
                     <button
                       type="button"
                       onClick={() => setScheduleForm({...scheduleForm, notificationPlatform: 'Email'})}
-                      className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-lg font-semibold text-xs cursor-pointer transition-all border ${
+                      className={`px-3 py-1.5 rounded-[5px] font-semibold text-xs transition-all border cursor-pointer ${
                         scheduleForm.notificationPlatform === 'Email'
-                          ? 'bg-[#1A91F0] border-[#1A91F0] text-white shadow-sm'
-                          : 'bg-white hover:bg-slate-50 border-gray-300 text-gray-700'
+                          ? 'bg-[#1A91F0] border-[#1A91F0] text-white'
+                          : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
                       }`}
                     >
-                      <span className="font-semibold text-sm leading-none">@</span>
-                      <span>Email</span>
+                      Email
                     </button>
                   </div>
                 </div>
 
-                {/* Section: Note */}
-                <div className="space-y-1.5 mt-4">
-                  <label className="block text-xs font-semibold text-gray-700">Note</label>
+                {/* Note */}
+                <div className="space-y-1">
+                  <label className="block text-[10px] font-semibold text-slate-500">Note</label>
                   <textarea
                     rows={3}
                     placeholder="Enter notes about client preference..."
                     value={scheduleForm.note}
                     onChange={(e) => setScheduleForm({...scheduleForm, note: e.target.value})}
-                    className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-[#035096] resize-none"
+                    className="w-full bg-white border border-slate-200 rounded-[5px] px-2.5 py-1.5 text-xs outline-none focus:border-[#035096] resize-none"
                   />
                 </div>
-
               </div>
 
               {/* Footer */}
-              <div className="px-6 py-4 bg-slate-50 border-t border-gray-150 flex items-center justify-between gap-3 shrink-0">
+              <div className="px-6 py-4 border-t border-slate-100 flex items-center gap-3">
                 <button
                   type="button"
                   onClick={() => setShowScheduleModal(false)}
-                  className="bg-slate-200/80 hover:bg-slate-200 text-gray-700 font-semibold text-sm px-6 py-2 rounded-lg transition-colors cursor-pointer border border-slate-250 flex-1"
+                  className="flex-1 h-9 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-[5px] cursor-pointer"
                 >
                   Close
                 </button>
                 <button
                   type="submit"
-                  className="bg-[#035096] hover:bg-[#024076] text-white font-semibold text-sm px-6 py-2 rounded-lg transition-colors cursor-pointer flex-1"
+                  className="flex-1 h-9 bg-[#035096] hover:bg-[#024078] text-white text-xs font-semibold rounded-[5px] cursor-pointer"
                 >
                   Schedule
                 </button>
@@ -1344,89 +1363,83 @@ export const CrmManagement: React.FC = () => {
 
       {/* ================= MODAL 3: RESCHEDULE VISIT ================= */}
       {showRescheduleModal && rescheduleLead && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4 overflow-y-auto animate-fade-in">
-          <div className="bg-white rounded-2xl w-full max-w-md border border-gray-200 shadow-2xl flex flex-col overflow-hidden max-h-[90vh]">
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center z-[1000] p-4">
+          <div className="bg-white w-full max-w-[400px] rounded-[5px] overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200 text-left flex flex-col max-h-[90vh]">
             {/* Header */}
-            <div className="px-6 py-4 border-b border-gray-150 flex justify-between items-center bg-white">
-              <h3 className="text-lg font-semibold text-gray-900 font-poppins">Reschedule Visit</h3>
-              <button 
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+              <h2 className="text-base font-semibold text-slate-900">Reschedule Visit</h2>
+              <button
                 onClick={() => {
                   setShowRescheduleModal(false);
                   setRescheduleLead(null);
                 }}
-                className="text-gray-400 hover:text-gray-650 p-1.5 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
+                className="w-8 h-8 rounded-[5px] hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-600 transition cursor-pointer"
               >
-                <Icon icon="ri:close-line" className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
 
             {/* Form */}
-            <form onSubmit={handleRescheduleSubmit} className="flex flex-col text-left">
-              <div className="p-6 space-y-4">
-                
+            <form onSubmit={handleRescheduleSubmit} className="flex flex-col">
+              <div className="p-6 space-y-4 text-xs text-slate-600">
                 {/* Property Display */}
                 <div>
-                  <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">Property</span>
-                  <p className="text-sm font-medium text-gray-900 mt-0.5">{rescheduleLead.property}</p>
+                  <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Property</span>
+                  <p className="text-slate-800 font-semibold mt-0.5">{rescheduleLead.property}</p>
                 </div>
 
                 {/* New Date */}
                 <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1">New Date</label>
-                  <div className="relative">
-                    <input
-                      type="date"
-                      required
-                      value={rescheduleForm.newDate}
-                      onChange={(e) => setRescheduleForm({...rescheduleForm, newDate: e.target.value})}
-                      className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-[#035096]"
-                    />
-                  </div>
+                  <label className="block text-[10px] font-semibold text-slate-500 mb-1">New Date</label>
+                  <input
+                    type="date"
+                    required
+                    value={rescheduleForm.newDate}
+                    onChange={(e) => setRescheduleForm({...rescheduleForm, newDate: e.target.value})}
+                    className="w-full h-8 px-2.5 bg-white border border-slate-200 rounded-[5px] text-xs outline-none focus:border-[#035096]"
+                  />
                 </div>
 
                 {/* New Time */}
                 <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1">New Time</label>
-                  <div className="relative">
-                    <input
-                      type="time"
-                      required
-                      value={rescheduleForm.newTime}
-                      onChange={(e) => setRescheduleForm({...rescheduleForm, newTime: e.target.value})}
-                      className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-[#035096]"
-                    />
-                  </div>
+                  <label className="block text-[10px] font-semibold text-slate-500 mb-1">New Time</label>
+                  <input
+                    type="time"
+                    required
+                    value={rescheduleForm.newTime}
+                    onChange={(e) => setRescheduleForm({...rescheduleForm, newTime: e.target.value})}
+                    className="w-full h-8 px-2.5 bg-white border border-slate-200 rounded-[5px] text-xs outline-none focus:border-[#035096]"
+                  />
                 </div>
 
                 {/* Reason */}
                 <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1">Reason for Rescheduling</label>
+                  <label className="block text-[10px] font-semibold text-slate-500 mb-1">Reason for Rescheduling</label>
                   <textarea
                     rows={3}
                     placeholder="Enter reason for rescheduling..."
                     value={rescheduleForm.reason}
                     onChange={(e) => setRescheduleForm({...rescheduleForm, reason: e.target.value})}
-                    className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-[#035096] resize-none"
+                    className="w-full bg-white border border-slate-200 rounded-[5px] px-2.5 py-1.5 text-xs outline-none focus:border-[#035096] resize-none"
                   />
                 </div>
-
               </div>
 
               {/* Footer */}
-              <div className="px-6 py-4 bg-slate-50 border-t border-gray-150 flex items-center justify-between gap-3 shrink-0">
+              <div className="px-6 py-4 border-t border-slate-100 flex items-center gap-3">
                 <button
                   type="button"
                   onClick={() => {
                     setShowRescheduleModal(false);
                     setRescheduleLead(null);
                   }}
-                  className="bg-slate-200/80 hover:bg-slate-200 text-gray-700 font-semibold text-sm px-6 py-2.5 rounded-lg transition-colors cursor-pointer border border-slate-250 flex-1 text-center font-poppins"
+                  className="flex-1 h-9 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-[5px] cursor-pointer"
                 >
                   Close
                 </button>
                 <button
                   type="submit"
-                  className="bg-[#035096] hover:bg-[#024076] text-white font-semibold text-sm px-6 py-2.5 rounded-lg transition-colors cursor-pointer flex-1 text-center font-poppins shadow-sm"
+                  className="flex-1 h-9 bg-[#035096] hover:bg-[#024078] text-white text-xs font-semibold rounded-[5px] cursor-pointer"
                 >
                   Reschedule
                 </button>

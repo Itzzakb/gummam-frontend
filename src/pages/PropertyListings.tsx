@@ -375,7 +375,7 @@ export const PropertyListings: React.FC = () => {
         </div>
         <button 
           onClick={() => navigate('/post-property')}
-          className="bg-[#035096] hover:bg-[#024076] text-white font-medium text-sm px-5 py-2.5 rounded-lg inline-flex items-center gap-2 transition-colors cursor-pointer shadow-sm"
+          className="bg-[#035096] hover:bg-[#024076] text-white font-medium text-sm px-5 py-2.5 rounded-lg inline-flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-sm"
         >
           <Plus className="w-4 h-4" />
           <span>Add New Property</span>
@@ -397,7 +397,7 @@ export const PropertyListings: React.FC = () => {
         <div className="relative">
           <button 
             onClick={() => setShowFiltersPanel(!showFiltersPanel)}
-            className="w-full md:w-auto bg-[#035096] text-white hover:bg-[#024076] border border-transparent rounded-lg px-5 py-2.5 text-sm font-medium inline-flex items-center gap-2 transition-colors cursor-pointer"
+            className="w-full md:w-auto bg-[#035096] text-white hover:bg-[#024076] border border-transparent rounded-lg px-5 py-2.5 text-sm font-medium inline-flex items-center justify-center gap-2 transition-colors cursor-pointer"
           >
             <Filter className="w-4 h-4" />
             <span>Filters</span>

@@ -186,7 +186,7 @@ export const Blogs: React.FC = () => {
           </Link>
 
           {/* Right Sidebar Stack */}
-          <div className="flex flex-col gap-4 justify-between h-[380px] md:h-[450px]">
+          <div className="flex flex-col gap-4 justify-between h-auto lg:h-[450px]">
             {sidebarPosts.map((post) => (
               <Link to={`/blog/${post.id}`} key={post.id} className="bg-white rounded-[16px] border border-gray-200/60 shadow-sm flex items-center overflow-hidden hover:shadow-md transition-shadow cursor-pointer flex-1 gap-4 block">
                 <div className="w-[120px] md:w-[140px] self-stretch flex-shrink-0">

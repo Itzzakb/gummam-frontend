@@ -63,7 +63,7 @@ export const PrimeProperties: React.FC = () => {
         {/* Heading */}
         <div className="flex justify-center mb-4">
           <div className="relative inline-block border-b-2 border-[#0B2C5C] pb-3">
-            <h2 className="text-center text-3xl font-bold text-[#0B2C5C] font-heading">
+            <h2 className="text-center text-2xl sm:text-3xl font-bold text-[#0B2C5C] font-heading">
               Prime Properties
             </h2>
             <div className="absolute -bottom-[9px] left-1/2 -translate-x-1/2 w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[8px] border-t-[#0B2C5C]"></div>
@@ -83,7 +83,7 @@ export const PrimeProperties: React.FC = () => {
 
             {/* Left Content */}
             <div className="w-full lg:w-[45%] flex flex-col justify-center">
-              <h3 className="text-3xl sm:text-4xl font-bold text-black mb-4">{currentProp.title}</h3>
+              <h3 className="text-2xl sm:text-4xl font-bold text-black mb-4">{currentProp.title}</h3>
               <p className="text-gray-500 text-[15px] leading-relaxed mb-8">
                 {currentProp.description}
               </p>

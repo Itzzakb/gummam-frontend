@@ -1,4 +1,5 @@
 import React, { useState, useLayoutEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Search, SlidersHorizontal, Share2, Phone, FileText, ChevronDown } from 'lucide-react';
 interface DualRangeSliderProps {
   min: number;
@@ -95,63 +96,90 @@ const DualRangeSlider: React.FC<DualRangeSliderProps> = ({
   );
 };
 
-interface LostDealSubmenuProps {
+interface ReasonSubmenuProps {
+  reasons: string[];
   onSelectReason: (reason: string) => void;
+  anchorRect: DOMRect;
 }
 
-const LostDealSubmenu: React.FC<LostDealSubmenuProps> = ({ onSelectReason }) => {
-  const ref = useRef<HTMLDivElement>(null);
-  const [placement, setPlacement] = useState<'left' | 'right' | 'bottom'>('left');
+const ReasonSubmenu: React.FC<ReasonSubmenuProps> = ({ reasons, onSelectReason, anchorRect }) => {
+  const menuWidth = 224;
+  const gap = 8;
+  const spaceOnRight = window.innerWidth - anchorRect.right;
+  const placeRight = spaceOnRight >= menuWidth + gap;
+  const left = placeRight
+    ? anchorRect.right + gap
+    : Math.max(8, anchorRect.left - menuWidth - gap);
+  const top = Math.min(
+    Math.max(8, anchorRect.top),
+    window.innerHeight - 280
+  );
 
-  useLayoutEffect(() => {
-    if (!ref.current) return;
-    const rect = ref.current.getBoundingClientRect();
-    // Check if drawing to the left (224px width + margin) goes off-screen
-    if (rect.left - 240 < 0) {
-      // If we go off-screen left, check if we have space on the right (208px is status dropdown width)
-      if (rect.right + 240 < window.innerWidth) {
-        setPlacement('right');
-      } else {
-        setPlacement('bottom');
-      }
-    }
-  }, []);
-
-  const reasons = [
-    'No Response',
-    'Requirement Changed',
-    'Budget Limitation',
-    'Different Location',
-    'Negotiation Unsuccessful',
-    'Purchased from Competitor',
-    'Commercial T&C Not Agreed',
-    'Ready-to-Move Preference',
-    'Others'
-  ];
-
-  const placementClasses = {
-    left: 'right-full top-0 mr-2',
-    right: 'left-full top-0 ml-2',
-    bottom: 'left-0 top-full mt-2'
-  };
-
-  return (
+  return createPortal(
     <div
-      ref={ref}
-      className={`absolute ${placementClasses[placement]} w-56 bg-white border border-[#E2E8F0] rounded-[6px] shadow-xl z-50 py-1.5 flex flex-col`}
+      className="fixed w-56 bg-white border border-[#E2E8F0] rounded-[6px] shadow-xl z-[9999] py-1.5 flex flex-col max-h-64 overflow-y-auto"
+      style={{ left, top }}
+      onMouseDown={(e) => e.stopPropagation()}
     >
       {reasons.map((reason) => (
         <button
           key={reason}
+          type="button"
           onClick={() => onSelectReason(reason)}
           className="w-full text-left px-4 py-2 text-xs text-gray-700 hover:bg-slate-50 border-b border-gray-100 last:border-0 font-medium"
         >
           {reason}
         </button>
       ))}
-    </div>
+    </div>,
+    document.body
   );
 };
+
+const LEAD_STATUSES = [
+  { label: 'New Lead', color: 'text-blue-500', hasSubmenu: false },
+  { label: 'Contacted', color: 'text-blue-500', hasSubmenu: false },
+  { label: 'Send Brochure', color: 'text-indigo-600', hasSubmenu: false },
+  { label: 'Follow-up', color: 'text-[#004B8F]', hasSubmenu: 'follow-up' as const },
+  { label: 'Send Location Map', color: 'text-indigo-600', hasSubmenu: false },
+  { label: 'Site Visit Scheduled', color: 'text-indigo-800', hasSubmenu: false },
+  { label: 'Site Visit Completed', color: 'text-teal-600', hasSubmenu: false },
+  { label: 'Negotiation', color: 'text-slate-900 font-semibold', hasSubmenu: false },
+  { label: 'Token Received', color: 'text-green-600', hasSubmenu: false },
+  { label: 'Booking Confirmed', color: 'text-green-600', hasSubmenu: false },
+  { label: 'Registered', color: 'text-green-700', hasSubmenu: false },
+  { label: 'Lost', color: 'text-red-500 font-medium', hasSubmenu: 'lost' as const },
+  { label: 'Junk Lead', color: 'text-red-400', hasSubmenu: false },
+  { label: 'Add extra point', color: 'text-[#035096] font-medium', hasSubmenu: 'extra' as const },
+];
+
+const FOLLOW_UP_REASONS = [
+  'Ring No Response (RNR)',
+  'Busy',
+  'Requested Callback',
+  'Family Discussion',
+  'Loan Processing',
+  'Budget Arrangement',
+  'Site Visit Planning',
+  'Price Discussion',
+  'Documents Review',
+  'Interested',
+  'Comparing Projects',
+  'Not Available',
+];
+
+const LOST_REASONS = [
+  'Budget Mismatch',
+  'Location Mismatch',
+  'Purchased Elsewhere',
+  'Loan Rejected',
+  'No Requirement',
+  'Price Negotiation Failed',
+  'Family Rejected',
+  'Project Not Suitable',
+  'Invalid Number',
+  'Duplicate Lead',
+];
 
 interface NoteEditorModalProps {
   initialContent: string;
@@ -294,7 +322,11 @@ export const LeadManagement: React.FC = () => {
   // Custom dropdown states for each lead status / lead assign select
   const [activeStatusDropdown, setActiveStatusDropdown] = useState<string | null>(null);
   const [activeAssignDropdown, setActiveAssignDropdown] = useState<string | null>(null);
-  const [activeLostDealDropdown, setActiveLostDealDropdown] = useState<string | null>(null);
+  const [activeStatusSubmenu, setActiveStatusSubmenu] = useState<{
+    leadId: string;
+    type: 'Follow-up' | 'Lost';
+    rect: DOMRect;
+  } | null>(null);
   const [activeEditingNoteLeadId, setActiveEditingNoteLeadId] = useState<string | null>(null);
   const [noteText, setNoteText] = useState('');
 
@@ -320,7 +352,7 @@ export const LeadManagement: React.FC = () => {
       initials: 'PL',
       timeAgo: '20 hrs ago',
       isBoosted: true,
-      status: 'Open',
+      status: 'New Lead',
       assignedId: 'ID - 001',
       lookingFor: {
         bhk: '2 BHK',
@@ -329,7 +361,7 @@ export const LeadManagement: React.FC = () => {
         location: 'Hayathnagar',
         purpose: 'Buy',
         price: '₹ 68.5 L',
-        area: '1200 sq.ft.'
+        area: '1200 Sft.'
       }
     },
     {
@@ -339,7 +371,7 @@ export const LeadManagement: React.FC = () => {
       initials: 'PL',
       timeAgo: '20 hrs ago',
       isBoosted: true,
-      status: 'Open',
+      status: 'New Lead',
       assignedId: 'ID - 001',
       lookingFor: {
         bhk: '2 BHK',
@@ -348,7 +380,7 @@ export const LeadManagement: React.FC = () => {
         location: 'Hayathnagar',
         purpose: 'Buy',
         price: '₹ 68.5 L',
-        area: '1200 sq.ft.'
+        area: '1200 Sft.'
       }
     },
     {
@@ -358,7 +390,7 @@ export const LeadManagement: React.FC = () => {
       initials: 'PL',
       timeAgo: '20 hrs ago',
       isBoosted: true,
-      status: 'Open',
+      status: 'New Lead',
       assignedId: 'ID - 001',
       lookingFor: {
         bhk: '2 BHK',
@@ -367,7 +399,7 @@ export const LeadManagement: React.FC = () => {
         location: 'Hayathnagar',
         purpose: 'Buy',
         price: '₹ 68.5 L',
-        area: '1200 sq.ft.'
+        area: '1200 Sft.'
       }
     },
     {
@@ -377,7 +409,7 @@ export const LeadManagement: React.FC = () => {
       initials: 'PL',
       timeAgo: '20 hrs ago',
       isBoosted: true,
-      status: 'Open',
+      status: 'New Lead',
       assignedId: 'ID - 001',
       lookingFor: {
         bhk: '2 BHK',
@@ -386,7 +418,7 @@ export const LeadManagement: React.FC = () => {
         location: 'Hayathnagar',
         purpose: 'Buy',
         price: '₹ 68.5 L',
-        area: '1200 sq.ft.'
+        area: '1200 Sft.'
       }
     }
   ]);
@@ -402,6 +434,7 @@ export const LeadManagement: React.FC = () => {
   const handleStatusChange = (id: string, newStatus: Lead['status']) => {
     setLeads(prev => prev.map(lead => lead.id === id ? { ...lead, status: newStatus } : lead));
     setActiveStatusDropdown(null);
+    setActiveStatusSubmenu(null);
   };
 
   const handleAssignChange = (id: string, newAssignId: string) => {
@@ -643,8 +676,8 @@ export const LeadManagement: React.FC = () => {
                       accentColor="#004B8F"
                     />
                     <div className="flex justify-between text-[9px] text-gray-400 font-bold mt-1">
-                      <span>₹ {(500000).toLocaleString('en-IN')}</span>
-                      <span>₹ {(100000000).toLocaleString('en-IN')}</span>
+                      <span>₹ 5 Lakhs</span>
+                      <span>₹ 10 Cr</span>
                     </div>
                   </div>
                 </div>
@@ -754,57 +787,69 @@ export const LeadManagement: React.FC = () => {
                     onClick={() => {
                       setActiveStatusDropdown(activeStatusDropdown === lead.id ? null : lead.id);
                       setActiveAssignDropdown(null);
+                      setActiveStatusSubmenu(null);
                     }}
-                    className="flex items-center gap-1.5 bg-[#EBF3FE] border border-[#BFDBFE] text-[#0066F6] font-medium px-3 py-1.5 rounded-[4px] cursor-pointer"
+                    className="flex items-center gap-1.5 bg-[#EBF3FE] border border-[#BFDBFE] text-[#0066F6] font-medium px-3 py-1.5 rounded-[4px] cursor-pointer max-w-[180px]"
                   >
-                    <span>{lead.status}</span>
-                    <ChevronDown className="w-3 h-3 text-[#0066F6]" />
+                    <span className="truncate">{lead.status}</span>
+                    <ChevronDown className="w-3 h-3 text-[#0066F6] shrink-0" />
                   </button>
                   {activeStatusDropdown === lead.id && (
-                    <div className="absolute right-0 mt-1.5 w-52 bg-white border border-[#E2E8F0] rounded-[6px] shadow-lg z-50 py-1.5 flex flex-col">
-                      {[
-                        { label: 'New Inquiry', color: 'text-blue-500' },
-                        { label: 'Contact Scheduled', color: 'text-blue-400' },
-                        { label: 'Callback', color: 'text-blue-500' },
-                        { label: 'Qualified Lead', color: 'text-[#004B8F]' },
-                        { label: 'Property Tour', color: 'text-indigo-600' },
-                        { label: 'Proposal Shared', color: 'text-indigo-800' },
-                        { label: 'Negotiation Stage', color: 'text-slate-900 font-semibold' },
-                        { label: 'Booking Confirmed', color: 'text-green-600' },
-                        { label: 'Lost Deal ✕', color: 'text-red-500 font-medium' }
-                      ].map((statusObj) => (
+                    <div className="absolute right-0 mt-1.5 w-56 bg-white border border-[#E2E8F0] rounded-[6px] shadow-lg z-50 py-1.5 flex flex-col max-h-72 overflow-y-auto">
+                      {LEAD_STATUSES.map((statusObj) => (
                         <div key={statusObj.label} className="relative">
                           <button
-                            onClick={() => {
-                              if (statusObj.label.startsWith('Lost Deal')) {
-                                setActiveLostDealDropdown(activeLostDealDropdown === lead.id ? null : lead.id);
+                            onClick={(e) => {
+                              if (statusObj.hasSubmenu === 'follow-up' || statusObj.hasSubmenu === 'lost') {
+                                const type = statusObj.label as 'Follow-up' | 'Lost';
+                                const rect = e.currentTarget.getBoundingClientRect();
+                                setActiveStatusSubmenu(
+                                  activeStatusSubmenu?.leadId === lead.id &&
+                                  activeStatusSubmenu?.type === type
+                                    ? null
+                                    : { leadId: lead.id, type, rect }
+                                );
+                              } else if (statusObj.hasSubmenu === 'extra') {
+                                const customStatus = window.prompt('Enter custom status point:');
+                                if (customStatus?.trim()) {
+                                  handleStatusChange(lead.id, customStatus.trim());
+                                }
                               } else {
-                                handleStatusChange(lead.id, statusObj.label as any);
-                                setActiveLostDealDropdown(null);
+                                handleStatusChange(lead.id, statusObj.label);
                               }
                             }}
                             className={`w-full text-left px-4 py-2 text-xs transition-colors hover:bg-slate-50 border-b border-gray-100 last:border-0 ${statusObj.color} flex items-center justify-between`}
                           >
                             <span>{statusObj.label}</span>
-                            {statusObj.label.startsWith('Lost Deal') && (
-                              <svg className="w-3 h-3 text-red-400" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                            {(statusObj.hasSubmenu === 'follow-up' || statusObj.hasSubmenu === 'lost') && (
+                              <svg className="w-3 h-3 text-slate-400 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
                               </svg>
                             )}
                           </button>
-
-                          {/* Sub-dropdown reasons for Lost Deal */}
-                          {statusObj.label.startsWith('Lost Deal') && activeLostDealDropdown === lead.id && (
-                            <LostDealSubmenu 
-                              onSelectReason={(reason) => {
-                                handleStatusChange(lead.id, `Lost: ${reason}`);
-                                setActiveLostDealDropdown(null);
-                              }}
-                            />
-                          )}
                         </div>
                       ))}
                     </div>
+                  )}
+
+                  {activeStatusSubmenu?.leadId === lead.id && activeStatusSubmenu.type === 'Follow-up' && (
+                    <ReasonSubmenu
+                      reasons={FOLLOW_UP_REASONS}
+                      anchorRect={activeStatusSubmenu.rect}
+                      onSelectReason={(reason) => {
+                        handleStatusChange(lead.id, `Follow-up: ${reason}`);
+                      }}
+                    />
+                  )}
+
+                  {activeStatusSubmenu?.leadId === lead.id && activeStatusSubmenu.type === 'Lost' && (
+                    <ReasonSubmenu
+                      reasons={LOST_REASONS}
+                      anchorRect={activeStatusSubmenu.rect}
+                      onSelectReason={(reason) => {
+                        handleStatusChange(lead.id, `Lost: ${reason}`);
+                      }}
+                    />
                   )}
                 </div>
               </div>
@@ -817,6 +862,7 @@ export const LeadManagement: React.FC = () => {
                     onClick={() => {
                       setActiveAssignDropdown(activeAssignDropdown === lead.id ? null : lead.id);
                       setActiveStatusDropdown(null);
+                      setActiveStatusSubmenu(null);
                     }}
                     className="flex items-center gap-1.5 bg-[#F5F3FF] border border-[#DDD6FE] text-[#6D28D9] font-medium px-3 py-1.5 rounded-[4px] cursor-pointer"
                   >
@@ -894,26 +940,24 @@ export const LeadManagement: React.FC = () => {
 
             {/* Action Buttons */}
             <div className="space-y-2 mt-5">
-              <div className="flex gap-2">
-                <button className="flex-1 flex items-center justify-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold py-2.5 rounded-[4px] transition-all">
-                  <Phone className="w-3.5 h-3.5" />
-                  <span>View Contact</span>
-                </button>
-                <button 
-                  onClick={() => {
-                    setActiveEditingNoteLeadId(lead.id);
-                    setNoteText(lead.notes || '');
-                  }}
-                  className={`flex items-center justify-center gap-1 text-xs font-semibold px-3 py-2.5 rounded-[4px] transition-all border cursor-pointer ${
-                    lead.notes 
-                      ? 'bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100/70' 
-                      : 'bg-white border-[#E2E8F0] hover:bg-gray-50 text-gray-700'
-                  }`}
-                >
-                  <FileText className="w-3.5 h-3.5 text-gray-500" />
-                  <span>{lead.notes ? 'Edit note' : 'Add note'}</span>
-                </button>
-              </div>
+              <button 
+                onClick={() => {
+                  setActiveEditingNoteLeadId(lead.id);
+                  setNoteText(lead.notes || '');
+                }}
+                className={`w-full flex items-center justify-center gap-1.5 text-xs font-semibold px-3 py-2.5 rounded-[4px] transition-all border cursor-pointer ${
+                  lead.notes 
+                    ? 'bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100/70' 
+                    : 'bg-white border-[#E2E8F0] hover:bg-gray-50 text-gray-700'
+                }`}
+              >
+                <FileText className="w-3.5 h-3.5 text-gray-500" />
+                <span>{lead.notes ? 'Edit note' : 'Add note'}</span>
+              </button>
+              <button className="w-full flex items-center justify-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold py-2.5 rounded-[4px] transition-all">
+                <Phone className="w-3.5 h-3.5" />
+                <span>View Contact</span>
+              </button>
               
               <button className="w-full flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#20ba59] text-white text-xs font-semibold py-2.5 rounded-[4px] transition-all">
                 <svg className="w-4 h-4 fill-white" viewBox="0 0 24 24">

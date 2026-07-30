@@ -284,7 +284,7 @@ export const PricingSubscription: React.FC = () => {
             </div>
           </div>
           <div className="flex flex-col mt-2">
-            <span className="text-2xl font-bold text-slate-900 leading-none">₹45,23,000</span>
+            <span className="text-2xl font-bold text-slate-900 leading-none">₹45.23 Lakhs</span>
             <div className="flex justify-between items-center mt-3">
               <span className="text-[10px] font-bold text-emerald-600 flex items-center gap-0.5">
                 <TrendingUp className="w-3 h-3" />
@@ -343,7 +343,7 @@ export const PricingSubscription: React.FC = () => {
             </div>
           </div>
           <div className="flex flex-col mt-2">
-            <span className="text-2xl font-bold text-slate-900 leading-none">₹8,75,000</span>
+            <span className="text-2xl font-bold text-slate-900 leading-none">₹8.75 Lakhs</span>
             <div className="flex justify-between items-center mt-3">
               <span className="text-[10px] font-bold text-rose-600 flex items-center gap-0.5">
                 <span className="font-semibold">- 2.3%</span>

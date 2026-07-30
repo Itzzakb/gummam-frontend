@@ -484,7 +484,7 @@ export const AgentDetails: React.FC = () => {
                       <div className="w-[1px] h-3 bg-gray-300 mx-3"></div>
                       <div className="flex items-center gap-1.5">
                         <Maximize className="w-4 h-4 text-gray-400" />
-                        <span>{prop.sqft.toLocaleString()} sqft</span>
+                        <span>{prop.sqft.toLocaleString()} Sft.</span>
                       </div>
                     </div>
 

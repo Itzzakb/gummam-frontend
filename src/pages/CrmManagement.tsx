@@ -12,6 +12,7 @@ import {
   Phone,
   MapPin
 } from 'lucide-react';
+import { DashboardRangeFilter } from '@/components/ui/DashboardRangeFilter';
 
 // Interfaces for our Lead data
 interface LeadTimelineItem {
@@ -42,93 +43,6 @@ interface Lead {
     nextFollowUp: LeadTimelineItem;
   };
 }
-
-// Period Dropdown Component to match User Management Stat Cards Dropdown
-interface PeriodDropdownProps {
-  value: string;
-  onChange: (value: string) => void;
-}
-
-const PeriodDropdown: React.FC<PeriodDropdownProps> = ({ value, onChange }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const triggerRef = useRef<HTMLButtonElement>(null);
-  const [coords, setCoords] = useState({ top: 0, left: 0, width: 0 });
-  const options = ['Last Week', 'Last Month', 'Three Months', 'Six Months', 'Last Years'];
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  useEffect(() => {
-    if (isOpen && triggerRef.current) {
-      const rect = triggerRef.current.getBoundingClientRect();
-      setCoords({
-        top: rect.bottom + window.scrollY + 4,
-        left: rect.right + window.scrollX - 112, // width is 112px
-        width: 112
-      });
-    }
-  }, [isOpen]);
-
-  return (
-    <div className="relative inline-block text-left" ref={dropdownRef}>
-      <button
-        ref={triggerRef}
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-1 bg-[#E2F5EC] hover:bg-[#d4f0e2] rounded-full px-2.5 py-1 text-[10px] font-semibold text-slate-800 transition-all focus:outline-none cursor-pointer"
-      >
-        <span>{value}</span>
-        <ChevronDown
-          className={`w-2.5 h-2.5 shrink-0 transition-transform duration-200 ${
-            isOpen ? 'rotate-180 text-slate-800' : 'text-slate-600'
-          }`}
-        />
-      </button>
-
-      {isOpen && createPortal(
-        <div
-          className="bg-white border border-slate-200 rounded-lg shadow-lg z-[9999] py-1 flex flex-col"
-          style={{
-            position: 'absolute',
-            top: coords.top,
-            left: coords.left,
-            width: coords.width
-          }}
-        >
-          {options.map((option) => (
-            <button
-              key={option}
-              type="button"
-              onClick={() => {
-                onChange(option);
-                setIsOpen(false);
-              }}
-              className={`w-full text-left px-3 py-1.5 text-[10px] transition-colors flex items-center justify-between cursor-pointer ${
-                option === value
-                  ? 'bg-[#F0F4F9]/60 font-semibold text-[#035096]'
-                  : 'text-slate-700 hover:bg-slate-50'
-              }`}
-            >
-              <span>{option}</span>
-              {option === value && (
-                <Check className="w-3 h-3 text-[#035096] shrink-0" />
-              )}
-            </button>
-          ))}
-        </div>,
-        document.body
-      )}
-    </div>
-  );
-};
 
 // Custom Filter Dropdown Component to match Table Filter Bar Dropdown
 interface CustomFilterDropdownProps {
@@ -251,12 +165,9 @@ const CustomFilterDropdown: React.FC<CustomFilterDropdownProps> = ({
 };
 
 export const CrmManagement: React.FC = () => {
-  // Stat periods
-  const [periodTotalInquiries, setPeriodTotalInquiries] = useState('Last Month');
-  const [periodNewLeads, setPeriodNewLeads] = useState('Last Month');
-  const [periodClosedDeals, setPeriodClosedDeals] = useState('Last Month');
-  const [periodContacted, setPeriodContacted] = useState('Last Month');
-  const [periodConversion, setPeriodConversion] = useState('Last Month');
+  const [dashboardRange, setDashboardRange] = useState('Last Month');
+  const [customStartDate, setCustomStartDate] = useState<Date | null>(null);
+  const [customEndDate, setCustomEndDate] = useState<Date | null>(null);
 
   // Filters state
   const [searchQuery, setSearchQuery] = useState('');
@@ -731,20 +642,35 @@ export const CrmManagement: React.FC = () => {
     <div className="space-y-6 text-left">
       
       {/* ================= HEADER SECTION ================= */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center">
-        <div>
-          <h1 className="text-2xl font-semibold text-slate-900">Inquiries & CRM Management</h1>
-          <p className="text-xs font-medium text-slate-500 mt-1">
-            Deep lead tracking system with status management, follow-ups, and lead source tracking.
-          </p>
+      <div className="bg-white rounded-[12px] border border-gray-200/60 shadow-sm px-6 py-5 flex flex-col gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-semibold text-[#0B2C5C] tracking-tight">Inquiries & CRM Management</h1>
+            <p className="text-sm text-gray-500 mt-1">
+              Deep lead tracking system with status management, follow-ups, and lead source tracking.
+            </p>
+          </div>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
+            <DashboardRangeFilter
+              value={dashboardRange}
+              onChange={setDashboardRange}
+              customStart={customStartDate}
+              customEnd={customEndDate}
+              onCustomRangeChange={(start, end) => {
+                setCustomStartDate(start);
+                setCustomEndDate(end);
+                setDashboardRange('Custom Range');
+              }}
+            />
+            <button
+              onClick={() => setShowScheduleModal(true)}
+              className="h-10 px-4 bg-[#035096] hover:bg-[#024078] text-white text-xs font-semibold rounded-[8px] flex items-center justify-center gap-2 transition cursor-pointer whitespace-nowrap w-full sm:w-auto"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Schedule Visit</span>
+            </button>
+          </div>
         </div>
-        <button
-          onClick={() => setShowScheduleModal(true)}
-          className="h-10 px-4 bg-[#035096] hover:bg-[#024078] text-white text-xs font-semibold rounded-[8px] flex items-center justify-center gap-2 transition cursor-pointer w-full sm:w-auto"
-        >
-          <Plus className="h-4 w-4" />
-          <span>Schedule Visit</span>
-        </button>
       </div>
 
       {/* ================= KPI CARDS GRID ================= */}
@@ -754,7 +680,6 @@ export const CrmManagement: React.FC = () => {
           <span className="text-sm font-medium text-slate-500">Total Inquiries</span>
           <div className="flex items-end justify-between mt-2">
             <span className="text-3xl font-semibold text-slate-900 leading-none">08</span>
-            <PeriodDropdown value={periodTotalInquiries} onChange={setPeriodTotalInquiries} />
           </div>
         </div>
 
@@ -763,7 +688,6 @@ export const CrmManagement: React.FC = () => {
           <span className="text-sm font-medium text-slate-500">New Leads</span>
           <div className="flex items-end justify-between mt-2">
             <span className="text-3xl font-semibold text-amber-500 leading-none">02</span>
-            <PeriodDropdown value={periodNewLeads} onChange={setPeriodNewLeads} />
           </div>
         </div>
 
@@ -772,7 +696,6 @@ export const CrmManagement: React.FC = () => {
           <span className="text-sm font-medium text-slate-500">Closed Deals</span>
           <div className="flex items-end justify-between mt-2">
             <span className="text-3xl font-semibold text-[#0F8043] leading-none">05</span>
-            <PeriodDropdown value={periodClosedDeals} onChange={setPeriodClosedDeals} />
           </div>
         </div>
 
@@ -781,7 +704,6 @@ export const CrmManagement: React.FC = () => {
           <span className="text-sm font-medium text-slate-500">Contacted</span>
           <div className="flex items-end justify-between mt-2">
             <span className="text-3xl font-semibold text-[#D92D20] leading-none">01</span>
-            <PeriodDropdown value={periodContacted} onChange={setPeriodContacted} />
           </div>
         </div>
 
@@ -790,7 +712,6 @@ export const CrmManagement: React.FC = () => {
           <span className="text-sm font-medium text-slate-500">Conversion Rate</span>
           <div className="flex items-end justify-between mt-2">
             <span className="text-3xl font-semibold text-[#035096] leading-none">12.5%</span>
-            <PeriodDropdown value={periodConversion} onChange={setPeriodConversion} />
           </div>
         </div>
       </div>

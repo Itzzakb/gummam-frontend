@@ -30,25 +30,12 @@ export const Navbar: React.FC = () => {
   };
 
   const handleCrmClick = () => {
-    if (!isAuthenticated) {
-      openAuthDialog('agent');
-    } else if (user?.role !== 'agent') {
-      const confirmSwitch = window.confirm(
-        "CRM Portal is for agents only. Would you like to log in/register as an Agent?"
-      );
-      if (confirmSwitch) {
-        logout();
-        setTimeout(() => {
-          openAuthDialog('agent');
-        }, 100);
-      }
-    } else {
-      navigate('/agent-crm');
-    }
+    navigate('/agent-crm');
   };
 
   const currentPath = location.pathname;
   const stateCategory = location.state?.category;
+  const showCrm = isAuthenticated && user?.role === 'agent';
 
   let activeTab = '';
   if (currentPath.startsWith('/map-view')) {
@@ -61,7 +48,17 @@ export const Navbar: React.FC = () => {
     activeTab = 'projects';
   } else if (currentPath.startsWith('/agent-crm')) {
     activeTab = 'crm';
+  } else if (currentPath.startsWith('/blog')) {
+    activeTab = 'blog';
   }
+
+  const navItems = [
+    { name: 'Projects', key: 'projects', path: '/search', state: { category: 'Projects' } },
+    { name: 'Map-View', key: 'map-view', path: '/map-view' },
+    { name: 'Commercial', key: 'commercial', path: '/search', state: { category: 'Commercial' } },
+    { name: 'Blog', key: 'blog', path: '/blogs' },
+    ...(showCrm ? [{ name: 'CRM', key: 'crm', path: '/agent-crm' }] : []),
+  ];
 
 
   return (
@@ -107,25 +104,24 @@ export const Navbar: React.FC = () => {
 
           {/* Center Links - White Pill */}
           <div className="hidden lg:flex items-center bg-white rounded-full px-8 py-3 shadow-[0_2px_10px_rgba(0,0,0,0.02)] gap-8">
-            <div className="relative group cursor-pointer" onClick={() => navigate('/search', { state: { category: 'Projects' } })}>
-              <span className={`text-sm ${activeTab === 'projects' ? 'text-[#0B2C5C] font-bold' : 'text-[#173F8D] font-medium hover:text-[#F6931D] transition-colors'}`}>Projects</span>
-              {activeTab === 'projects' && <div className="absolute -bottom-3 left-0 w-full h-[3px] bg-[#F6931D] rounded-full"></div>}
-            </div>
-            
-            <div className="relative group cursor-pointer" onClick={() => navigate('/map-view')}>
-              <span className={`text-sm ${activeTab === 'map-view' ? 'text-[#0B2C5C] font-bold' : 'text-[#173F8D] font-medium hover:text-[#F6931D] transition-colors'}`}>Map-View</span>
-              {activeTab === 'map-view' && <div className="absolute -bottom-3 left-0 w-full h-[3px] bg-[#F6931D] rounded-full"></div>}
-            </div>
-
-            <div className="relative group cursor-pointer" onClick={() => navigate('/search', { state: { category: 'Commercial' } })}>
-              <span className={`text-sm ${activeTab === 'commercial' ? 'text-[#0B2C5C] font-bold' : 'text-[#173F8D] font-medium hover:text-[#F6931D] transition-colors'}`}>Commercial</span>
-              {activeTab === 'commercial' && <div className="absolute -bottom-3 left-0 w-full h-[3px] bg-[#F6931D] rounded-full"></div>}
-            </div>
-
-            <div className="relative group cursor-pointer" onClick={handleCrmClick}>
-              <span className={`text-sm ${activeTab === 'crm' ? 'text-[#0B2C5C] font-bold' : 'text-[#173F8D] font-medium hover:text-[#F6931D] transition-colors'}`}>CRM</span>
-              {activeTab === 'crm' && <div className="absolute -bottom-3 left-0 w-full h-[3px] bg-[#F6931D] rounded-full"></div>}
-            </div>
+            {navItems.map((item) => (
+              <div
+                key={item.key}
+                className="relative group cursor-pointer"
+                onClick={() => {
+                  if (item.key === 'crm') {
+                    handleCrmClick();
+                    return;
+                  }
+                  navigate(item.path, { state: item.state });
+                }}
+              >
+                <span className={`text-sm ${activeTab === item.key ? 'text-[#0B2C5C] font-bold' : 'text-[#173F8D] font-medium hover:text-[#F6931D] transition-colors'}`}>
+                  {item.name}
+                </span>
+                {activeTab === item.key && <div className="absolute -bottom-3 left-0 w-full h-[3px] bg-[#F6931D] rounded-full"></div>}
+              </div>
+            ))}
           </div>
 
           {/* Right Actions */}
@@ -236,23 +232,18 @@ export const Navbar: React.FC = () => {
 
         {/* Mobile Quick Navigation Pills */}
         <div className="flex lg:hidden items-center gap-2 mt-4 px-4 overflow-x-auto whitespace-nowrap scrollbar-none scroll-smooth">
-          {[
-            { name: 'Projects', active: activeTab === 'projects', path: '/search', state: { category: 'Projects' } },
-            { name: 'Map-View', active: activeTab === 'map-view', path: '/map-view' },
-            { name: 'Commercial', active: activeTab === 'commercial', path: '/search', state: { category: 'Commercial' } },
-            { name: 'CRM', active: activeTab === 'crm', path: '/agent-crm' }
-          ].map((item) => (
+          {navItems.map((item) => (
             <button
-              key={item.name}
+              key={item.key}
               onClick={() => {
-                if (item.name === 'CRM') {
+                if (item.key === 'crm') {
                   handleCrmClick();
                   return;
                 }
                 navigate(item.path, { state: item.state });
               }}
               className={`px-4 py-1.5 rounded-full mb-2 font-medium text-[13px] border transition-all shadow-sm shrink-0 ${
-                item.active
+                activeTab === item.key
                   ? 'bg-[#0B2C5C] text-white border-transparent font-semibold'
                   : 'bg-white text-[#173F8D] border-gray-200/80 hover:border-[#173F8D] active:bg-gray-50'
               }`}
@@ -328,24 +319,19 @@ export const Navbar: React.FC = () => {
             <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Quick Navigation</p>
             {/* Rounded pill tab design for nav links */}
             <div className="bg-[#F0F4F9] p-1.5 rounded-2xl flex flex-col gap-1.5 shadow-inner">
-              {[
-                { name: 'Projects', active: activeTab === 'projects', path: '/search', state: { category: 'Projects' } },
-                { name: 'Map-View', active: activeTab === 'map-view', path: '/map-view' },
-                { name: 'Commercial', active: activeTab === 'commercial', path: '/search', state: { category: 'Commercial' } },
-                { name: 'CRM', active: activeTab === 'crm', path: '/agent-crm' }
-              ].map((item) => (
+              {navItems.map((item) => (
                 <button
-                  key={item.name}
+                  key={item.key}
                   onClick={() => {
                     setIsMobileMenuOpen(false);
-                    if (item.name === 'CRM') {
+                    if (item.key === 'crm') {
                       handleCrmClick();
                       return;
                     }
                     navigate(item.path, { state: item.state });
                   }}
                   className={`w-full py-3 px-5 rounded-xl font-medium text-[15px] transition-all text-center ${
-                    item.active
+                    activeTab === item.key
                       ? 'bg-white text-[#0B2C5C] shadow-sm font-semibold'
                       : 'text-[#173F8D] hover:bg-white/50'
                   }`}

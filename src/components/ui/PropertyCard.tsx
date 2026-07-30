@@ -60,7 +60,7 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
           )}
           <div className="flex items-center gap-1.5">
             <Maximize className="w-3.5 h-3.5 text-gray-400" />
-            <span>{sqft} {sqft === 1500 ? 'sqft' : 'sqft'}</span>
+            <span>{sqft} Sft.</span>
           </div>
         </div>
         

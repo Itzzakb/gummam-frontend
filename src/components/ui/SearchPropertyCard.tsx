@@ -75,7 +75,7 @@ export const SearchPropertyCard: React.FC<SearchPropertyCardProps> = ({
             </div>
             <div className="border border-gray-200 rounded px-2.5 py-1.5 text-[12px] flex items-center overflow-hidden whitespace-nowrap">
               <span className="text-gray-600 mr-1 flex-shrink-0">Buildup Area: </span>
-              <span className="text-[#035096] font-bold truncate">{sqft} Sq.Ft.</span>
+              <span className="text-[#035096] font-bold truncate">{sqft} Sft.</span>
             </div>
             <div className="border border-gray-200 rounded px-2.5 py-1.5 text-[12px] flex items-center overflow-hidden whitespace-nowrap">
               <span className="text-gray-600 mr-1 flex-shrink-0">Facing: </span>
@@ -186,7 +186,7 @@ export const SearchPropertyCard: React.FC<SearchPropertyCardProps> = ({
           )}
           <div className="flex items-center gap-1.5">
             <Maximize className="w-4 h-4 text-gray-400" />
-            <span>{sqft.toLocaleString()} sqft</span>
+            <span>{sqft.toLocaleString()} Sft.</span>
           </div>
         </div>
 

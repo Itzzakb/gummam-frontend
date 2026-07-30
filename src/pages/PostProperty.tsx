@@ -284,6 +284,40 @@ const amenityCategories = {
   ]
 };
 
+const ORR_EXIT_OPTIONS = [
+  'Exit 1: Kokapet',
+  'Exit 2: Edulanagulapally',
+  'Exit 3: Patancheru',
+  'Exit 4: Sultanpur',
+  'Exit 5: Saregudem',
+  'Exit 6: Kandlakoya',
+  'Exit 7: Shamirpet',
+  'Exit 8: Keeara',
+  'Exit 9: Ghatkesar',
+  'Exit 10: Taramatipet',
+  'Exit 11: Pedda Amberpet',
+  'Exit 12: Bongulur',
+  'Exit 13: Raviryal',
+  'Exit 14: Tukkuguda',
+  'Exit 15: Pedda Golconda',
+  'Exit 16: Shamshabad',
+  'Exit 17: Rajendranagar',
+  'Exit 18: TSPA',
+  'Exit 19: Financial District',
+] as const;
+
+const formatAmountInLacCr = (value: string | number): string => {
+  const amount = Number(value);
+  if (!amount || Number.isNaN(amount)) return '';
+  if (amount >= 1_00_00_000) {
+    return `₹${parseFloat((amount / 1_00_00_000).toFixed(2))} Cr`;
+  }
+  if (amount >= 1_00_000) {
+    return `₹${parseFloat((amount / 1_00_000).toFixed(2))} Lakhs`;
+  }
+  return `₹${amount.toLocaleString('en-IN')}`;
+};
+
 const CustomSelect: React.FC<{
   value: string;
   onChange: (e: { target: { value: string } }) => void;
@@ -436,10 +470,10 @@ const initialFormData: PropertyFormData = {
   additionalRooms: '',
   otherRoomsList: [],
   carpetArea: '',
-  carpetAreaUnit: 'Sq.Ft',
-  builtUpAreaUnit: 'Sq.Ft',
+  carpetAreaUnit: 'Sft.',
+  builtUpAreaUnit: 'Sft.',
   superBuiltUpArea: '',
-  superBuiltUpAreaUnit: 'Sq.Ft',
+  superBuiltUpAreaUnit: 'Sft.',
   uds: '',
   fourWheelerParking: '',
   twoWheelerParking: '',
@@ -447,7 +481,7 @@ const initialFormData: PropertyFormData = {
   facing: '',
   pricePerUnit: '',
   totalAreaVal: '',
-  totalAreaUnit: 'Sq.Ft',
+  totalAreaUnit: 'Sft.',
   otherTaxes: 'Include',
   priceNegotiable: 'Yes',
   brokerageCharge: 'No',
@@ -468,22 +502,22 @@ const initialFormData: PropertyFormData = {
   washroomsCount: '',
   storeRoomsCount: '',
   propertyAreaVal: '',
-  propertyAreaUnit: 'Sq.Ft',
+  propertyAreaUnit: 'Sft.',
   doorNo: '',
   propertyAt: 'Select',
   shuttersCount: 'Select',
   workSpace: '',
   garageShedCarpetArea: '',
-  garageShedCarpetAreaUnit: 'Sq.Ft',
+  garageShedCarpetAreaUnit: 'Sft.',
   showroomSpaceCarpetArea: '',
-  showroomSpaceCarpetAreaUnit: 'Sq.Ft',
+  showroomSpaceCarpetAreaUnit: 'Sft.',
   totalCarpetAreaVal: '',
-  totalCarpetAreaUnit: 'Sq.Ft',
+  totalCarpetAreaUnit: 'Sft.',
   godownType: 'AC',
   closedShedCarpetArea: '',
-  closedShedCarpetAreaUnit: 'Sq.Ft',
+  closedShedCarpetAreaUnit: 'Sft.',
   openSpaceCarpetArea: '',
-  openSpaceCarpetAreaUnit: 'Sq.Ft',
+  openSpaceCarpetAreaUnit: 'Sft.',
   workMode: 'Factory',
   plotAreaSqYds: '',
   plotLength: '',
@@ -505,7 +539,7 @@ const initialFormData: PropertyFormData = {
   ventureInAcres: '',
   nearFtl: 'Yes',
   distanceFromNhw: '',
-  nearbyOrrExit: 'Select',
+  nearbyOrrExit: '',
   ventureAmenities: [],
   additionalAmenities: '',
   locationHighlights: '',
@@ -1031,7 +1065,7 @@ export const PostProperty: React.FC = () => {
                 <h2 className="text-xl font-bold text-black mb-1">Rent For?</h2>
                 <p className="text-xs text-slate-400 mb-6">Select the target tenants for your property.</p>
                 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                   {[
                     { key: 'Family', title: 'Family', desc: 'For families and couples', icon: Users },
                     { key: 'Bachelors', title: 'Bachelors', desc: 'For students/bachelors', icon: User },
@@ -1044,25 +1078,25 @@ export const PostProperty: React.FC = () => {
                       <div 
                         key={item.key}
                         onClick={() => updateFormData({ rentFor: item.key })}
-                        className={`flex items-center justify-between p-5 rounded-2xl border cursor-pointer transition-all ${
+                        className={`flex items-center justify-between p-6 rounded-2xl border cursor-pointer transition-all ${
                           isSelected 
                             ? 'border-[#4885FF] bg-[#F0F4F9]/60 shadow-[0_4px_15px_rgba(72,133,255,0.1)]' 
                             : 'border-slate-100 hover:border-slate-300 bg-white'
                         }`}
                       >
                         <div className="flex items-center gap-4">
-                          <div className={`p-3 rounded-xl ${isSelected ? 'bg-white shadow-sm text-[#035096]' : 'bg-[#F0F4F9] text-slate-500'}`}>
-                            <IconComponent className="w-5 h-5" />
+                          <div className={`p-3.5 rounded-2xl ${isSelected ? 'bg-white shadow-sm text-[#035096]' : 'bg-[#F0F4F9] text-slate-500'}`}>
+                            <IconComponent className="w-6 h-6" />
                           </div>
                           <div>
-                            <h3 className="font-bold text-sm text-[#0B2C5C]">{item.title}</h3>
-                            <p className="text-[10px] text-slate-400 mt-0.5">{item.desc}</p>
+                            <h3 className="font-bold text-base text-[#0B2C5C]">{item.title}</h3>
+                            <p className="text-xs text-slate-500 mt-0.5">{item.desc}</p>
                           </div>
                         </div>
-                        <div className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 ${
+                        <div className={`w-6 h-6 rounded-full border flex items-center justify-center ${
                           isSelected ? 'bg-[#4885FF] border-[#4885FF]' : 'border-slate-300'
                         }`}>
-                          {isSelected && <Check className="w-3.5 h-3.5 text-white" />}
+                          {isSelected && <Check className="w-4 h-4 text-white" />}
                         </div>
                       </div>
                     );
@@ -1373,7 +1407,7 @@ export const PostProperty: React.FC = () => {
                             >
                               <option value="">Select Acres</option>
                               {Array.from({ length: 100 }, (_, i) => i + 1).map(num => (
-                                <option key={num} value={String(num)}>{num} Acre{num > 1 ? 's' : ''}</option>
+                                <option key={num} value={String(num)}>{`${num} Acre${num > 1 ? 's' : ''}`}</option>
                               ))}
                             </CustomSelect>
                           </div>
@@ -1386,7 +1420,7 @@ export const PostProperty: React.FC = () => {
                             >
                               <option value="">Select Guntas</option>
                               {Array.from({ length: 40 }, (_, i) => i).map(num => (
-                                <option key={num} value={String(num)}>{num} Gunta{num !== 1 ? 's' : ''}</option>
+                                <option key={num} value={String(num)}>{`${num} Gunta${num !== 1 ? 's' : ''}`}</option>
                               ))}
                             </CustomSelect>
                           </div>
@@ -1412,7 +1446,7 @@ export const PostProperty: React.FC = () => {
                             <input
                               type="text"
                               placeholder="Total Cost"
-                              value={formData.totalCost || ''}
+                              value={formData.totalCost ? formatAmountInLacCr(formData.totalCost) : ''}
                               disabled
                               className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-500 font-medium"
                             />
@@ -1467,6 +1501,7 @@ export const PostProperty: React.FC = () => {
                             <option value="">Select Nature of Land</option>
                             <option value="Agricultural">Agricultural</option>
                             <option value="Non-Agricultural">Non-Agricultural</option>
+                            <option value="Commercial">Commercial</option>
                             <option value="Semi-Commercial">Semi-Commercial</option>
                             <option value="Others">Others</option>
                           </CustomSelect>
@@ -1565,12 +1600,24 @@ export const PostProperty: React.FC = () => {
                             className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800 bg-white"
                           >
                             <option value="">Select Zone</option>
-                            <option value="Agricultural Zone">Agricultural Zone</option>
-                            <option value="Residential Zone">Residential Zone</option>
-                            <option value="Commercial Zone">Commercial Zone</option>
-                            <option value="Industrial Zone">Industrial Zone</option>
+                            <option value="Agriculture use zone">Agriculture use zone</option>
+                            <option value="Residential Use Zone-R1">Residential Use Zone-R1</option>
+                            <option value="Residential Use Zone-R2">Residential Use Zone-R2</option>
+                            <option value="Residential Use Zone-R3">Residential Use Zone-R3</option>
+                            <option value="Residential Use Zone-R4">Residential Use Zone-R4</option>
                             <option value="Conservation Zone">Conservation Zone</option>
-                            <option value="Others">Others</option>
+                            <option value="Peri-Urban Use Zone">Peri-Urban Use Zone</option>
+                            <option value="Commercial Use Zone">Commercial Use Zone</option>
+                            <option value="Manufacturing Use Zone">Manufacturing Use Zone</option>
+                            <option value="Recreation and open space use zone">Recreation and open space use zone</option>
+                            <option value="Multiple Use Zone">Multiple Use Zone</option>
+                            <option value="Public, Semi-Public Facilities and Utilities Use Zone">Public, Semi-Public Facilities and Utilities Use Zone</option>
+                            <option value="Forest Zone">Forest Zone</option>
+                            <option value="Water Bodies Zone">Water Bodies Zone</option>
+                            <option value="Agriculture Use Zone">Agriculture Use Zone</option>
+                            <option value="Traffic and Transportation Use Zone">Traffic and Transportation Use Zone</option>
+                            <option value="Recreation and Open Space Use Zone">Recreation and Open Space Use Zone</option>
+                            <option value="Special Reservations Zone">Special Reservations Zone</option>
                           </CustomSelect>
                         </div>
                       </div>
@@ -1612,10 +1659,18 @@ export const PostProperty: React.FC = () => {
                           className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800 bg-white"
                         >
                           <option value="">Select</option>
-                          <option value="National Highway">National Highway</option>
-                          <option value="State Highway">State Highway</option>
-                          <option value="Regular Road">Regular Road</option>
-                          <option value="No Highway Connectivity">No Highway Connectivity</option>
+                          <option value="Vijayawada Highway">Vijayawada Highway</option>
+                          <option value="Srisailam Highway">Srisailam Highway</option>
+                          <option value="Bangalore Highway">Bangalore Highway</option>
+                          <option value="Mumbai Highway">Mumbai Highway</option>
+                          <option value="Warangal Highway">Warangal Highway</option>
+                          <option value="Sagar Highway">Sagar Highway</option>
+                          <option value="Karimnagar Highway">Karimnagar Highway</option>
+                          <option value="Nizamabad Highway">Nizamabad Highway</option>
+                          <option value="Nagpur Highway">Nagpur Highway</option>
+                          <option value="Medak Highway">Medak Highway</option>
+                          <option value="Kodangal Highway">Kodangal Highway</option>
+                          <option value="Nanded Highway">Nanded Highway</option>
                         </CustomSelect>
                       </div>
                       <div className="space-y-2">
@@ -1627,6 +1682,19 @@ export const PostProperty: React.FC = () => {
                           onChange={e => updateFormData({ distanceFromOrr: e.target.value })}
                           className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800"
                         />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="block text-xs font-semibold text-slate-500 uppercase">ORR Exit Number</label>
+                        <CustomSelect
+                          value={formData.nearbyOrrExit || ''}
+                          onChange={e => updateFormData({ nearbyOrrExit: e.target.value })}
+                          className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800 bg-white"
+                        >
+                          <option value="">Select Exit</option>
+                          {ORR_EXIT_OPTIONS.map((exit) => (
+                            <option key={exit} value={exit}>{exit}</option>
+                          ))}
+                        </CustomSelect>
                       </div>
                       <div className="space-y-2">
                         <label className="block text-xs font-semibold text-slate-500 uppercase">Road Faced Properties</label>
@@ -1717,26 +1785,13 @@ export const PostProperty: React.FC = () => {
                       />
                     </div>
 
-                    {/* --- Map Configuration --- */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                    {/* --- Property Location & Map --- */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                       <div className="space-y-2">
-                        <label className="block text-xs font-semibold text-slate-500 uppercase">Select Map options</label>
-                        <CustomSelect
-                          value={formData.mapOptions || ''}
-                          onChange={e => updateFormData({ mapOptions: e.target.value })}
-                          className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800 bg-white"
-                        >
-                          <option value="">Select</option>
-                          <option value="Google Map Link">Google Map Link</option>
-                          <option value="Latitude & Longitude">Latitude & Longitude</option>
-                          <option value="Survey Number">Survey Number</option>
-                        </CustomSelect>
-                      </div>
-                      <div className="space-y-2">
-                        <label className="block text-xs font-semibold text-slate-500 uppercase">Map Option Value</label>
+                        <label className="block text-xs font-semibold text-slate-500 uppercase">Property Location</label>
                         <input
                           type="text"
-                          placeholder="Enter Map value"
+                          placeholder="Google map location"
                           value={formData.mapOptionValue || ''}
                           onChange={e => updateFormData({ mapOptionValue: e.target.value })}
                           className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800"
@@ -1816,7 +1871,7 @@ export const PostProperty: React.FC = () => {
                             <input
                               type="text"
                               placeholder="Total Cost"
-                              value={formData.totalCost || ''}
+                              value={formData.totalCost ? formatAmountInLacCr(formData.totalCost) : ''}
                               disabled
                               className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-500 font-medium"
                             />
@@ -2152,10 +2207,18 @@ export const PostProperty: React.FC = () => {
                             className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800 bg-white"
                           >
                             <option value="">Select</option>
-                            <option value="National Highway">National Highway</option>
-                            <option value="State Highway">State Highway</option>
-                            <option value="Regular Road">Regular Road</option>
-                            <option value="No Highway Connectivity">No Highway Connectivity</option>
+                            <option value="Vijayawada Highway">Vijayawada Highway</option>
+                            <option value="Srisailam Highway">Srisailam Highway</option>
+                            <option value="Bangalore Highway">Bangalore Highway</option>
+                            <option value="Mumbai Highway">Mumbai Highway</option>
+                            <option value="Warangal Highway">Warangal Highway</option>
+                            <option value="Sagar Highway">Sagar Highway</option>
+                            <option value="Karimnagar Highway">Karimnagar Highway</option>
+                            <option value="Nizamabad Highway">Nizamabad Highway</option>
+                            <option value="Nagpur Highway">Nagpur Highway</option>
+                            <option value="Medak Highway">Medak Highway</option>
+                            <option value="Kodangal Highway">Kodangal Highway</option>
+                            <option value="Nanded Highway">Nanded Highway</option>
                           </CustomSelect>
                         </div>
                         <div className="space-y-2">
@@ -2169,17 +2232,16 @@ export const PostProperty: React.FC = () => {
                           />
                         </div>
                         <div className="space-y-2">
-                          <label className="block text-xs font-semibold text-slate-500 uppercase">Nearby ORR exit numer</label>
+                          <label className="block text-xs font-semibold text-slate-500 uppercase">ORR Exit Number</label>
                           <CustomSelect
-                            value={formData.nearbyOrrExit || 'Select'}
+                            value={formData.nearbyOrrExit || ''}
                             onChange={e => updateFormData({ nearbyOrrExit: e.target.value })}
                             className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800 bg-white"
                           >
-                            <option value="Select">Select</option>
-                            <option value="Exit 1">Exit 1</option>
-                            <option value="Exit 2">Exit 2</option>
-                            <option value="Exit 3">Exit 3</option>
-                            <option value="Exit 4">Exit 4</option>
+                            <option value="">Select Exit</option>
+                            {ORR_EXIT_OPTIONS.map((exit) => (
+                              <option key={exit} value={exit}>{exit}</option>
+                            ))}
                           </CustomSelect>
                         </div>
                       </div>
@@ -2619,11 +2681,11 @@ export const PostProperty: React.FC = () => {
                                   className="w-full px-4 py-3 rounded-l-xl focus:outline-none text-sm text-slate-800"
                                 />
                                 <CustomSelect 
-                                  value={formData.closedShedCarpetAreaUnit || 'Sq.Ft'}
+                                  value={formData.closedShedCarpetAreaUnit || 'Sft.'}
                                   onChange={e => updateFormData({ closedShedCarpetAreaUnit: e.target.value })}
                                   className="px-2 bg-slate-50 border-l border-slate-200 focus:outline-none text-xs text-slate-600 bg-white"
                                 >
-                                  <option value="Sq.Ft">Sq.Ft</option>
+                                  <option value="Sft.">Sft.</option>
                                   <option value="Sq.Yards">Sq.Yards</option>
                                 </CustomSelect>
                               </div>
@@ -2639,11 +2701,11 @@ export const PostProperty: React.FC = () => {
                                   className="w-full px-4 py-3 rounded-l-xl focus:outline-none text-sm text-slate-800"
                                 />
                                 <CustomSelect 
-                                  value={formData.openSpaceCarpetAreaUnit || 'Sq.Ft'}
+                                  value={formData.openSpaceCarpetAreaUnit || 'Sft.'}
                                   onChange={e => updateFormData({ openSpaceCarpetAreaUnit: e.target.value })}
                                   className="px-2 bg-slate-50 border-l border-slate-200 focus:outline-none text-xs text-slate-600 bg-white"
                                 >
-                                  <option value="Sq.Ft">Sq.Ft</option>
+                                  <option value="Sft.">Sft.</option>
                                   <option value="Sq.Yards">Sq.Yards</option>
                                 </CustomSelect>
                               </div>
@@ -2659,11 +2721,11 @@ export const PostProperty: React.FC = () => {
                                   className="w-full px-4 py-3 rounded-l-xl focus:outline-none text-sm text-slate-800"
                                 />
                                 <CustomSelect 
-                                  value={formData.totalCarpetAreaUnit || 'Sq.Ft'}
+                                  value={formData.totalCarpetAreaUnit || 'Sft.'}
                                   onChange={e => updateFormData({ totalCarpetAreaUnit: e.target.value })}
                                   className="px-2 bg-slate-50 border-l border-slate-200 focus:outline-none text-xs text-slate-600 bg-white"
                                 >
-                                  <option value="Sq.Ft">Sq.Ft</option>
+                                  <option value="Sft.">Sft.</option>
                                   <option value="Sq.Yards">Sq.Yards</option>
                                 </CustomSelect>
                               </div>
@@ -2699,11 +2761,11 @@ export const PostProperty: React.FC = () => {
                                     className="w-full px-4 py-3 rounded-l-xl focus:outline-none text-sm text-slate-800"
                                   />
                                   <CustomSelect 
-                                    value={formData.closedShedCarpetAreaUnit || 'Sq.Ft'}
+                                    value={formData.closedShedCarpetAreaUnit || 'Sft.'}
                                     onChange={e => updateFormData({ closedShedCarpetAreaUnit: e.target.value })}
                                     className="px-2 bg-slate-50 border-l border-slate-200 focus:outline-none text-xs text-slate-600 bg-white"
                                   >
-                                    <option value="Sq.Ft">Sq.Ft</option>
+                                    <option value="Sft.">Sft.</option>
                                     <option value="Sq.Yards">Sq.Yards</option>
                                   </CustomSelect>
                                 </div>
@@ -2719,11 +2781,11 @@ export const PostProperty: React.FC = () => {
                                     className="w-full px-4 py-3 rounded-l-xl focus:outline-none text-sm text-slate-800"
                                   />
                                   <CustomSelect 
-                                    value={formData.openSpaceCarpetAreaUnit || 'Sq.Ft'}
+                                    value={formData.openSpaceCarpetAreaUnit || 'Sft.'}
                                     onChange={e => updateFormData({ openSpaceCarpetAreaUnit: e.target.value })}
                                     className="px-2 bg-slate-50 border-l border-slate-200 focus:outline-none text-xs text-slate-600 bg-white"
                                   >
-                                    <option value="Sq.Ft">Sq.Ft</option>
+                                    <option value="Sft.">Sft.</option>
                                     <option value="Sq.Yards">Sq.Yards</option>
                                   </CustomSelect>
                                 </div>
@@ -2743,11 +2805,11 @@ export const PostProperty: React.FC = () => {
                                     className="w-full px-4 py-3 rounded-l-xl focus:outline-none text-sm text-slate-800"
                                   />
                                   <CustomSelect 
-                                    value={formData.totalCarpetAreaUnit || 'Sq.Ft'}
+                                    value={formData.totalCarpetAreaUnit || 'Sft.'}
                                     onChange={e => updateFormData({ totalCarpetAreaUnit: e.target.value })}
                                     className="px-2 bg-slate-50 border-l border-slate-200 focus:outline-none text-xs text-slate-600 bg-white"
                                   >
-                                    <option value="Sq.Ft">Sq.Ft</option>
+                                    <option value="Sft.">Sft.</option>
                                     <option value="Sq.Yards">Sq.Yards</option>
                                   </CustomSelect>
                                 </div>
@@ -2779,11 +2841,11 @@ export const PostProperty: React.FC = () => {
                                   className="w-full px-4 py-3 rounded-l-xl focus:outline-none text-sm text-slate-800"
                                 />
                                 <CustomSelect 
-                                  value={formData.garageShedCarpetAreaUnit || 'Sq.Ft'}
+                                  value={formData.garageShedCarpetAreaUnit || 'Sft.'}
                                   onChange={e => updateFormData({ garageShedCarpetAreaUnit: e.target.value })}
                                   className="px-2 bg-slate-50 border-l border-slate-200 focus:outline-none text-xs text-slate-600 bg-white"
                                 >
-                                  <option value="Sq.Ft">Sq.Ft</option>
+                                  <option value="Sft.">Sft.</option>
                                   <option value="Sq.Yards">Sq.Yards</option>
                                 </CustomSelect>
                               </div>
@@ -2799,11 +2861,11 @@ export const PostProperty: React.FC = () => {
                                   className="w-full px-4 py-3 rounded-l-xl focus:outline-none text-sm text-slate-800"
                                 />
                                 <CustomSelect 
-                                  value={formData.showroomSpaceCarpetAreaUnit || 'Sq.Ft'}
+                                  value={formData.showroomSpaceCarpetAreaUnit || 'Sft.'}
                                   onChange={e => updateFormData({ showroomSpaceCarpetAreaUnit: e.target.value })}
                                   className="px-2 bg-slate-50 border-l border-slate-200 focus:outline-none text-xs text-slate-600 bg-white"
                                 >
-                                  <option value="Sq.Ft">Sq.Ft</option>
+                                  <option value="Sft.">Sft.</option>
                                   <option value="Sq.Yards">Sq.Yards</option>
                                 </CustomSelect>
                               </div>
@@ -2819,11 +2881,11 @@ export const PostProperty: React.FC = () => {
                                   className="w-full px-4 py-3 rounded-l-xl focus:outline-none text-sm text-slate-800"
                                 />
                                 <CustomSelect 
-                                  value={formData.totalCarpetAreaUnit || 'Sq.Ft'}
+                                  value={formData.totalCarpetAreaUnit || 'Sft.'}
                                   onChange={e => updateFormData({ totalCarpetAreaUnit: e.target.value })}
                                   className="px-2 bg-slate-50 border-l border-slate-200 focus:outline-none text-xs text-slate-600 bg-white"
                                 >
-                                  <option value="Sq.Ft">Sq.Ft</option>
+                                  <option value="Sft.">Sft.</option>
                                   <option value="Sq.Yards">Sq.Yards</option>
                                 </CustomSelect>
                               </div>
@@ -2928,11 +2990,11 @@ export const PostProperty: React.FC = () => {
                                 className="w-full px-4 py-3 rounded-l-xl focus:outline-none text-sm text-slate-800"
                               />
                               <CustomSelect 
-                                value={formData.propertyAreaUnit || 'Sq.Ft'}
+                                value={formData.propertyAreaUnit || 'Sft.'}
                                 onChange={e => updateFormData({ propertyAreaUnit: e.target.value })}
                                 className="px-2 bg-slate-50 border-l border-slate-200 focus:outline-none text-xs text-slate-600 bg-white"
                               >
-                                <option value="Sq.Ft">Sq.Ft</option>
+                                <option value="Sft.">Sft.</option>
                                 <option value="Sq.Yards">Sq.Yards</option>
                               </CustomSelect>
                             </div>
@@ -3224,11 +3286,11 @@ export const PostProperty: React.FC = () => {
                               className="w-full px-4 py-3 rounded-l-xl focus:outline-none text-sm text-slate-800"
                             />
                             <CustomSelect 
-                              value={formData.carpetAreaUnit || 'Sq.Ft'}
+                              value={formData.carpetAreaUnit || 'Sft.'}
                               onChange={e => updateFormData({ carpetAreaUnit: e.target.value })}
                               className="px-3 bg-slate-50 border-l border-slate-200 focus:outline-none text-sm text-slate-600 bg-white"
                             >
-                              <option value="Sq.Ft">Sq.Ft</option>
+                              <option value="Sft.">Sft.</option>
                               <option value="Sq.Yards">Sq.Yards</option>
                               <option value="Sq.Meters">Sq.Meters</option>
                             </CustomSelect>
@@ -3245,11 +3307,11 @@ export const PostProperty: React.FC = () => {
                               className="w-full px-4 py-3 rounded-l-xl focus:outline-none text-sm text-slate-800"
                             />
                             <CustomSelect 
-                              value={formData.builtUpAreaUnit || 'Sq.Ft'}
+                              value={formData.builtUpAreaUnit || 'Sft.'}
                               onChange={e => updateFormData({ builtUpAreaUnit: e.target.value })}
                               className="px-3 bg-slate-50 border-l border-slate-200 focus:outline-none text-sm text-slate-600 bg-white"
                             >
-                              <option value="Sq.Ft">Sq.Ft</option>
+                              <option value="Sft.">Sft.</option>
                               <option value="Sq.Yards">Sq.Yards</option>
                               <option value="Sq.Meters">Sq.Meters</option>
                             </CustomSelect>
@@ -3266,11 +3328,11 @@ export const PostProperty: React.FC = () => {
                               className="w-full px-4 py-3 rounded-l-xl focus:outline-none text-sm text-slate-800"
                             />
                             <CustomSelect 
-                              value={formData.superBuiltUpAreaUnit || 'Sq.Ft'}
+                              value={formData.superBuiltUpAreaUnit || 'Sft.'}
                               onChange={e => updateFormData({ superBuiltUpAreaUnit: e.target.value })}
                               className="px-3 bg-slate-50 border-l border-slate-200 focus:outline-none text-sm text-slate-600 bg-white"
                             >
-                              <option value="Sq.Ft">Sq.Ft</option>
+                              <option value="Sft.">Sft.</option>
                               <option value="Sq.Yards">Sq.Yards</option>
                               <option value="Sq.Meters">Sq.Meters</option>
                             </CustomSelect>
@@ -3394,11 +3456,11 @@ export const PostProperty: React.FC = () => {
                               className="w-full px-4 py-3 rounded-l-xl focus:outline-none text-sm text-slate-800"
                             />
                             <CustomSelect 
-                              value={formData.totalAreaUnit || 'Sq.Ft'}
+                              value={formData.totalAreaUnit || 'Sft.'}
                               onChange={e => updateFormData({ totalAreaUnit: e.target.value })}
                               className="px-2 bg-slate-50 border-l border-slate-200 focus:outline-none text-xs text-slate-600"
                             >
-                              <option value="Sq.Ft">Sq.Ft</option>
+                              <option value="Sft.">Sft.</option>
                               <option value="Sq.Yards">Sq.Yards</option>
                             </CustomSelect>
                           </div>
@@ -3414,11 +3476,11 @@ export const PostProperty: React.FC = () => {
                               className="w-full px-4 py-3 rounded-l-xl focus:outline-none text-sm text-slate-800"
                             />
                             <CustomSelect 
-                              value={formData.totalAreaUnit || 'Sq.Ft'}
+                              value={formData.totalAreaUnit || 'Sft.'}
                               onChange={e => updateFormData({ totalAreaUnit: e.target.value })}
                               className="px-2 bg-slate-50 border-l border-slate-200 focus:outline-none text-xs text-slate-600"
                             >
-                              <option value="Sq.Ft">Sq.Ft</option>
+                              <option value="Sft.">Sft.</option>
                               <option value="Sq.Yards">Sq.Yards</option>
                             </CustomSelect>
                           </div>
@@ -3481,6 +3543,7 @@ export const PostProperty: React.FC = () => {
             )}
 
                 {/* --- Amenities & Features Section --- */}
+                {!isLandsAcre && (
                 <div>
                   <h3 className="text-lg font-bold text-[#0B2C5C] mb-4 pb-2 border-b border-slate-100">Amenities & Features</h3>
                   <div className="space-y-6">
@@ -3856,6 +3919,7 @@ export const PostProperty: React.FC = () => {
                     )}
                   </div>
                 </div>
+                )}
 
                 {/* --- Media Upload Section --- */}
                 <div>
@@ -3914,10 +3978,12 @@ export const PostProperty: React.FC = () => {
                         />
                       </div>
                       <div className="space-y-2">
-                        <label className="block text-sm font-semibold text-[#0B2C5C]">Floor Plan URL (Optional)</label>
+                        <label className="block text-sm font-semibold text-[#0B2C5C]">
+                          {isLandsAcre ? 'Property Boundaries Map' : 'Floor Plan URL (Optional)'}
+                        </label>
                         <input 
                           type="url" 
-                          placeholder="e.g., Floor plan image or PDF link"
+                          placeholder={isLandsAcre ? 'e.g., Property boundaries map image or PDF link' : 'e.g., Floor plan image or PDF link'}
                           value={formData.floorPlanUrl || ''}
                           onChange={e => updateFormData({ floorPlanUrl: e.target.value })}
                           className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800"
@@ -3928,6 +3994,7 @@ export const PostProperty: React.FC = () => {
                 </div>
 
                 {/* --- Promotion options --- */}
+                {!isLandsAcre && (
                 <div>
                   <h3 className="text-lg font-bold text-[#0B2C5C] mb-4 pb-2 border-b border-slate-100">Promotion Options</h3>
                   {/* Boost Post Radio Cards */}
@@ -3995,6 +4062,7 @@ export const PostProperty: React.FC = () => {
                     </label>
                   </div>
                 </div>
+                )}
 
               </div>
             ) : (
@@ -4057,7 +4125,7 @@ export const PostProperty: React.FC = () => {
                         </div>
 
                         <div className="space-y-2">
-                          <label className="block text-sm font-semibold text-[#0B2C5C]">Built-up Area (sq ft) <span className="text-red-500">*</span></label>
+                          <label className="block text-sm font-semibold text-[#0B2C5C]">Built-up Area (Sft.) <span className="text-red-500">*</span></label>
                           <input 
                             type="number" 
                             placeholder="e.g., 1600"
@@ -4114,7 +4182,7 @@ export const PostProperty: React.FC = () => {
                 {formData.category === 'Lands' && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
                     <div className="space-y-2">
-                      <label className="block text-sm font-semibold text-[#0B2C5C]">Land Area (sq ft) <span className="text-red-500">*</span></label>
+                      <label className="block text-sm font-semibold text-[#0B2C5C]">Land Area (Sft.) <span className="text-red-500">*</span></label>
                       <input 
                         type="number" 
                         placeholder="Enter Land Area"
@@ -4209,7 +4277,7 @@ export const PostProperty: React.FC = () => {
                           />
                         </div>
                         <div className="space-y-2">
-                          <label className="block text-sm font-semibold text-[#0B2C5C]">Price Per Sq.ft</label>
+                          <label className="block text-sm font-semibold text-[#0B2C5C]">Price Per Sft.</label>
                           <input 
                             type="number" 
                             placeholder="e.g., 3500"
@@ -4669,7 +4737,7 @@ export const PostProperty: React.FC = () => {
                           <span className="text-sm font-bold text-[#0B2C5C] mt-1 block">{formData.commercialZoneType || 'N/A'}</span>
                         </div>
                         <div className="p-4 bg-[#F0F4F9]/60 rounded-xl border border-slate-100">
-                          <span className="text-[11px] font-semibold text-slate-400 block uppercase">Price/Sqft</span>
+                          <span className="text-[11px] font-semibold text-slate-400 block uppercase">Price/Sft.</span>
                           <span className="text-sm font-bold text-[#0B2C5C] mt-1 block">₹{formData.pricePerSqft || 'N/A'}</span>
                         </div>
                       </div>

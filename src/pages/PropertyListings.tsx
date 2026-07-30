@@ -146,7 +146,7 @@ const mockProperties: Property[] = [
     location: 'EAPL Sri tirumala fortune, Hyderabad',
     price: '₹ 1.00Cr',
     priceRaw: 10000000,
-    area: '1500 sq.ft.',
+    area: '1500 Sft.',
     status: 'Active',
     image: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=600&auto=format&fit=crop&q=60',
     images: [
@@ -169,7 +169,7 @@ const mockProperties: Property[] = [
     location: 'EAPL Sri tirumala fortune, Hyderabad',
     price: '₹ 1.00Cr',
     priceRaw: 10000000,
-    area: '1500 sq.ft.',
+    area: '1500 Sft.',
     status: 'Active',
     image: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=600&auto=format&fit=crop&q=60',
     images: [
@@ -192,7 +192,7 @@ const mockProperties: Property[] = [
     location: 'EAPL Sri tirumala fortune, Hyderabad',
     price: '₹ 1.00Cr',
     priceRaw: 10000000,
-    area: '1500 sq.ft.',
+    area: '1500 Sft.',
     status: 'Active',
     image: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=600&auto=format&fit=crop&q=60',
     images: [
@@ -215,7 +215,7 @@ const mockProperties: Property[] = [
     location: 'Gachibowli, Hyderabad',
     price: '₹ 4.50Cr',
     priceRaw: 45000000,
-    area: '3800 sq.ft.',
+    area: '3800 Sft.',
     status: 'Pending',
     image: 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=600&auto=format&fit=crop&q=60',
     images: [
@@ -237,7 +237,7 @@ const mockProperties: Property[] = [
     location: 'Madhapur, Hitech City, Hyderabad',
     price: '₹ 6.20Cr',
     priceRaw: 62000000,
-    area: '5400 sq.ft.',
+    area: '5400 Sft.',
     status: 'Sold',
     image: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=600&auto=format&fit=crop&q=60',
     images: [
@@ -259,7 +259,7 @@ const mockProperties: Property[] = [
     location: 'Shadnagar Phase-2, Hyderabad',
     price: '₹ 45.00L',
     priceRaw: 4500000,
-    area: '2400 sq.ft.',
+    area: '2400 Sft.',
     status: 'Expired',
     image: 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=600&auto=format&fit=crop&q=60',
     images: [
@@ -601,8 +601,8 @@ export const PropertyListings: React.FC = () => {
                       accentColor="#035096"
                     />
                     <div className="flex justify-between text-[9px] text-gray-400 font-semibold mt-1">
-                      <span>₹ {(500000).toLocaleString('en-IN')}</span>
-                      <span>₹ {(100000000).toLocaleString('en-IN')}</span>
+                      <span>₹ 5 Lakhs</span>
+                      <span>₹ 10 Cr</span>
                     </div>
                   </div>
                 </div>
@@ -692,7 +692,12 @@ export const PropertyListings: React.FC = () => {
               {/* Card Details */}
               <div className="p-6 flex-1 flex flex-col justify-between">
                 <div>
-                  <h3 className="text-base font-semibold text-gray-900 leading-snug font-poppins text-left">{property.title}</h3>
+                  <div className="flex items-start justify-between gap-2">
+                    <h3 className="text-base font-semibold text-gray-900 leading-snug font-poppins text-left flex-1 min-w-0">{property.title}</h3>
+                    <span className="shrink-0 text-[11px] font-semibold text-[#035096] bg-[#EBF3FE] border border-[#BFDBFE] px-2 py-0.5 rounded-[4px]">
+                      {property.id}
+                    </span>
+                  </div>
                   
                   <div className="flex items-center gap-1.5 text-xs mt-1.5 font-poppins font-light text-left" style={{ color: '#7A7A7A' }}>
                     <MapPin className="w-4 h-4 shrink-0" style={{ color: '#7A7A7A' }} strokeWidth={1.5} />
@@ -715,10 +720,10 @@ export const PropertyListings: React.FC = () => {
                   </div>
 
                   {/* Metrics Table / Grid */}
-                  <div className="grid grid-cols-3 border border-gray-200 rounded-xl mt-4 bg-white p-3 divide-x divide-gray-200">
-                    <div className="flex flex-col items-center justify-center text-center px-1">
-                      <span className="text-[9px] font-medium leading-tight text-center" style={{ color: '#7A7A7A' }}>Listing Quality Score</span>
-                      <div className="flex items-center justify-center gap-1.5 mt-2">
+                  <div className="flex flex-col border border-gray-200 rounded-xl mt-4 bg-white divide-y divide-gray-200">
+                    <div className="flex items-center justify-between px-4 py-3">
+                      <span className="text-[11px] font-medium" style={{ color: '#7A7A7A' }}>Property Quality Score</span>
+                      <div className="flex items-center gap-1.5">
                         <span className="border border-[#0F925E] text-[#0F925E] bg-green-100 text-[10px] font-semibold rounded-[4px] px-1.5 py-0.5 flex items-center justify-center">
                           {property.qualityScore}
                         </span>
@@ -726,17 +731,17 @@ export const PropertyListings: React.FC = () => {
                       </div>
                     </div>
                     
-                    <div className="flex flex-col items-center justify-center text-center px-1">
-                      <span className="text-[9px] font-medium leading-tight" style={{ color: '#7A7A7A' }}>Last Added</span>
-                      <div className="flex items-center justify-center gap-1.5 mt-2.5 text-gray-700 font-semibold text-[10px]">
+                    <div className="flex items-center justify-between px-4 py-3">
+                      <span className="text-[11px] font-medium" style={{ color: '#7A7A7A' }}>Prop Added on</span>
+                      <div className="flex items-center gap-1.5 text-gray-700 font-semibold text-[10px]">
                         <Calendar className="w-3.5 h-3.5" style={{ color: '#7A7A7A' }} />
                         <span>{property.lastAdded}</span>
                       </div>
                     </div>
 
-                    <div className="flex flex-col items-center justify-center text-center px-1">
-                      <span className="text-[9px] font-medium leading-tight" style={{ color: '#7A7A7A' }}>Leads</span>
-                      <div className="flex items-center justify-center gap-1 mt-2.5 text-gray-750 font-semibold text-[10px]">
+                    <div className="flex items-center justify-between px-4 py-3">
+                      <span className="text-[11px] font-medium" style={{ color: '#7A7A7A' }}>Total Leads</span>
+                      <div className="flex items-center gap-1 text-gray-750 font-semibold text-[10px]">
                         <Users className="w-3.5 h-3.5 text-indigo-500" />
                         <span className="text-[#0B2C5C] font-semibold">{property.leads}</span>
                         <svg className="w-3.5 h-3.5 text-indigo-500 cursor-pointer ml-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -834,7 +839,7 @@ export const PropertyListings: React.FC = () => {
                     <TrendingUp className="w-4 h-4 text-slate-500" strokeWidth={2} />
                     <span className="font-normal text-slate-500 font-poppins">Price</span>
                   </div>
-                  <p className="text-[17px] font-semibold text-gray-950 font-poppins" style={{ fontWeight: 600 }}>₹1,00,00,000</p>
+                  <p className="text-[17px] font-semibold text-gray-950 font-poppins" style={{ fontWeight: 600 }}>₹1 Cr</p>
                 </div>
                 
                 <div className="bg-[#EBF3FE] rounded-[12px] p-4 flex flex-col justify-between text-left h-24">
@@ -857,15 +862,15 @@ export const PropertyListings: React.FC = () => {
               {/* Info dates metadata */}
               <div className="grid grid-cols-3 gap-4 text-left px-1">
                 <div>
-                  <p className="text-[11px] font-normal font-poppins" style={{ color: '#7A7A7A' }}>Last Added</p>
+                  <p className="text-[11px] font-normal font-poppins" style={{ color: '#7A7A7A' }}>Property Created On</p>
                   <p className="text-[13px] font-semibold text-gray-950 font-poppins mt-1.5" style={{ fontWeight: 600 }}>19 May 2026</p>
                 </div>
                 <div>
-                  <p className="text-[11px] font-normal font-poppins" style={{ color: '#7A7A7A' }}>Created On</p>
+                  <p className="text-[11px] font-normal font-poppins" style={{ color: '#7A7A7A' }}>Prop Added on</p>
                   <p className="text-[13px] font-semibold text-gray-950 font-poppins mt-1.5" style={{ fontWeight: 600 }}>19 May 2026</p>
                 </div>
                 <div>
-                  <p className="text-[11px] font-normal font-poppins" style={{ color: '#7A7A7A' }}>Leads</p>
+                  <p className="text-[11px] font-normal font-poppins" style={{ color: '#7A7A7A' }}>Total Leads</p>
                   <p className="text-[13px] font-semibold text-gray-950 font-poppins mt-1.5" style={{ fontWeight: 600 }}>02</p>
                 </div>
               </div>

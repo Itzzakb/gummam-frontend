@@ -25,6 +25,8 @@ import {
   Menu,
   X
 } from 'lucide-react';
+import { DashboardRangeFilter } from '@/components/ui/DashboardRangeFilter';
+import { ScheduleCalendar } from '@/components/ui/ScheduleCalendar';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -46,83 +48,6 @@ ChartJS.register(
   ChartLegend,
   ArcElement
 );
-
-
-
-interface PeriodDropdownProps {
-  value: string;
-  onChange: (value: string) => void;
-}
-
-const PeriodDropdown: React.FC<PeriodDropdownProps> = ({ value, onChange }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = React.useRef<HTMLDivElement>(null);
-  const options = ['Last Week', 'Last Month', 'Three Months', 'Six Months', 'Last Years'];
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  return (
-    <div className="relative inline-block text-left" ref={dropdownRef} onClick={(e) => e.stopPropagation()}>
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className={`flex items-center gap-1 bg-white border rounded-full px-2.5 py-1 text-[10px] font-semibold transition-all focus:outline-none cursor-pointer ${
-          isOpen
-            ? 'border-[#035096] text-[#035096] ring-1/2 ring-[#035096]'
-            : 'border-slate-200 hover:border-slate-350 text-slate-700'
-        }`}
-      >
-        <span>{value}</span>
-        <svg 
-          className={`w-2.5 h-2.5 shrink-0 transition-transform duration-200 ${
-            isOpen ? 'rotate-180 text-[#035096]' : 'text-slate-400'
-          }`}
-          fill="none" 
-          stroke="currentColor" 
-          strokeWidth="2.5" 
-          viewBox="0 0 24 24"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-        </svg>
-      </button>
-
-      {isOpen && (
-        <div className="absolute right-0 mt-1.5 w-28 bg-white border border-slate-200 rounded-lg shadow-lg z-50 py-1 flex flex-col">
-          {options.map((option) => (
-            <button
-              key={option}
-              type="button"
-              onClick={() => {
-                onChange(option);
-                setIsOpen(false);
-              }}
-              className={`w-full text-left px-3 py-1.5 text-[10px] transition-colors flex items-center justify-between ${
-                option === value 
-                  ? 'bg-[#F0F4F9]/60 font-semibold text-[#035096]' 
-                  : 'text-slate-700 hover:bg-slate-50'
-              }`}
-            >
-              <span>{option}</span>
-              {option === value && (
-                <svg className="w-3 h-3 text-[#035096] shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                </svg>
-              )}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
 
 interface AnalyticsPeriodDropdownProps {
   value: string;
@@ -222,10 +147,12 @@ export const CrmPortal: React.FC = () => {
 
   const [showNotifications, setShowNotifications] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState('Jan - Jun 2026');
-  const [leadsResPeriod, setLeadsResPeriod] = useState('Last Month');
-  const [leadsCommPeriod, setLeadsCommPeriod] = useState('Last Month');
-  const [listingsResPeriod, setListingsResPeriod] = useState('Last Month');
-  const [listingsCommPeriod, setListingsCommPeriod] = useState('Last Month');
+  const [dashboardRange, setDashboardRange] = useState('Last Month');
+  const [customStartDate, setCustomStartDate] = useState<Date | null>(null);
+  const [customEndDate, setCustomEndDate] = useState<Date | null>(null);
+  const [connectionStatusRange, setConnectionStatusRange] = useState('Last Month');
+  const [connectionCustomStart, setConnectionCustomStart] = useState<Date | null>(null);
+  const [connectionCustomEnd, setConnectionCustomEnd] = useState<Date | null>(null);
 
   // Verification progress mock data
   const verificationProgress = {
@@ -253,17 +180,21 @@ export const CrmPortal: React.FC = () => {
 
   // Dummy statistics and sparklines
   const connectionStatuses = [
-    { name: 'All', value: '22', points: '10,15 20,8 30,14 40,6 50,11' },
-    { name: 'Pending', value: '02', points: '10,18 20,15 30,12 40,10 50,8' },
-    { name: 'Interested', value: '13', points: '10,16 20,11 30,9 40,7 50,5' },
-    { name: 'Follow Up', value: '05', points: '10,12 20,10 30,11 40,7 50,9' },
-    { name: 'In Progress', value: '40', points: '10,18 20,12 30,15 40,9 50,6' },
-    { name: 'Not Ans', value: '08', points: '10,15 20,14 30,16 40,13 50,15' },
-    { name: 'Converted', value: '22', points: '10,18 20,16 30,12 40,9 50,4' },
-    { name: 'Dead', value: '14', points: '10,5 20,8 30,11 40,14 50,18' },
-    { name: 'Visited', value: '51', points: '10,19 20,14 30,10 40,8 50,5' },
-    { name: 'Payment', value: '34', points: '10,15 20,12 30,14 40,10 50,7' },
-    { name: 'Not Connected', value: '34', points: '10,10 20,12 30,9 40,11 50,8' },
+    { name: 'Total Leads', value: '156', points: '10,15 20,8 30,14 40,6 50,11' },
+    { name: 'Open Leads', value: '42', points: '10,18 20,15 30,12 40,10 50,8' },
+    { name: 'Active Leads', value: '38', points: '10,16 20,11 30,9 40,7 50,5' },
+    { name: 'Qualified Leads', value: '24', points: '10,12 20,10 30,11 40,7 50,9' },
+    { name: "Today's Follow-ups", value: '12', points: '10,18 20,12 30,15 40,9 50,6' },
+    { name: 'Overdue Follow-ups', value: '08', points: '10,15 20,14 30,16 40,13 50,15' },
+    { name: 'No Response', value: '15', points: '10,18 20,16 30,12 40,9 50,4' },
+    { name: 'Site Visits', value: '19', points: '10,5 20,8 30,11 40,14 50,18' },
+    { name: 'Negotiation', value: '11', points: '10,19 20,14 30,10 40,8 50,5' },
+    { name: 'Token Received', value: '07', points: '10,15 20,12 30,14 40,10 50,7' },
+    { name: 'Booking Confirmed', value: '09', points: '10,10 20,12 30,9 40,11 50,8' },
+    { name: 'Payment Pending', value: '06', points: '10,14 20,11 30,13 40,8 50,6' },
+    { name: 'Registration Completed', value: '14', points: '10,8 20,10 30,7 40,12 50,9' },
+    { name: 'Lost Leads', value: '10', points: '10,6 20,9 30,12 40,15 50,17' },
+    { name: 'Unreachable Leads', value: '05', points: '10,16 20,13 30,15 40,11 50,14' },
   ];
 
   const recentActivities = [
@@ -310,17 +241,21 @@ export const CrmPortal: React.FC = () => {
   ];
 
   const pieLegend = [
-    { name: 'All', count: 45, color: '#1E3A8A' },
-    { name: 'Not Ans', count: 45, color: '#F59E0B' },
-    { name: 'Pending', count: 32, color: '#EF4444' },
-    { name: 'Converted', count: 32, color: '#10B981' },
-    { name: 'Interested', count: 18, color: '#3B82F6' },
-    { name: 'Dead', count: 18, color: '#6B7280' },
-    { name: 'Follow Up', count: 5, color: '#8B5CF6' },
-    { name: 'Visited', count: 5, color: '#EC4899' },
-    { name: 'In Progress', count: 5, color: '#14B8A6' },
-    { name: 'Payment', count: 5, color: '#F97316' },
-    { name: 'Not Connected', count: 5, color: '#06B6D4' }
+    { name: 'Total Leads', count: 156, color: '#1E3A8A' },
+    { name: 'Open Leads', count: 42, color: '#3B82F6' },
+    { name: 'Active Leads', count: 38, color: '#06B6D4' },
+    { name: 'Qualified Leads', count: 24, color: '#8B5CF6' },
+    { name: "Today's Follow-ups", count: 12, color: '#F59E0B' },
+    { name: 'Overdue Follow-ups', count: 8, color: '#EF4444' },
+    { name: 'No Response', count: 15, color: '#F97316' },
+    { name: 'Site Visits', count: 19, color: '#EC4899' },
+    { name: 'Negotiation', count: 11, color: '#14B8A6' },
+    { name: 'Token Received', count: 7, color: '#6366F1' },
+    { name: 'Booking Confirmed', count: 9, color: '#10B981' },
+    { name: 'Payment Pending', count: 6, color: '#EAB308' },
+    { name: 'Registration Completed', count: 14, color: '#22C55E' },
+    { name: 'Lost Leads', count: 10, color: '#6B7280' },
+    { name: 'Unreachable Leads', count: 5, color: '#94A3B8' },
   ];
 
   const monthlyData = [
@@ -567,9 +502,30 @@ export const CrmPortal: React.FC = () => {
             </div>
           ) : (
             <div className="space-y-6">
+
+              {/* Dashboard Overview Header */}
+              <div className="bg-white rounded-[12px] border border-gray-200/60 shadow-sm px-6 py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-2xl md:text-3xl font-semibold text-[#0B2C5C] tracking-tight">Dashboard Overview</h2>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Manage your leads, listings, and schedule in one place.
+                  </p>
+                </div>
+                <DashboardRangeFilter
+                  value={dashboardRange}
+                  onChange={setDashboardRange}
+                  customStart={customStartDate}
+                  customEnd={customEndDate}
+                  onCustomRangeChange={(start, end) => {
+                    setCustomStartDate(start);
+                    setCustomEndDate(end);
+                    setDashboardRange('Custom Range');
+                  }}
+                />
+              </div>
               
               {/* Row 1: Leads, Listings, Gold Plan on left, Scan & Verify on right */}
-              <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 xl:grid-cols-[3fr_2fr] gap-6">
                 
                 {/* Left Column (Leads, Listings, Gold Plan) */}
                 <div className="space-y-6">
@@ -582,14 +538,13 @@ export const CrmPortal: React.FC = () => {
                         <div className="flex-1">
                           <span className="text-xs font-medium text-[#5C5C5C]">Residential</span>
                           <h4 className="text-2xl font-semibold text-gray-900 mt-1">24</h4>
-                          <div className="flex items-center justify-between gap-2 mt-3 w-full">
+                          <div className="flex items-center gap-2 mt-3 w-full">
                             <span className="text-[10px] text-[#10B981] font-semibold bg-[#ECFDF5] px-2.5 py-1 rounded-full flex items-center gap-1">
                               <svg className="w-3 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 10.5L12 3m0 0l7.5 7.5M12 3v18" />
                               </svg>
                               5.01%
                             </span>
-                            <PeriodDropdown value={leadsResPeriod} onChange={setLeadsResPeriod} />
                           </div>
                         </div>
                         <div className="w-10 h-10 rounded-full bg-[#EBF3FE] text-[#0066F6] flex items-center justify-center shrink-0 ml-4">
@@ -602,14 +557,13 @@ export const CrmPortal: React.FC = () => {
                         <div className="flex-1">
                           <span className="text-xs font-medium text-[#5C5C5C]">Commercial</span>
                           <h4 className="text-2xl font-semibold text-gray-900 mt-1">44</h4>
-                          <div className="flex items-center justify-between gap-2 mt-3 w-full">
+                          <div className="flex items-center gap-2 mt-3 w-full">
                             <span className="text-[10px] text-[#10B981] font-semibold bg-[#ECFDF5] px-2.5 py-1 rounded-full flex items-center gap-1">
                               <svg className="w-3 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 10.5L12 3m0 0l7.5 7.5M12 3v18" />
                               </svg>
                               5.01%
                             </span>
-                            <PeriodDropdown value={leadsCommPeriod} onChange={setLeadsCommPeriod} />
                           </div>
                         </div>
                         <div className="w-10 h-10 rounded-full bg-[#FFF3E5] text-[#FFA234] flex items-center justify-center shrink-0 ml-4">
@@ -628,14 +582,13 @@ export const CrmPortal: React.FC = () => {
                         <div className="flex-1">
                           <span className="text-xs font-medium text-[#5C5C5C]">Residential</span>
                           <h4 className="text-2xl font-semibold text-gray-900 mt-1">14</h4>
-                          <div className="flex items-center justify-between gap-2 mt-3 w-full">
+                          <div className="flex items-center gap-2 mt-3 w-full">
                             <span className="text-[10px] text-[#10B981] font-semibold bg-[#ECFDF5] px-2.5 py-1 rounded-full flex items-center gap-1">
                               <svg className="w-3 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 10.5L12 3m0 0l7.5 7.5M12 3v18" />
                               </svg>
                               5.01%
                             </span>
-                            <PeriodDropdown value={listingsResPeriod} onChange={setListingsResPeriod} />
                           </div>
                         </div>
                         <div className="w-10 h-10 rounded-full bg-[#EBF3FE] text-[#0066F6] flex items-center justify-center shrink-0 ml-4">
@@ -648,14 +601,13 @@ export const CrmPortal: React.FC = () => {
                         <div className="flex-1">
                           <span className="text-xs font-medium text-[#5C5C5C]">Commercial</span>
                           <h4 className="text-2xl font-semibold text-gray-900 mt-1">34</h4>
-                          <div className="flex items-center justify-between gap-2 mt-3 w-full">
+                          <div className="flex items-center gap-2 mt-3 w-full">
                             <span className="text-[10px] text-[#10B981] font-semibold bg-[#ECFDF5] px-2.5 py-1 rounded-full flex items-center gap-1">
                               <svg className="w-3 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 10.5L12 3m0 0l7.5 7.5M12 3v18" />
                               </svg>
                               5.01%
                             </span>
-                            <PeriodDropdown value={listingsCommPeriod} onChange={setListingsCommPeriod} />
                           </div>
                         </div>
                         <div className="w-10 h-10 rounded-full bg-[#FFF3E5] text-[#FFA234] flex items-center justify-center shrink-0 ml-4">
@@ -683,7 +635,7 @@ export const CrmPortal: React.FC = () => {
                 </div>
 
                 {/* Right Column (Scan & Verify) */}
-                <div className="xl:col-span-1 space-y-6">
+                <div className="space-y-6">
                   {/* Master Scan and Verify Card */}
                   <div className="bg-white rounded-[5px] border border-gray-200/60 p-6 shadow-sm space-y-2 h-full flex flex-col justify-between">
                     
@@ -703,7 +655,7 @@ export const CrmPortal: React.FC = () => {
                        
                       </div>
                       
-                      <div className="w-[310px] h-[180px] shrink-0">
+                      <div className="w-[230px] h-[180px] shrink-0">
                         <img src="/images/scan-property.png" alt="Scan Property" className="w-full h-full object-contain" />
                       </div>
                     </div>
@@ -792,7 +744,7 @@ export const CrmPortal: React.FC = () => {
                       <div className="h-16 w-[1px] bg-[#E5E0FF] shrink-0"></div>
 
                       {/* Right side text and button */}
-                      <div className="flex-1 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div className="flex-1 flex  sm:flex-row xl:flex-col sm:items-center justify-between gap-4">
                         <div className="space-y-1">
                           <h4 className="text-base font-bold text-[#0B2C5C] flex items-center gap-1.5 leading-tight">
                             Almost there! <span className="text-lg">🎉</span>
@@ -816,16 +768,44 @@ export const CrmPortal: React.FC = () => {
 
               </div>
 
+              {/* Schedule Calendar */}
+              <ScheduleCalendar />
+
               {/* Row 2: Connection Status (Full Width Combined Section) */}
-              <div className="bg-white rounded-[5px] p-6 border border-gray-200/60 shadow-sm grid grid-cols-1 lg:grid-cols-2 gap-8">
-                
-                {/* Left Part: Grid of 11 items (takes 2 columns) */}
-                <div className="space-y-5">
+              <div className="bg-white rounded-[5px] p-6 border border-gray-200/60 shadow-sm space-y-5">
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
                   <h3 className="text-base font-semibold text-[#0B2C5C] tracking-tight">Connection Status</h3>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 w-full lg:w-auto">
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="text-[11px] font-bold text-white bg-[#0088FF] px-3.5 py-2 rounded-[8px] whitespace-nowrap shadow-sm">
+                        Contact Rate 10%
+                      </span>
+                      <span className="text-[11px] font-bold text-white bg-[#00B050] px-3.5 py-2 rounded-[8px] whitespace-nowrap shadow-sm">
+                        Conversion Rate 10%
+                      </span>
+                    </div>
+                    <DashboardRangeFilter
+                      value={connectionStatusRange}
+                      onChange={setConnectionStatusRange}
+                      customStart={connectionCustomStart}
+                      customEnd={connectionCustomEnd}
+                      onCustomRangeChange={(start, end) => {
+                        setConnectionCustomStart(start);
+                        setConnectionCustomEnd(end);
+                        setConnectionStatusRange('Custom Range');
+                      }}
+                    />
+                    
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Left Part: Grid of status cards */}
+                <div className="space-y-5">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                     {connectionStatuses.map((stat, i) => (
-                      <div key={i} className="bg-white border border-gray-100 rounded-[5px] p-3.5 flex flex-col justify-between transition-colors shadow-sm">
-                        <span className="text-xs font-semibold text-gray-400">{stat.name}</span>
+                      <div key={i} className="bg-white border border-gray-100 rounded-[5px] p-3.5 flex flex-col justify-between transition-colors shadow-sm min-h-[76px]">
+                        <span className="text-[11px] font-semibold text-gray-400 leading-tight">{stat.name}</span>
                         <div className="flex items-end justify-between mt-2">
                           <h4 className="text-xl font-medium text-gray-900 leading-none">{stat.value}</h4>
                           <svg className="w-10 h-5 overflow-visible text-[#0062E1]" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -841,56 +821,46 @@ export const CrmPortal: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Right Part: Distribution Pie Chart & Badges (takes 1 column) */}
+                {/* Right Part: Distribution Pie Chart (takes 1 column) */}
                 <div className="border-t lg:border-t-0 lg:border-l border-gray-100 pt-6 lg:pt-0 lg:pl-8 flex flex-col">
-                  <div className="flex justify-start gap-2 mb-5">
-                    <span className="text-[11px] font-bold text-white bg-[#0088FF] px-3.5 py-1.5 rounded-[5px] whitespace-nowrap shadow-sm">
-                      Contact Rate 10%
-                    </span>
-                    <span className="text-[11px] font-bold text-white bg-[#00B050] px-3.5 py-1.5 rounded-[5px] whitespace-nowrap shadow-sm">
-                      Conversion Rate 10%
-                    </span>
+                  {/* Chart.js Pie Chart - top, large */}
+                  <div className="relative w-full max-w-[240px] aspect-square mx-auto mb-6 flex items-center justify-center">
+                    <ChartPie
+                      data={{
+                        labels: pieLegend.map(item => item.name),
+                        datasets: [
+                          {
+                            data: pieLegend.map(item => item.count),
+                            backgroundColor: pieLegend.map(item => item.color),
+                            borderWidth: 0,
+                          }
+                        ]
+                      }}
+                      options={{
+                        plugins: {
+                          legend: { display: false },
+                          tooltip: { enabled: true }
+                        },
+                        maintainAspectRatio: false
+                      }}
+                    />
                   </div>
 
-                  <div className="flex flex-col md:flex-row items-center gap-6">
-                    {/* Legend list in two sub-columns */}
-                    <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 w-full md:flex-1">
-                      {pieLegend.map((item, index) => (
-                        <div key={index} className="flex items-center justify-between text-xs font-semibold text-gray-500 whitespace-nowrap">
-                          <div className="flex items-center gap-2">
-                            <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: item.color }}></span>
-                            <span>{item.name} :</span>
-                          </div>
-                          <span className="font-semibold text-gray-950 ml-1">{item.count}</span>
+                  {/* Status legend below chart */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5 w-full">
+                    {pieLegend.map((item, index) => (
+                      <div key={index} className="flex items-center justify-between text-[11px] font-semibold text-gray-500 gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: item.color }}></span>
+                          <span className="truncate">{item.name} :</span>
                         </div>
-                      ))}
-                    </div>
-
-                    {/* Chart.js Pie Chart */}
-                    <div className="relative w-32 h-32 shrink-0 flex items-center justify-center mx-auto md:mx-0">
-                      <ChartPie
-                        data={{
-                          labels: pieLegend.map(item => item.name),
-                          datasets: [
-                            {
-                              data: pieLegend.map(item => item.count),
-                              backgroundColor: pieLegend.map(item => item.color),
-                              borderWidth: 0,
-                            }
-                          ]
-                        }}
-                        options={{
-                          plugins: {
-                            legend: { display: false },
-                            tooltip: { enabled: true }
-                          },
-                          maintainAspectRatio: false
-                        }}
-                      />
-                    </div>
+                        <span className="font-semibold text-gray-950 shrink-0">{item.count}</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
 
+                </div>
               </div>
 
               {/* Row 3: Bottom Performance & Activity Grid */}

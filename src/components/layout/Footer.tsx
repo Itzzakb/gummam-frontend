@@ -147,6 +147,20 @@ export const Footer: React.FC = () => {
             </div>
           </div>
         </div>
+
+        <div className="mt-10 flex flex-col gap-4 border-t border-white/10 pt-8 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-[13px] font-normal text-white/50">
+            © {new Date().getFullYear()} Gummaam. All rights reserved.
+          </p>
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+            <a href="#" className="text-[14px] font-normal text-white/62 underline underline-offset-3 transition hover:text-white">
+              Privacy Policy
+            </a>
+            <a href="#" className="text-[14px] font-normal text-white/62 underline underline-offset-3 transition hover:text-white">
+              Terms &amp; Conditions
+            </a>
+          </div>
+        </div>
       </div>
     </footer>
   );

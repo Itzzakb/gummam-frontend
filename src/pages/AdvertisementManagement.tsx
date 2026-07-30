@@ -18,6 +18,7 @@ import {
 
 interface FeaturedProperty {
   id: string;
+  propertyId: string;
   propertyName: string;
   category: string;
   agentName: string;
@@ -26,6 +27,26 @@ interface FeaturedProperty {
   status: string;
   revenue: string;
 }
+
+interface PropertyOption {
+  propertyId: string;
+  propertyName: string;
+  category: string;
+  agentName: string;
+}
+
+const PROPERTY_CATALOG: PropertyOption[] = [
+  { propertyId: 'PRP001', propertyName: 'Luxury Apartment', category: 'Apartment', agentName: 'Rajesh Kumar' },
+  { propertyId: 'PRP002', propertyName: '3 BHK Apartment in Tukkuguda', category: 'Apartment', agentName: 'Rajesh Kumar' },
+  { propertyId: 'PRP003', propertyName: 'Penthouse Suite', category: 'Luxury', agentName: 'Priya Sharma' },
+  { propertyId: 'PRP004', propertyName: '4 BHK Luxury Villa', category: 'Villa', agentName: 'Anjali Mehta' },
+  { propertyId: 'PRP005', propertyName: 'Commercial Office Space', category: 'Commercial', agentName: 'Vikram Patel' },
+  { propertyId: 'PRP006', propertyName: 'Gachibowli Plot', category: 'Land', agentName: 'Sneha Reddy' },
+  { propertyId: 'PRP007', propertyName: 'Jubilee Hills Independent House', category: 'Residential', agentName: 'Arjun Nair' },
+  { propertyId: 'PRP008', propertyName: 'Hitech City Studio', category: 'Apartment', agentName: 'Meera Iyer' },
+  { propertyId: 'PRP009', propertyName: 'Kondapur Duplex', category: 'Residential', agentName: 'Rahul Sharma' },
+  { propertyId: 'PRP010', propertyName: 'Madhapur Retail Shop', category: 'Commercial', agentName: 'Neha Kapoor' },
+];
 
 interface BannerAd {
   id: string;
@@ -183,6 +204,7 @@ export const AdvertisementManagement: React.FC = () => {
 
   // Form states for creating a Featured Property
   const [featuredForm, setFeaturedForm] = useState({
+    propertyId: '',
     propertyName: '',
     agentName: '',
     startDate: '',
@@ -192,6 +214,9 @@ export const AdvertisementManagement: React.FC = () => {
     category: '',
     status: 'Active'
   });
+  const [propertyQuery, setPropertyQuery] = useState('');
+  const [propertySuggestionsOpen, setPropertySuggestionsOpen] = useState(false);
+  const propertySearchRef = useRef<HTMLDivElement>(null);
 
   // Form states for creating a Banner
   const [bannerForm, setBannerForm] = useState({
@@ -209,10 +234,10 @@ export const AdvertisementManagement: React.FC = () => {
 
   // Mock initial Featured Properties
   const [featuredProperties, setFeaturedProperties] = useState<FeaturedProperty[]>([
-    { id: 'FP1', propertyName: 'Luxury Apartment', category: 'Apartment', agentName: 'Rajesh Kumar', featuredPosition: 'Trending Homes You\'ll Love', duration: '30 Days', status: 'Active', revenue: '₹2500' },
-    { id: 'FP2', propertyName: 'Luxury Apartment', category: 'Residential', agentName: 'Rajesh Kumar', featuredPosition: 'Trending Homes You\'ll Love', duration: '15 Days', status: 'Active', revenue: '₹2500' },
-    { id: 'FP3', propertyName: 'Luxury Apartment', category: 'Land', agentName: 'Rajesh Kumar', featuredPosition: 'Trending Homes You\'ll Love', duration: '07 Days', status: 'Active', revenue: '₹2500' },
-    { id: 'FP4', propertyName: 'Penthouse Suite', category: 'Luxury', agentName: 'Rajesh Kumar', featuredPosition: 'Trending Homes You\'ll Love', duration: '30 Days', status: 'Active', revenue: '₹2500' }
+    { id: 'FP1', propertyId: 'PRP001', propertyName: 'Luxury Apartment', category: 'Apartment', agentName: 'Rajesh Kumar', featuredPosition: 'Trending Homes You\'ll Love', duration: '30 Days', status: 'Active', revenue: '₹2500' },
+    { id: 'FP2', propertyId: 'PRP002', propertyName: 'Luxury Apartment', category: 'Residential', agentName: 'Rajesh Kumar', featuredPosition: 'Trending Homes You\'ll Love', duration: '15 Days', status: 'Active', revenue: '₹2500' },
+    { id: 'FP3', propertyId: 'PRP006', propertyName: 'Luxury Apartment', category: 'Land', agentName: 'Rajesh Kumar', featuredPosition: 'Trending Homes You\'ll Love', duration: '07 Days', status: 'Active', revenue: '₹2500' },
+    { id: 'FP4', propertyId: 'PRP003', propertyName: 'Penthouse Suite', category: 'Luxury', agentName: 'Rajesh Kumar', featuredPosition: 'Trending Homes You\'ll Love', duration: '30 Days', status: 'Active', revenue: '₹2500' }
   ]);
 
   // Mock initial Banners
@@ -232,10 +257,50 @@ export const AdvertisementManagement: React.FC = () => {
       if (placementRef.current && !placementRef.current.contains(e.target as Node)) {
         setPlacementDropdownOpen(false);
       }
+      if (propertySearchRef.current && !propertySearchRef.current.contains(e.target as Node)) {
+        setPropertySuggestionsOpen(false);
+      }
     };
     document.addEventListener('mousedown', handleOutside);
     return () => document.removeEventListener('mousedown', handleOutside);
   }, []);
+
+  const matchedProperties = PROPERTY_CATALOG.filter((p) => {
+    const q = propertyQuery.trim().toLowerCase();
+    if (!q) return false;
+    return (
+      p.propertyId.toLowerCase().includes(q) ||
+      p.propertyName.toLowerCase().includes(q)
+    );
+  }).slice(0, 6);
+
+  const selectPropertyOption = (option: PropertyOption) => {
+    setFeaturedForm((prev) => ({
+      ...prev,
+      propertyId: option.propertyId,
+      propertyName: option.propertyName,
+      category: option.category,
+      agentName: option.agentName,
+    }));
+    setPropertyQuery(`${option.propertyId} — ${option.propertyName}`);
+    setPropertySuggestionsOpen(false);
+  };
+
+  const resetFeaturedForm = () => {
+    setFeaturedForm({
+      propertyId: '',
+      propertyName: '',
+      agentName: '',
+      startDate: '',
+      endDate: '',
+      pricing: '',
+      titleId: 'ID - 001',
+      category: '',
+      status: 'Active'
+    });
+    setPropertyQuery('');
+    setPropertySuggestionsOpen(false);
+  };
 
   const handleFeaturedSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -251,6 +316,7 @@ export const AdvertisementManagement: React.FC = () => {
 
     const newFP: FeaturedProperty = {
       id: `FP${featuredProperties.length + 1}`,
+      propertyId: featuredForm.propertyId || 'PRP000',
       propertyName: featuredForm.propertyName || 'Luxury Apartment',
       category: featuredForm.category || 'Apartment',
       agentName: featuredForm.agentName || 'Rajesh Kumar',
@@ -262,17 +328,7 @@ export const AdvertisementManagement: React.FC = () => {
 
     setFeaturedProperties([...featuredProperties, newFP]);
     setShowCreateFeaturedModal(false);
-    // Reset Form
-    setFeaturedForm({
-      propertyName: '',
-      agentName: '',
-      startDate: '',
-      endDate: '',
-      pricing: '',
-      titleId: 'ID - 001',
-      category: '',
-      status: 'Active'
-    });
+    resetFeaturedForm();
   };
 
   const handleBannerSubmit = (e: React.FormEvent) => {
@@ -415,7 +471,7 @@ export const AdvertisementManagement: React.FC = () => {
             </div>
           </div>
           <div className="flex flex-col mt-2">
-            <span className="text-2xl font-bold text-slate-900 leading-none">₹8,75,000</span>
+            <span className="text-2xl font-bold text-slate-900 leading-none">₹8.75 Lakhs</span>
             <div className="flex justify-between items-center mt-3">
               <span className="text-[10px] font-bold text-emerald-600 flex items-center gap-0.5">
                 <TrendingUp className="w-3 h-3" />
@@ -493,7 +549,8 @@ export const AdvertisementManagement: React.FC = () => {
               <table className="w-full border-collapse text-left text-xs text-slate-700 font-medium">
                 <thead>
                   <tr className="bg-[#F0F2F3] border-b border-[#dddddd] text-xs font-semibold text-slate-700">
-                    <th className="p-4 pl-6 min-w-[140px] whitespace-nowrap">Property Name</th>
+                    <th className="p-4 pl-6 min-w-[100px] whitespace-nowrap">Property ID</th>
+                    <th className="p-4 min-w-[140px] whitespace-nowrap">Property Name</th>
                     <th className="p-4 min-w-[100px] whitespace-nowrap">Category</th>
                     <th className="p-4 min-w-[110px] whitespace-nowrap">Agent Name</th>
                     <th className="p-4 min-w-[160px] whitespace-nowrap">Title List</th>
@@ -506,7 +563,8 @@ export const AdvertisementManagement: React.FC = () => {
                 <tbody className="divide-y divide-[#dddddd]">
                   {featuredProperties.map((prop) => (
                     <tr key={prop.id} className="hover:bg-slate-50/30 transition-colors">
-                      <td className="p-4 pl-6 font-semibold text-slate-900 whitespace-nowrap">{prop.propertyName}</td>
+                      <td className="p-4 pl-6 font-semibold text-[#035096] whitespace-nowrap">{prop.propertyId}</td>
+                      <td className="p-4 font-semibold text-slate-900 whitespace-nowrap">{prop.propertyName}</td>
                       <td className="p-4 text-slate-650 whitespace-nowrap">{prop.category}</td>
                       <td className="p-4 text-slate-655 whitespace-nowrap">{prop.agentName}</td>
                       <td className="p-4 whitespace-nowrap">
@@ -622,7 +680,10 @@ export const AdvertisementManagement: React.FC = () => {
             <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
               <h2 className="text-base font-semibold text-slate-900">Create Featured Property</h2>
               <button
-                onClick={() => setShowCreateFeaturedModal(false)}
+                onClick={() => {
+                  setShowCreateFeaturedModal(false);
+                  resetFeaturedForm();
+                }}
                 className="w-8 h-8 rounded-[5px] hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-600 transition cursor-pointer"
               >
                 <X className="w-4 h-4" />
@@ -633,16 +694,58 @@ export const AdvertisementManagement: React.FC = () => {
             <form onSubmit={handleFeaturedSubmit} className="flex flex-col overflow-hidden">
               <div className="p-6 overflow-y-auto space-y-4 text-xs text-slate-600">
                 <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-[10px] font-semibold text-slate-500 mb-1">Property Name</label>
+                  <div ref={propertySearchRef} className="relative">
+                    <label className="block text-[10px] font-semibold text-slate-500 mb-1">Property Name / ID</label>
                     <input
                       type="text"
                       required
-                      placeholder="e.g. Luxury Apartment"
-                      value={featuredForm.propertyName}
-                      onChange={(e) => setFeaturedForm({...featuredForm, propertyName: e.target.value})}
+                      autoComplete="off"
+                      placeholder="Search by ID or name"
+                      value={propertyQuery}
+                      onFocus={() => {
+                        if (propertyQuery.trim()) setPropertySuggestionsOpen(true);
+                      }}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setPropertyQuery(value);
+                        setPropertySuggestionsOpen(value.trim().length > 0);
+                        setFeaturedForm((prev) => ({
+                          ...prev,
+                          propertyId: '',
+                          propertyName: value,
+                        }));
+                      }}
                       className="w-full h-8 px-2.5 bg-white border border-slate-200 rounded-[5px] text-xs outline-none focus:border-[#035096]"
                     />
+                    {propertySuggestionsOpen && matchedProperties.length > 0 && (
+                      <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-[5px] shadow-lg z-20 max-h-44 overflow-y-auto py-1">
+                        {matchedProperties.map((option) => (
+                          <button
+                            key={option.propertyId}
+                            type="button"
+                            onClick={() => selectPropertyOption(option)}
+                            className="w-full text-left px-3 py-2 hover:bg-[#F0F7FF] transition-colors cursor-pointer"
+                          >
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="text-[11px] font-semibold text-slate-800 truncate">
+                                {option.propertyName}
+                              </span>
+                              <span className="text-[10px] font-semibold text-[#035096] shrink-0">
+                                {option.propertyId}
+                              </span>
+                            </div>
+                            <div className="text-[10px] text-slate-500 mt-0.5">
+                              {option.category} · {option.agentName}
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    {propertySuggestionsOpen && propertyQuery.trim() && matchedProperties.length === 0 && (
+                      <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-[5px] shadow-lg z-20 px-3 py-2 text-[10px] text-slate-500">
+                        No matching properties found
+                      </div>
+                    )}
                   </div>
                   <div>
                     <label className="block text-[10px] font-semibold text-slate-500 mb-1">Agent Name</label>
@@ -769,7 +872,10 @@ export const AdvertisementManagement: React.FC = () => {
               <div className="px-6 py-4 border-t border-slate-100 flex items-center gap-3">
                 <button
                   type="button"
-                  onClick={() => setShowCreateFeaturedModal(false)}
+                  onClick={() => {
+                    setShowCreateFeaturedModal(false);
+                    resetFeaturedForm();
+                  }}
                   className="flex-1 h-9 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-[5px] cursor-pointer"
                 >
                   Cancel

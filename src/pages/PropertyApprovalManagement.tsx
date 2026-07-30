@@ -1,5 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Eye, Search, Download, X, Check, Ban, AlertCircle, MapPin } from 'lucide-react';
+
+type DocReviewStatus = 'Pending' | 'Approved' | 'Rejected';
+
+const OWNERSHIP_DOCS = [
+  'Property Ownership Proof / Passbook',
+  'Sale Deed',
+  'Tax Receipt',
+  'Utility Bill',
+  'Property Diagram',
+] as const;
 
 interface ApprovalRequest {
   id: string;
@@ -20,6 +31,8 @@ interface ApprovalRequest {
   pincode: string;
   images: string[];
   latLng: string;
+  documentReviews?: Partial<Record<(typeof OWNERSHIP_DOCS)[number], DocReviewStatus>>;
+  documentRejectReasons?: Partial<Record<(typeof OWNERSHIP_DOCS)[number], string>>;
   checks: {
     titleClear: boolean;
     duplicateCheck: boolean;
@@ -189,7 +202,7 @@ export const PropertyApprovalManagement: React.FC = () => {
       category: 'Residential',
       submittedDate: '07 Jun 2026',
       status: 'Approved',
-      price: '₹2,50,00,000',
+      price: '₹2.50 Cr',
       area: 3500,
       bedrooms: 4,
       bathrooms: 3,
@@ -221,7 +234,7 @@ export const PropertyApprovalManagement: React.FC = () => {
       category: 'Residential',
       submittedDate: '07 Jun 2026',
       status: 'Pending',
-      price: '₹95,00,000',
+      price: '₹95 Lakhs',
       area: 1800,
       bedrooms: 2,
       bathrooms: 2,
@@ -252,7 +265,7 @@ export const PropertyApprovalManagement: React.FC = () => {
       category: 'Office Space',
       submittedDate: '07 Jun 2026',
       status: 'Approved',
-      price: '₹25,00,00,000',
+      price: '₹25 Cr',
       area: 5000,
       bedrooms: 0,
       bathrooms: 4,
@@ -282,7 +295,7 @@ export const PropertyApprovalManagement: React.FC = () => {
       category: 'Residential',
       submittedDate: '07 Jun 2026',
       status: 'Under Review',
-      price: '₹45,00,000',
+      price: '₹45 Lakhs',
       area: 650,
       bedrooms: 1,
       bathrooms: 1,
@@ -312,7 +325,7 @@ export const PropertyApprovalManagement: React.FC = () => {
       category: 'Plot',
       submittedDate: '07 Jun 2026',
       status: 'Approved',
-      price: '₹3,50,00,000',
+      price: '₹3.50 Cr',
       area: 3000,
       bedrooms: 0,
       bathrooms: 0,
@@ -342,7 +355,7 @@ export const PropertyApprovalManagement: React.FC = () => {
       category: 'Residential',
       submittedDate: '07 Jun 2026',
       status: 'Pending',
-      price: '₹4,50,00,000',
+      price: '₹4.50 Cr',
       area: 4200,
       bedrooms: 4,
       bathrooms: 4,
@@ -372,7 +385,7 @@ export const PropertyApprovalManagement: React.FC = () => {
       category: 'Residential',
       submittedDate: '07 Jun 2026',
       status: 'Approved',
-      price: '₹12,00,00,000',
+      price: '₹12 Cr',
       area: 6000,
       bedrooms: 5,
       bathrooms: 6,
@@ -402,7 +415,7 @@ export const PropertyApprovalManagement: React.FC = () => {
       category: 'Residential',
       submittedDate: '07 Jun 2026',
       status: 'Under Review',
-      price: '₹2,50,00,000',
+      price: '₹2.50 Cr',
       area: 3500,
       bedrooms: 4,
       bathrooms: 3,
@@ -431,6 +444,10 @@ export const PropertyApprovalManagement: React.FC = () => {
 
   const [selectedRequest, setSelectedRequest] = useState<ApprovalRequest | null>(null);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [rejectDocModal, setRejectDocModal] = useState<{
+    docName: (typeof OWNERSHIP_DOCS)[number];
+    reason: string;
+  } | null>(null);
 
   // Period states
   const [pendingPeriod, setPendingPeriod] = useState('Last Month');
@@ -457,6 +474,56 @@ export const PropertyApprovalManagement: React.FC = () => {
     const updatedRequest = { ...selectedRequest, checks: updatedChecks };
     setSelectedRequest(updatedRequest);
     setRequests(prev => prev.map(req => req.id === selectedRequest.id ? updatedRequest : req));
+  };
+
+  const handleDocReview = (docName: (typeof OWNERSHIP_DOCS)[number], status: DocReviewStatus) => {
+    if (!selectedRequest) return;
+    const current = selectedRequest.documentReviews?.[docName] ?? 'Pending';
+
+    if (status === 'Rejected') {
+      setRejectDocModal({
+        docName,
+        reason: selectedRequest.documentRejectReasons?.[docName] ?? '',
+      });
+      return;
+    }
+
+    const nextStatus = current === status ? 'Pending' : status;
+    const updatedReasons = { ...(selectedRequest.documentRejectReasons ?? {}) };
+    if (nextStatus === 'Approved') {
+      delete updatedReasons[docName];
+    }
+    const updatedRequest: ApprovalRequest = {
+      ...selectedRequest,
+      documentReviews: {
+        ...selectedRequest.documentReviews,
+        [docName]: nextStatus,
+      },
+      documentRejectReasons: updatedReasons,
+    };
+    setSelectedRequest(updatedRequest);
+    setRequests((prev) => prev.map((req) => (req.id === selectedRequest.id ? updatedRequest : req)));
+  };
+
+  const confirmDocReject = () => {
+    if (!selectedRequest || !rejectDocModal) return;
+    const reason = rejectDocModal.reason.trim();
+    if (!reason) return;
+
+    const updatedRequest: ApprovalRequest = {
+      ...selectedRequest,
+      documentReviews: {
+        ...selectedRequest.documentReviews,
+        [rejectDocModal.docName]: 'Rejected',
+      },
+      documentRejectReasons: {
+        ...selectedRequest.documentRejectReasons,
+        [rejectDocModal.docName]: reason,
+      },
+    };
+    setSelectedRequest(updatedRequest);
+    setRequests((prev) => prev.map((req) => (req.id === selectedRequest.id ? updatedRequest : req)));
+    setRejectDocModal(null);
   };
 
   // Filtering
@@ -680,7 +747,7 @@ export const PropertyApprovalManagement: React.FC = () => {
                   <div className="text-slate-900 font-semibold">{selectedRequest.price}</div>
                 </div>
                 <div>
-                  <div className="text-slate-455 font-semibold mb-1">Area (Sq Ft)</div>
+                  <div className="text-slate-455 font-semibold mb-1">Area (Sft.)</div>
                   <div className="text-slate-900 font-semibold">{selectedRequest.area}</div>
                 </div>
                 <div>
@@ -758,25 +825,84 @@ export const PropertyApprovalManagement: React.FC = () => {
 
               {/* Ownership Verification documents checklist */}
               <div className="space-y-3">
-                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">Ownership Verification</span>
+                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">Property Approval</span>
                 
                 <div className="space-y-2">
-                  {['Property Ownership Proof', 'Sale Deed', 'Tax Receipt', 'Utility Bill'].map((docName, idx) => (
-                    <div key={idx} className="flex items-center justify-between p-3 border border-slate-100 rounded-[8px] bg-slate-50/20 text-xs">
-                      <div className="flex items-center gap-2">
-                        <Check className="w-4 h-4 text-emerald-600" />
-                        <span className="text-slate-800 font-semibold">{docName}</span>
+                  {OWNERSHIP_DOCS.map((docName) => {
+                    const docStatus = selectedRequest.documentReviews?.[docName] ?? 'Pending';
+                    const rejectReason = selectedRequest.documentRejectReasons?.[docName];
+                    return (
+                      <div key={docName} className="flex items-center justify-between gap-2 p-3 border border-slate-100 rounded-[8px] bg-slate-50/20 text-xs">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className="min-w-0">
+                            <span className="text-slate-800 font-semibold block truncate">{docName}</span>
+                            <span
+                              className={`text-[10px] font-semibold ${
+                                docStatus === 'Approved'
+                                  ? 'text-emerald-600'
+                                  : docStatus === 'Rejected'
+                                    ? 'text-red-500'
+                                    : 'text-amber-600'
+                              }`}
+                            >
+                              {docStatus}
+                            </span>
+                            {docStatus === 'Rejected' && rejectReason && (
+                              <p className="text-[10px] text-slate-500 mt-0.5 line-clamp-2" title={rejectReason}>
+                                Reason: {rejectReason}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => alert(`Reviewing ${docName}`)}
+                            className="w-7 h-7 hover:bg-slate-100 rounded flex items-center justify-center text-slate-500 cursor-pointer"
+                            title="View"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => alert(`Downloading ${docName}`)}
+                            className="w-7 h-7 hover:bg-slate-100 rounded flex items-center justify-center text-slate-500 cursor-pointer"
+                            title="Download"
+                          >
+                            <Download className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDocReview(docName, 'Approved')}
+                            title="Approve"
+                            className={`w-7 h-7 rounded flex items-center justify-center transition cursor-pointer ${
+                              docStatus === 'Approved'
+                                ? 'bg-emerald-600 text-white'
+                                : 'text-emerald-600 hover:bg-emerald-50'
+                            }`}
+                          >
+                            <Check className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleDocReview(docName, 'Rejected');
+                            }}
+                            title="Reject"
+                            className={`w-7 h-7 rounded flex items-center justify-center transition cursor-pointer ${
+                              docStatus === 'Rejected'
+                                ? 'bg-red-600 text-white'
+                                : 'text-red-500 hover:bg-red-50'
+                            }`}
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <button onClick={() => alert(`Reviewing ${docName}`)} className="w-7 h-7 hover:bg-slate-100 rounded flex items-center justify-center text-slate-500">
-                          <Eye className="w-3.5 h-3.5" />
-                        </button>
-                        <button onClick={() => alert(`Downloading ${docName}`)} className="w-7 h-7 hover:bg-slate-100 rounded flex items-center justify-center text-slate-500">
-                          <Download className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
 
@@ -884,6 +1010,68 @@ export const PropertyApprovalManagement: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Document reject reason modal */}
+      {rejectDocModal &&
+        createPortal(
+          <div
+            className="fixed inset-0 bg-slate-900/55 flex items-center justify-center p-4"
+            style={{ zIndex: 9999 }}
+            onClick={() => setRejectDocModal(null)}
+          >
+            <div
+              className="bg-white w-full max-w-[400px] rounded-[12px] overflow-hidden border border-[#dddddd] shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-semibold text-slate-900">Reject Document</h3>
+                  <p className="text-[11px] text-slate-500 mt-0.5">{rejectDocModal.docName}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setRejectDocModal(null)}
+                  className="w-8 h-8 rounded-[8px] hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-650 transition cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="p-5 space-y-3">
+                <label className="block text-[10px] font-semibold text-slate-500">
+                  Reason for rejection
+                </label>
+                <textarea
+                  autoFocus
+                  rows={4}
+                  value={rejectDocModal.reason}
+                  onChange={(e) =>
+                    setRejectDocModal((prev) => (prev ? { ...prev, reason: e.target.value } : prev))
+                  }
+                  placeholder="Explain why this document is being rejected..."
+                  className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-[8px] text-xs text-slate-700 outline-none focus:border-[#035096] resize-none"
+                />
+              </div>
+              <div className="px-5 py-4 border-t border-slate-100 flex items-center gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setRejectDocModal(null)}
+                  className="flex-1 h-9 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-[6px] cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={confirmDocReject}
+                  disabled={!rejectDocModal.reason.trim()}
+                  className="flex-1 h-9 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-[6px] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Confirm Reject
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
     </div>
   );
 };

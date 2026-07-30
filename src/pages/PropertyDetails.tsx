@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ChevronRight, MapPin, Heart, Share2,
@@ -8,12 +8,28 @@ import {
 import { PromoSidebarCard } from '../components/ui/PromoSidebarCard';
 import { PropertyCarousel } from '../features/landing/PropertyCarousel';
 
+type FlatStatus = 'available' | 'occupied' | 'sold' | 'mortgage';
+
+const FLAT_STATUS_COLORS: Record<FlatStatus, string> = {
+  available: '#22C55E',
+  occupied: '#F97316',
+  sold: '#EF4444',
+  mortgage: '#D1D5DB',
+};
+
+const FLAT_STATUS_LEGEND: { status: FlatStatus; label: string }[] = [
+  { status: 'available', label: 'Available' },
+  { status: 'occupied', label: 'Occupied' },
+  { status: 'sold', label: 'Sold' },
+  { status: 'mortgage', label: 'Mortgage' },
+];
+
 // Dummy data for property
 const propertyData = {
   id: 1,
   title: 'High-Rise Townhouse In',
   location: 'Ready Nager Main Road, Hyderabad',
-  price: '₹07,46,00,000',
+  price: '₹7.46 Cr',
   rating: 4.8,
   reviews: 24,
   images: [
@@ -34,13 +50,59 @@ const propertyData = {
     type: 'Townhouse',
     purpose: 'For Sale',
     status: 'Ready To Move',
-    area: '12900 sq ft',
+    area: '12900 Sft.',
     propertyId: 'ABX123456789'
   },
   features: [
     'Gym', 'Power Backup', 'Security', 'Balcony', 'Pool'
   ],
   description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.',
+  wings: [
+    {
+      id: 'a-block',
+      label: 'A- Block',
+      floors: [
+        {
+          label: '1st Floor',
+          units: ['occupied', 'occupied', 'available', 'available', 'available', 'available', 'available'] as FlatStatus[],
+        },
+        {
+          label: '2nd Floor',
+          units: ['available', 'available', 'available', 'available', 'available', 'available', 'available'] as FlatStatus[],
+        },
+        {
+          label: '3rd Floor',
+          units: ['available', 'available', 'available', 'available', 'available', 'available', 'available'] as FlatStatus[],
+        },
+        {
+          label: '4th Floor',
+          units: ['occupied', 'occupied', 'available', 'available', 'available', 'available', 'available'] as FlatStatus[],
+        },
+      ],
+    },
+    {
+      id: 'b-block',
+      label: 'B - Block',
+      floors: [
+        {
+          label: '1st Floor',
+          units: ['sold', 'sold', 'occupied', 'available', 'available', 'mortgage', 'available'] as FlatStatus[],
+        },
+        {
+          label: '2nd Floor',
+          units: ['available', 'occupied', 'available', 'sold', 'available', 'available', 'mortgage'] as FlatStatus[],
+        },
+        {
+          label: '3rd Floor',
+          units: ['available', 'available', 'occupied', 'occupied', 'available', 'available', 'available'] as FlatStatus[],
+        },
+        {
+          label: '4th Floor',
+          units: ['mortgage', 'available', 'available', 'sold', 'available', 'occupied', 'available'] as FlatStatus[],
+        },
+      ],
+    },
+  ],
   floorPlans: [
     { title: 'Floor Plan 1', image: 'https://images.unsplash.com/photo-1600607686527-6fb886090705?w=800&q=80' }
   ],
@@ -115,6 +177,8 @@ export const PropertyDetails: React.FC = () => {
 
   // In a real app, we'd fetch property by ID here. Using dummy data for now.
   const data = propertyData;
+  const [activeWingId, setActiveWingId] = useState(data.wings[0].id);
+  const activeWing = data.wings.find((wing) => wing.id === activeWingId) ?? data.wings[0];
 
   return (
     <div className="bg-[#FAFAFA] min-h-screen pb-20 font-poppins">
@@ -152,10 +216,10 @@ export const PropertyDetails: React.FC = () => {
           <div className="flex justify-between items-end">
             <div className="flex items-baseline gap-2">
               <div className="text-[36px] font-bold text-[#E67E22]">
-                ₹07,46,00,000
+                ₹7.46 Cr
               </div>
               <div className="text-[15px] text-gray-500">
-                6,800/Sq Ft
+                6,800/Sft.
               </div>
             </div>
 
@@ -198,6 +262,67 @@ export const PropertyDetails: React.FC = () => {
               <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
                 <span className="text-white text-[28px] font-medium">+1</span>
               </div>
+            </div>
+          </div>
+        </div>
+
+        {/* List of plats (Flats & Wings) — full width, no card */}
+        <div className="w-full mb-10">
+          <h2 className="text-[20px] font-medium text-[#1A1A1A] mb-4 font-poppins">List of plats</h2>
+
+          <div className="flex flex-wrap items-center gap-2 mb-6">
+            {data.wings.map((wing) => {
+              const isActive = wing.id === activeWingId;
+              return (
+                <button
+                  key={wing.id}
+                  type="button"
+                  onClick={() => setActiveWingId(wing.id)}
+                  className={`px-4 py-2 rounded-full text-[14px] font-medium transition-colors ${
+                    isActive
+                      ? 'bg-[#E5E5EA] text-[#1A1A1A]'
+                      : 'bg-transparent text-[#636366] hover:bg-[#F3F4F6]'
+                  }`}
+                >
+                  {wing.label}
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-6 sm:gap-10 items-start w-full">
+            <div className="flex-1 w-full space-y-3 min-w-0">
+              {activeWing.floors.map((floor) => (
+                <div key={floor.label} className="flex items-center gap-3 sm:gap-4">
+                  <span className="w-[72px] sm:w-[80px] shrink-0 text-[13px] sm:text-[14px] text-[#636366]">
+                    {floor.label}
+                  </span>
+                  <div className="flex flex-1 gap-1.5 sm:gap-2 min-w-0">
+                    {floor.units.map((status, index) => (
+                      <div
+                        key={`${floor.label}-${index}`}
+                        title={FLAT_STATUS_LEGEND.find((item) => item.status === status)?.label}
+                        className="h-8 sm:h-9 flex-1 min-w-0 rounded-md"
+                        style={{ backgroundColor: FLAT_STATUS_COLORS[status] }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="hidden sm:block w-px self-stretch bg-[#E0E0E0] shrink-0" />
+
+            <div className="flex sm:flex-col flex-wrap gap-x-4 gap-y-3 sm:gap-4 sm:pt-1 shrink-0">
+              {FLAT_STATUS_LEGEND.map((item) => (
+                <div key={item.status} className="flex items-center gap-2.5">
+                  <span
+                    className="w-3.5 h-3.5 rounded-sm shrink-0"
+                    style={{ backgroundColor: FLAT_STATUS_COLORS[item.status] }}
+                  />
+                  <span className="text-[13px] text-[#636366]">{item.label}</span>
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -259,11 +384,11 @@ export const PropertyDetails: React.FC = () => {
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-y-6 gap-x-4 mb-4 pb-4 border-b border-[#E0E0E0]">
                   <div>
                     <div className="text-[13px] text-[#636366] mb-1">Price</div>
-                    <div className="text-[14px] font-medium text-[#1A1A1A]">₹07,46,00,000</div>
+                    <div className="text-[14px] font-medium text-[#1A1A1A]">₹7.46 Cr</div>
                   </div>
                   <div>
                     <div className="text-[13px] text-[#636366] mb-1">Area Size</div>
-                    <div className="text-[14px] font-medium text-[#1A1A1A]">6,800 Sq Ft</div>
+                    <div className="text-[14px] font-medium text-[#1A1A1A]">6,800 Sft.</div>
                   </div>
                   <div>
                     <div className="text-[13px] text-[#636366] mb-1">Rooms</div>
@@ -275,7 +400,7 @@ export const PropertyDetails: React.FC = () => {
                   </div>
                   <div>
                     <div className="text-[13px] text-[#636366] mb-1">Land Area Size</div>
-                    <div className="text-[14px] font-medium text-[#1A1A1A]">10,766 Sq Ft</div>
+                    <div className="text-[14px] font-medium text-[#1A1A1A]">10,766 Sft.</div>
                   </div>
                 </div>
 
@@ -341,7 +466,7 @@ export const PropertyDetails: React.FC = () => {
                   <div className="flex items-center gap-4 text-[13px] text-gray-500 hidden sm:flex">
                     <span className="flex items-center gap-1"><BedDouble className="w-4 h-4" /> 2</span>
                     <span className="flex items-center gap-1"><Bath className="w-4 h-4" /> 2</span>
-                    <span className="flex items-center gap-1"><Square className="w-4 h-4" /> 1,290 sqft</span>
+                    <span className="flex items-center gap-1"><Square className="w-4 h-4" /> 1,290 Sft.</span>
                   </div>
                 </div>
                 <div className="p-4 bg-white flex justify-center">
@@ -449,10 +574,10 @@ export const PropertyDetails: React.FC = () => {
 
               <div className="flex items-baseline gap-2 mb-6 pb-6 border-b border-gray-200">
                 <div className="text-[32px] font-bold text-[#035096]">
-                  ₹07,46,00,000
+                  ₹7.46 Cr
                 </div>
                 <div className="text-[14px] text-gray-500">
-                  6,800/sq ft
+                  6,800/Sft.
                 </div>
               </div>
 

@@ -17,11 +17,11 @@ const dummyPrimeProperties: PrimeProperty[] = [
   {
     id: 1,
     title: 'The Best View Villa',
-    description: 'Experience modern living in this newly renovated 1,200 sq. ft. apartment. Features include a spacious open-concept living area, high-end stainless steel appliances, quartz countertops, and floor-to-ceiling windows with panoramic city views.',
+    description: 'Experience modern living in this newly renovated 1,200 Sft. apartment. Features include a spacious open-concept living area, high-end stainless steel appliances, quartz countertops, and floor-to-ceiling windows with panoramic city views.',
     location: 'Hyderabad, Uppal',
     beds: 3,
     baths: 2,
-    sqft: '1,200 sq. ft.',
+    sqft: '1,200 Sft.',
     images: [
       'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80',
       'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&q=80',
@@ -34,7 +34,7 @@ const dummyPrimeProperties: PrimeProperty[] = [
     location: 'Hyderabad, Banjara Hills',
     beds: 4,
     baths: 4,
-    sqft: '3,500 sq. ft.',
+    sqft: '3,500 Sft.',
     images: [
       'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80',
       'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=800&q=80',

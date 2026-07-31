@@ -118,6 +118,12 @@ export const SearchPropertyCard: React.FC<SearchPropertyCardProps> = ({
           </div>
         </div>
         <div className="flex flex-wrap gap-3">
+          <Link
+            to={`/property/${id}`}
+            className="px-5 py-2.5 border border-[#0B2C5C] text-[#0B2C5C] rounded-lg text-[13px] font-semibold hover:bg-[#0B2C5C] hover:text-white transition-colors text-center inline-flex items-center justify-center"
+          >
+            View Details
+          </Link>
           <button className="px-5 py-2.5 border border-[#E67E22] text-[#E67E22] rounded-lg text-[13px] font-semibold hover:bg-[#E67E22] hover:text-white transition-colors">
             Send A Message
           </button>
@@ -203,7 +209,7 @@ export const SearchPropertyCard: React.FC<SearchPropertyCardProps> = ({
             to={`/property/${id}`}
             className="px-5 py-1.5 border border-[#0B2C5C] text-[#0B2C5C] rounded-md text-[12px] font-semibold hover:bg-[#0B2C5C] hover:text-white transition-colors text-center inline-block"
           >
-            View Detail
+            View Details
           </Link>
         </div>
       </div>

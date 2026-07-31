@@ -152,7 +152,8 @@ export const AdvertisementManagement: React.FC = () => {
   // Modals state
   const [showCreateFeaturedModal, setShowCreateFeaturedModal] = useState(false);
   const [showCreateBannerModal, setShowCreateBannerModal] = useState(false);
-  const [deleteConfirm, setDeleteConfirm] = useState<{ type: 'featured' | 'banner'; id: string } | null>(null);
+  const [editingBannerId, setEditingBannerId] = useState<string | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ type: 'featured'; id: string } | null>(null);
 
   // Title Management list for Featured Property Dropdown
   const titleMgtOptions = [
@@ -179,28 +180,18 @@ export const AdvertisementManagement: React.FC = () => {
     }
   }, [titleDropdownOpen]);
 
-  // Placement Options for Banner
-  const placementOptions = [
-    'Homepage Featured',
-    'Homepage Top Banner',
-    'Search Sidebar Ads',
-    'Listing Footer Banner'
-  ];
-  const [placementDropdownOpen, setPlacementDropdownOpen] = useState(false);
-  const placementRef = useRef<HTMLDivElement>(null);
-  const placementTriggerRef = useRef<HTMLButtonElement>(null);
-  const [placementCoords, setPlacementCoords] = useState({ top: 0, left: 0, width: 0 });
-
-  useEffect(() => {
-    if (placementDropdownOpen && placementTriggerRef.current) {
-      const rect = placementTriggerRef.current.getBoundingClientRect();
-      setPlacementCoords({
-        top: rect.bottom + window.scrollY + 4,
-        left: rect.left + window.scrollX,
-        width: rect.width
-      });
-    }
-  }, [placementDropdownOpen]);
+  // Fixed 9 customer-website banner placements
+  const BANNER_PLACES = [
+    'Homepage Hero Banner',
+    'Homepage Mid Section Banner',
+    'Homepage Footer Banner',
+    'Search Results Top Banner',
+    'Search Results Sidebar Banner',
+    'Property Details Banner',
+    'Listings Page Banner',
+    'Blog Page Banner',
+    'Smart Solutions Ad Banner',
+  ] as const;
 
   // Form states for creating a Featured Property
   const [featuredForm, setFeaturedForm] = useState({
@@ -225,7 +216,7 @@ export const AdvertisementManagement: React.FC = () => {
     bannerTitle: '',
     landingPageUrl: '',
     ctaText: '',
-    placement: 'Select Placement',
+    placement: 'Homepage Hero Banner',
     startDate: '',
     endDate: '',
     price: '',
@@ -240,22 +231,77 @@ export const AdvertisementManagement: React.FC = () => {
     { id: 'FP4', propertyId: 'PRP003', propertyName: 'Penthouse Suite', category: 'Luxury', agentName: 'Rajesh Kumar', featuredPosition: 'Trending Homes You\'ll Love', duration: '30 Days', status: 'Active', revenue: '₹2500' }
   ]);
 
-  // Mock initial Banners
-  const [bannerAds, setBannerAds] = useState<BannerAd[]>([
-    { id: 'BA1', bannerName: 'Summer Promotion', agentName: 'Rajesh Kumar', featuredPosition: 'Homepage Featured', duration: '30 Days', status: 'Active', revenue: '₹2500' },
-    { id: 'BA2', bannerName: 'Luxury Living Campaign', agentName: 'Rajesh Kumar', featuredPosition: 'Homepage Featured', duration: '15 Days', status: 'Active', revenue: '₹2500' },
-    { id: 'BA3', bannerName: 'Summer Promotion', agentName: 'Rajesh Kumar', featuredPosition: 'Homepage Featured', duration: '07 Days', status: 'Active', revenue: '₹2500' },
-    { id: 'BA4', bannerName: 'Summer Promotion', agentName: 'Rajesh Kumar', featuredPosition: 'Homepage Featured', duration: '30 Days', status: 'Active', revenue: '₹2500' }
-  ]);
+  // Fixed 9 banner placements (customer website) — update only, no add/delete
+  const [bannerAds, setBannerAds] = useState<BannerAd[]>(
+    BANNER_PLACES.map((place, index) => ({
+      id: `BA${index + 1}`,
+      bannerName: [
+        'Summer Promotion',
+        'Luxury Living Campaign',
+        'New Launch Offer',
+        'Search Spotlight',
+        'Sidebar Promo',
+        'Property Detail Ad',
+        'Listings Boost',
+        'Blog Partner Ad',
+        'Smart Solutions Ad',
+      ][index],
+      agentName: [
+        'Rajesh Kumar',
+        'Aparna Constructions',
+        'Rajesh Kumar',
+        'Priya Sharma',
+        'Vikram Patel',
+        'Anjali Mehta',
+        'Rajesh Kumar',
+        'Neha Kapoor',
+        'Rachel Dan Realty',
+      ][index],
+      featuredPosition: place,
+      duration: '30 Days',
+      status: 'Active',
+      revenue: '₹2500',
+    }))
+  );
+
+  const resetBannerForm = () => {
+    setBannerForm({
+      bannerName: '',
+      agentName: '',
+      bannerTitle: '',
+      landingPageUrl: '',
+      ctaText: '',
+      placement: 'Homepage Hero Banner',
+      startDate: '',
+      endDate: '',
+      price: '',
+      status: 'Active'
+    });
+    setEditingBannerId(null);
+  };
+
+  const openEditBanner = (ban: BannerAd) => {
+    setEditingBannerId(ban.id);
+    setBannerForm({
+      bannerName: ban.bannerName,
+      agentName: ban.agentName,
+      bannerTitle: ban.bannerName,
+      landingPageUrl: '',
+      ctaText: '',
+      placement: ban.featuredPosition,
+      startDate: '',
+      endDate: '',
+      price: ban.revenue.replace('₹', ''),
+      status: ban.status
+    });
+    setShowCreateBannerModal(true);
+  };
 
   // Close dropdowns clicking outside
   useEffect(() => {
     const handleOutside = (e: MouseEvent) => {
       if (titleRef.current && !titleRef.current.contains(e.target as Node)) {
         setTitleDropdownOpen(false);
-      }
-      if (placementRef.current && !placementRef.current.contains(e.target as Node)) {
-        setPlacementDropdownOpen(false);
       }
       if (propertySearchRef.current && !propertySearchRef.current.contains(e.target as Node)) {
         setPropertySuggestionsOpen(false);
@@ -333,39 +379,32 @@ export const AdvertisementManagement: React.FC = () => {
 
   const handleBannerSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    let durationStr = '30 Days';
+    if (!editingBannerId) return;
+
+    let durationStr: string | null = null;
     if (bannerForm.startDate && bannerForm.endDate) {
       const diffTime = Math.abs(new Date(bannerForm.endDate).getTime() - new Date(bannerForm.startDate).getTime());
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
       durationStr = `${diffDays < 10 ? '0' : ''}${diffDays} Days`;
     }
 
-    const newBA: BannerAd = {
-      id: `BA${bannerAds.length + 1}`,
-      bannerName: bannerForm.bannerName || 'Summer Promotion',
-      agentName: bannerForm.agentName || 'Rajesh Kumar',
-      featuredPosition: bannerForm.placement === 'Select Placement' ? 'Homepage Featured' : bannerForm.placement,
-      duration: durationStr,
-      status: bannerForm.status,
-      revenue: `₹${bannerForm.price || '2500'}`
-    };
-
-    setBannerAds([...bannerAds, newBA]);
+    setBannerAds((prev) =>
+      prev.map((ban) =>
+        ban.id === editingBannerId
+          ? {
+              ...ban,
+              bannerName: bannerForm.bannerName || ban.bannerName,
+              agentName: bannerForm.agentName || ban.agentName,
+              featuredPosition: ban.featuredPosition,
+              duration: durationStr ?? ban.duration,
+              status: bannerForm.status,
+              revenue: `₹${bannerForm.price || '2500'}`,
+            }
+          : ban
+      )
+    );
     setShowCreateBannerModal(false);
-    // Reset Form
-    setBannerForm({
-      bannerName: '',
-      agentName: '',
-      bannerTitle: '',
-      landingPageUrl: '',
-      ctaText: '',
-      placement: 'Select Placement',
-      startDate: '',
-      endDate: '',
-      price: '',
-      status: 'Active'
-    });
+    resetBannerForm();
   };
 
   return (
@@ -607,15 +646,10 @@ export const AdvertisementManagement: React.FC = () => {
           <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center">
             <div>
               <h3 className="text-lg font-semibold text-slate-900">Banner Advertisement Management</h3>
-              <p className="text-[11px] font-medium text-slate-500">Manage website banner advertisements and campaigns</p>
+              <p className="text-[11px] font-medium text-slate-500">
+                Update the 9 fixed customer-website banner placements. Slots cannot be added or removed.
+              </p>
             </div>
-            <button
-              onClick={() => setShowCreateBannerModal(true)}
-              className="h-10 px-4 bg-[#035096] hover:bg-[#024078] text-white text-xs font-semibold rounded-[8px] flex items-center justify-center gap-2 transition cursor-pointer"
-            >
-              <Plus className="h-4 w-4" />
-              <span>Add Banner</span>
-            </button>
           </div>
 
           <div className="bg-white rounded-[16px] overflow-hidden border border-[#dddddd] shadow-none">
@@ -623,9 +657,9 @@ export const AdvertisementManagement: React.FC = () => {
               <table className="w-full border-collapse text-left text-xs text-slate-700 font-medium">
                 <thead>
                   <tr className="bg-[#F0F2F3] border-b border-[#dddddd] text-xs font-semibold text-slate-700">
-                    <th className="p-4 pl-6 min-w-[140px] whitespace-nowrap">Banner Name</th>
+                    <th className="p-4 pl-6 min-w-[180px] whitespace-nowrap">Banner Place</th>
+                    <th className="p-4 min-w-[140px] whitespace-nowrap">Banner Name</th>
                     <th className="p-4 min-w-[110px] whitespace-nowrap">Agent Name</th>
-                    <th className="p-4 min-w-[160px] whitespace-nowrap">Featured Position</th>
                     <th className="p-4 min-w-[90px] whitespace-nowrap">Duration</th>
                     <th className="p-4 min-w-[90px] whitespace-nowrap">Status</th>
                     <th className="p-4 min-w-[90px] whitespace-nowrap">Revenue</th>
@@ -635,13 +669,13 @@ export const AdvertisementManagement: React.FC = () => {
                 <tbody className="divide-y divide-[#dddddd]">
                   {bannerAds.map((ban) => (
                     <tr key={ban.id} className="hover:bg-slate-50/30 transition-colors">
-                      <td className="p-4 pl-6 font-semibold text-slate-900 whitespace-nowrap">{ban.bannerName}</td>
-                      <td className="p-4 text-slate-650 whitespace-nowrap">{ban.agentName}</td>
-                      <td className="p-4 whitespace-nowrap">
+                      <td className="p-4 pl-6 whitespace-nowrap">
                         <span className="bg-emerald-50 text-emerald-800 border border-emerald-100 rounded-[5px] px-2.5 py-0.5 text-[10px] font-semibold whitespace-nowrap">
                           {ban.featuredPosition}
                         </span>
                       </td>
+                      <td className="p-4 font-semibold text-slate-900 whitespace-nowrap">{ban.bannerName}</td>
+                      <td className="p-4 text-slate-650 whitespace-nowrap">{ban.agentName}</td>
                       <td className="p-4 text-slate-500 font-semibold whitespace-nowrap">{ban.duration}</td>
                       <td className="p-4 whitespace-nowrap">
                         <span className="text-emerald-600 font-semibold bg-emerald-50 border border-emerald-250 px-2.5 py-0.5 rounded-[5px] text-[10px] whitespace-nowrap">
@@ -651,14 +685,13 @@ export const AdvertisementManagement: React.FC = () => {
                       <td className="p-4 font-semibold text-slate-900 whitespace-nowrap">{ban.revenue}</td>
                       <td className="p-4 pr-6 text-right">
                         <div className="flex items-center justify-end gap-2">
-                          <button className="w-8 h-8 rounded-[5px] hover:bg-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-700 transition cursor-pointer">
-                            <Pencil className="w-4 h-4" />
-                          </button>
                           <button
-                            onClick={() => setDeleteConfirm({ type: 'banner', id: ban.id })}
-                            className="w-8 h-8 rounded-[5px] hover:bg-slate-100 flex items-center justify-center text-rose-600 hover:text-rose-700 transition cursor-pointer"
+                            type="button"
+                            onClick={() => openEditBanner(ban)}
+                            className="w-8 h-8 rounded-[5px] hover:bg-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-700 transition cursor-pointer"
+                            title="Update Banner"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Pencil className="w-4 h-4" />
                           </button>
                         </div>
                       </td>
@@ -892,16 +925,19 @@ export const AdvertisementManagement: React.FC = () => {
         </div>
       )}
 
-      {/* ================= MODAL: CREATE BANNER ================= */}
+      {/* ================= MODAL: UPDATE BANNER ================= */}
       {showCreateBannerModal && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center z-[1000] p-4">
           <div className="bg-white w-full max-w-[460px] rounded-[5px] overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200 text-left flex flex-col max-h-[90vh]">
             
             {/* Modal Header */}
             <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-              <h2 className="text-base font-semibold text-slate-900">Create Banner</h2>
+              <h2 className="text-base font-semibold text-slate-900">Update Banner</h2>
               <button
-                onClick={() => setShowCreateBannerModal(false)}
+                onClick={() => {
+                  setShowCreateBannerModal(false);
+                  resetBannerForm();
+                }}
                 className="w-8 h-8 rounded-[5px] hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-600 transition cursor-pointer"
               >
                 <X className="w-4 h-4" />
@@ -973,52 +1009,14 @@ export const AdvertisementManagement: React.FC = () => {
                       className="w-full h-8 px-2.5 bg-white border border-slate-200 rounded-[5px] text-xs outline-none focus:border-[#035096]"
                     />
                   </div>
-                  <div ref={placementRef}>
-                    <label className="block text-[10px] font-semibold text-slate-500 mb-1">Placement</label>
-                    <div className="relative">
-                      <button
-                        ref={placementTriggerRef}
-                        type="button"
-                        onClick={() => setPlacementDropdownOpen(!placementDropdownOpen)}
-                        className="w-full bg-white border border-slate-200 rounded-[5px] h-8 px-2.5 text-xs text-slate-700 flex items-center justify-between hover:border-slate-350 cursor-pointer"
-                      >
-                        <span className="truncate">{bannerForm.placement}</span>
-                        <ChevronDown className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-                      </button>
-                      {placementDropdownOpen && createPortal(
-                        <div
-                          className="bg-white border border-slate-200 rounded-[5px] shadow-lg z-[9999] py-1 max-h-36 overflow-y-auto"
-                          style={{
-                            position: 'absolute',
-                            top: placementCoords.top,
-                            left: placementCoords.left,
-                            width: placementCoords.width
-                          }}
-                        >
-                          {placementOptions.map((opt) => (
-                            <button
-                              key={opt}
-                              type="button"
-                              onClick={() => {
-                                setBannerForm({...bannerForm, placement: opt});
-                                setPlacementDropdownOpen(false);
-                              }}
-                              className={`w-full text-left px-3 py-1.5 text-xs transition-colors flex items-center justify-between cursor-pointer ${
-                                opt === bannerForm.placement
-                                  ? 'bg-[#F0F4F9]/60 font-semibold text-[#035096]'
-                                  : 'text-slate-700 hover:bg-slate-50'
-                              }`}
-                            >
-                              <span>{opt}</span>
-                              {opt === bannerForm.placement && (
-                                <Check className="w-3.5 h-3.5 text-[#035096] shrink-0" />
-                              )}
-                            </button>
-                          ))}
-                        </div>,
-                        document.body
-                      )}
-                    </div>
+                  <div>
+                    <label className="block text-[10px] font-semibold text-slate-500 mb-1">Banner Place</label>
+                    <input
+                      type="text"
+                      readOnly
+                      value={bannerForm.placement}
+                      className="w-full h-8 px-2.5 bg-slate-50 border border-slate-200 rounded-[5px] text-xs text-slate-600 outline-none cursor-default"
+                    />
                   </div>
                 </div>
 
@@ -1027,7 +1025,6 @@ export const AdvertisementManagement: React.FC = () => {
                     <label className="block text-[10px] font-semibold text-slate-500 mb-1">Start Date</label>
                     <input
                       type="date"
-                      required
                       value={bannerForm.startDate}
                       onChange={(e) => setBannerForm({...bannerForm, startDate: e.target.value})}
                       className="w-full h-8 px-2.5 bg-white border border-slate-200 rounded-[5px] text-xs outline-none focus:border-[#035096]"
@@ -1037,7 +1034,6 @@ export const AdvertisementManagement: React.FC = () => {
                     <label className="block text-[10px] font-semibold text-slate-500 mb-1">End Date</label>
                     <input
                       type="date"
-                      required
                       value={bannerForm.endDate}
                       onChange={(e) => setBannerForm({...bannerForm, endDate: e.target.value})}
                       className="w-full h-8 px-2.5 bg-white border border-slate-200 rounded-[5px] text-xs outline-none focus:border-[#035096]"
@@ -1074,23 +1070,19 @@ export const AdvertisementManagement: React.FC = () => {
               <div className="px-6 py-4 border-t border-slate-100 flex items-center gap-3">
                 <button
                   type="button"
-                  onClick={() => setShowCreateBannerModal(false)}
+                  onClick={() => {
+                    setShowCreateBannerModal(false);
+                    resetBannerForm();
+                  }}
                   className="flex-1 h-9 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-[5px] cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
-                  type="button"
-                  onClick={() => alert("Saved as draft")}
-                  className="flex-1 h-9 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-[5px] cursor-pointer"
-                >
-                  Save Draft
-                </button>
-                <button
                   type="submit"
                   className="flex-1 h-9 bg-[#035096] hover:bg-[#024078] text-white text-xs font-semibold rounded-[5px] cursor-pointer"
                 >
-                  Publish Now
+                  Update Banner
                 </button>
               </div>
             </form>
@@ -1105,7 +1097,7 @@ export const AdvertisementManagement: React.FC = () => {
               Confirm Delete
             </h3>
             <p className="text-xs text-slate-500 font-medium leading-relaxed">
-              Are you sure you want to delete this {deleteConfirm.type === 'featured' ? 'Featured Property' : 'Banner Ad'}? This action cannot be undone.
+              Are you sure you want to delete this Featured Property? This action cannot be undone.
             </p>
             <div className="flex justify-end gap-3 pt-2">
               <button
@@ -1116,11 +1108,7 @@ export const AdvertisementManagement: React.FC = () => {
               </button>
               <button
                 onClick={() => {
-                  if (deleteConfirm.type === 'featured') {
-                    setFeaturedProperties(featuredProperties.filter((f) => f.id !== deleteConfirm.id));
-                  } else {
-                    setBannerAds(bannerAds.filter((b) => b.id !== deleteConfirm.id));
-                  }
+                  setFeaturedProperties(featuredProperties.filter((f) => f.id !== deleteConfirm.id));
                   setDeleteConfirm(null);
                 }}
                 className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-[5px] transition cursor-pointer"

@@ -10,7 +10,11 @@ import {
   Check,
   Mail,
   Phone,
-  MapPin
+  MapPin,
+  Edit2,
+  Clock,
+  MessageCircle,
+  Bell
 } from 'lucide-react';
 import { DashboardRangeFilter } from '@/components/ui/DashboardRangeFilter';
 
@@ -20,7 +24,10 @@ interface LeadTimelineItem {
   date: string;
   time: string;
   notes: string;
+  lastUpdated?: string;
 }
+
+type TimelineKey = 'inquiry' | 'lastFollowUp' | 'nextFollowUp';
 
 interface Lead {
   id: string;
@@ -226,6 +233,7 @@ export const CrmManagement: React.FC = () => {
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [showRescheduleModal, setShowRescheduleModal] = useState(false);
   const [rescheduleLead, setRescheduleLead] = useState<Lead | null>(null);
+  const [rescheduleTimelineKey, setRescheduleTimelineKey] = useState<TimelineKey>('nextFollowUp');
 
   // Form states for scheduling a new visit
   const [scheduleForm, setScheduleForm] = useState({
@@ -449,14 +457,15 @@ export const CrmManagement: React.FC = () => {
     alert("Exporting lead listings data. Downloading file: gummam_crm_leads.csv");
   };
 
-  const triggerRescheduleFromView = (lead: Lead) => {
+  const triggerTimelineEdit = (lead: Lead, key: TimelineKey) => {
+    const item = lead.timeline[key];
     setRescheduleLead(lead);
+    setRescheduleTimelineKey(key);
     setRescheduleForm({
-      newDate: lead.timeline.nextFollowUp.date !== '-' ? lead.timeline.nextFollowUp.date : '2026-05-30',
-      newTime: lead.timeline.nextFollowUp.time !== '-' ? lead.timeline.nextFollowUp.time : '01:00PM',
-      reason: ''
+      newDate: item.date !== '-' ? item.date : '',
+      newTime: item.time !== '-' ? item.time : '',
+      reason: item.notes !== '-' ? item.notes : ''
     });
-    setSelectedLeadForView(null);
     setShowRescheduleModal(true);
   };
 
@@ -464,24 +473,25 @@ export const CrmManagement: React.FC = () => {
     e.preventDefault();
     if (!rescheduleLead) return;
 
-    setLeads(leads.map(l => {
-      if (l.id === rescheduleLead.id) {
-        return {
-          ...l,
-          followUp: rescheduleForm.newDate,
-          timeline: {
-            ...l.timeline,
-            nextFollowUp: {
-              type: 'Next Follow-up',
-              date: rescheduleForm.newDate,
-              time: rescheduleForm.newTime,
-              notes: rescheduleForm.reason || 'Rescheduled visit'
-            }
-          }
-        };
+    const updatedLead: Lead = {
+      ...rescheduleLead,
+      followUp: rescheduleTimelineKey === 'nextFollowUp' ? rescheduleForm.newDate : rescheduleLead.followUp,
+      timeline: {
+        ...rescheduleLead.timeline,
+        [rescheduleTimelineKey]: {
+          ...rescheduleLead.timeline[rescheduleTimelineKey],
+          date: rescheduleForm.newDate || '-',
+          time: rescheduleForm.newTime || '-',
+          notes: rescheduleForm.reason || '-',
+          lastUpdated: 'Just now'
+        }
       }
-      return l;
-    }));
+    };
+
+    setLeads((prev) => prev.map((l) => (l.id === rescheduleLead.id ? updatedLead : l)));
+    if (selectedLeadForView?.id === rescheduleLead.id) {
+      setSelectedLeadForView(updatedLead);
+    }
 
     setShowRescheduleModal(false);
     setRescheduleLead(null);
@@ -814,7 +824,7 @@ export const CrmManagement: React.FC = () => {
                           className="w-8 h-8 rounded-[5px] hover:bg-slate-100 flex items-center justify-center text-blue-600 transition cursor-pointer"
                           title="View Lead Details"
                         >
-                          <Eye className="w-4 h-4" />
+                           <Edit2 className="w-4 h-4" />
                         </button>
                       </div>
                     </td>
@@ -840,7 +850,7 @@ export const CrmManagement: React.FC = () => {
       {/* ================= MODAL 1: VIEW DETAILS MODAL ================= */}
       {selectedLeadForView && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center z-[1000] p-4">
-          <div className="bg-white w-full max-w-[460px] rounded-[5px] overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200 text-left flex flex-col max-h-[90vh]">
+          <div className="bg-white w-full max-w-[640px] rounded-[5px] overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200 text-left flex flex-col max-h-[90vh]">
             {/* Modal Header */}
             <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
               <h2 className="text-base font-semibold text-slate-900">{selectedLeadForView.name}</h2>
@@ -908,11 +918,54 @@ export const CrmManagement: React.FC = () => {
                 </div>
               </div>
 
-              {/* Note */}
-              <div className="space-y-1.5">
-                <h4 className="text-xs font-bold text-[#035096] uppercase tracking-wider">Note</h4>
-                <div className="bg-slate-50 border border-slate-100 rounded-[5px] p-3 text-slate-700 font-medium">
-                  {selectedLeadForView.note}
+              {/* Lead Timeline */}
+              <div className="space-y-2.5">
+                <h4 className="text-xs font-bold text-[#035096] uppercase tracking-wider">Lead Timeline</h4>
+                <div className="overflow-x-auto">
+                  <div className="min-w-[560px] space-y-2">
+                    <div className="grid grid-cols-[1.4fr_1fr_1fr_0.9fr_1fr_36px] gap-2 px-2 text-[10px] font-semibold text-slate-400 uppercase tracking-wide">
+                      <span>Status</span>
+                      <span>Follow up date</span>
+                      <span>Follow up Time</span>
+                      <span>Last Updated</span>
+                      <span>Note</span>
+                      <span />
+                    </div>
+                    {([
+                      { key: 'inquiry' as TimelineKey, icon: Clock, iconBg: 'bg-[#E8F1FB] text-[#035096]' },
+                      { key: 'lastFollowUp' as TimelineKey, icon: MessageCircle, iconBg: 'bg-[#E8F1FB] text-[#035096]' },
+                      { key: 'nextFollowUp' as TimelineKey, icon: Bell, iconBg: 'bg-red-50 text-red-500' },
+                    ]).map(({ key, icon: Icon, iconBg }) => {
+                      const item = selectedLeadForView.timeline[key];
+                      return (
+                        <div
+                          key={key}
+                          className="grid grid-cols-[1.4fr_1fr_1fr_0.9fr_1fr_36px] gap-2 items-center bg-slate-50 border border-slate-100 rounded-[8px] px-2 py-2.5"
+                        >
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${iconBg}`}>
+                              <Icon className="w-3.5 h-3.5" />
+                            </span>
+                            <span className="text-[11px] font-semibold text-slate-800 truncate">{item.type}</span>
+                          </div>
+                          <span className="text-[11px] font-medium text-slate-700">{item.date || '–'}</span>
+                          <span className="text-[11px] font-medium text-slate-700">{item.time || '–'}</span>
+                          <span className="text-[11px] font-medium text-slate-500">{item.lastUpdated || (item.date !== '-' ? '2hrs Ago' : '–')}</span>
+                          <span className="text-[11px] font-medium text-slate-600 truncate" title={item.notes}>
+                            {item.notes && item.notes !== '-' ? item.notes : ''}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => triggerTimelineEdit(selectedLeadForView, key)}
+                            className="w-7 h-7 rounded flex items-center justify-center text-slate-500 hover:bg-white hover:text-[#035096] transition cursor-pointer"
+                            title={`Edit ${item.type}`}
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
 
@@ -994,10 +1047,10 @@ export const CrmManagement: React.FC = () => {
             <div className="px-6 py-4 border-t border-slate-100 flex items-center gap-3">
               <button
                 type="button"
-                onClick={() => triggerRescheduleFromView(selectedLeadForView)}
+                onClick={() => setSelectedLeadForView(null)}
                 className="flex-1 h-9 bg-[#035096] hover:bg-[#024078] text-white text-xs font-semibold rounded-[5px] cursor-pointer"
               >
-                Reschedule
+                Save
               </button>
               <button
                 type="button"
@@ -1282,13 +1335,15 @@ export const CrmManagement: React.FC = () => {
         </div>
       )}
 
-      {/* ================= MODAL 3: RESCHEDULE VISIT ================= */}
+      {/* ================= MODAL 3: TIMELINE EDIT ================= */}
       {showRescheduleModal && rescheduleLead && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center z-[1000] p-4">
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center z-[1100] p-4">
           <div className="bg-white w-full max-w-[400px] rounded-[5px] overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200 text-left flex flex-col max-h-[90vh]">
             {/* Header */}
             <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-              <h2 className="text-base font-semibold text-slate-900">Reschedule Visit</h2>
+              <h2 className="text-base font-semibold text-slate-900">
+                {rescheduleLead.timeline[rescheduleTimelineKey].type}
+              </h2>
               <button
                 onClick={() => {
                   setShowRescheduleModal(false);
@@ -1311,10 +1366,11 @@ export const CrmManagement: React.FC = () => {
 
                 {/* New Date */}
                 <div>
-                  <label className="block text-[10px] font-semibold text-slate-500 mb-1">New Date</label>
+                  <label className="block text-[10px] font-semibold text-slate-500 mb-1">Date</label>
                   <input
-                    type="date"
+                    type="text"
                     required
+                    placeholder="YYYY-MM-DD"
                     value={rescheduleForm.newDate}
                     onChange={(e) => setRescheduleForm({...rescheduleForm, newDate: e.target.value})}
                     className="w-full h-8 px-2.5 bg-white border border-slate-200 rounded-[5px] text-xs outline-none focus:border-[#035096]"
@@ -1323,22 +1379,23 @@ export const CrmManagement: React.FC = () => {
 
                 {/* New Time */}
                 <div>
-                  <label className="block text-[10px] font-semibold text-slate-500 mb-1">New Time</label>
+                  <label className="block text-[10px] font-semibold text-slate-500 mb-1">Time</label>
                   <input
-                    type="time"
+                    type="text"
                     required
+                    placeholder="e.g. 01:00PM"
                     value={rescheduleForm.newTime}
                     onChange={(e) => setRescheduleForm({...rescheduleForm, newTime: e.target.value})}
                     className="w-full h-8 px-2.5 bg-white border border-slate-200 rounded-[5px] text-xs outline-none focus:border-[#035096]"
                   />
                 </div>
 
-                {/* Reason */}
+                {/* Note */}
                 <div>
-                  <label className="block text-[10px] font-semibold text-slate-500 mb-1">Reason for Rescheduling</label>
+                  <label className="block text-[10px] font-semibold text-slate-500 mb-1">Note</label>
                   <textarea
                     rows={3}
-                    placeholder="Enter reason for rescheduling..."
+                    placeholder="Enter note..."
                     value={rescheduleForm.reason}
                     onChange={(e) => setRescheduleForm({...rescheduleForm, reason: e.target.value})}
                     className="w-full bg-white border border-slate-200 rounded-[5px] px-2.5 py-1.5 text-xs outline-none focus:border-[#035096] resize-none"
@@ -1362,7 +1419,7 @@ export const CrmManagement: React.FC = () => {
                   type="submit"
                   className="flex-1 h-9 bg-[#035096] hover:bg-[#024078] text-white text-xs font-semibold rounded-[5px] cursor-pointer"
                 >
-                  Reschedule
+                  update
                 </button>
               </div>
             </form>

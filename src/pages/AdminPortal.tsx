@@ -69,8 +69,8 @@ ChartJS.register(
 // Sidebar Items Definition
 const sidebarItems = [
   { id: 'overview', name: 'Overview', icon: LayoutDashboard },
-  { id: 'users', name: 'Users Management', icon: Users },
-  { id: 'roles', name: 'User Roles', icon: ShieldCheck },
+  { id: 'users', name: 'User Management', icon: Users },
+  { id: 'roles', name: 'Role Management', icon: ShieldCheck },
   { id: 'agents', name: 'Agents & Owners', icon: Briefcase },
   { id: 'verification', name: 'Agent Verification', icon: UserCheck },
   { id: 'properties', name: 'Properties', icon: Building2 },

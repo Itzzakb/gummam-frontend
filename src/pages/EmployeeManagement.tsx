@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { ChevronDown, Edit2, Trash2 } from 'lucide-react';
 
 interface Employee {
@@ -6,18 +6,21 @@ interface Employee {
   name: string;
   role: string;
   email: string;
+  phone: string;
   noOfLeads: number;
   closedLeads: number;
   pendingLeads: number;
 }
 
 export const EmployeeManagement: React.FC = () => {
+  const pageTopRef = useRef<HTMLDivElement>(null);
   const [employees, setEmployees] = useState<Employee[]>([
     {
       id: '001',
       name: 'Rajesh Kumar',
       role: 'Manager',
       email: 'rajesh@gmail.com',
+      phone: '9876543210',
       noOfLeads: 22,
       closedLeads: 42,
       pendingLeads: 3
@@ -27,6 +30,7 @@ export const EmployeeManagement: React.FC = () => {
       name: 'Rajesh Kumar',
       role: 'Employee 1',
       email: 'rajesh@gmail.com',
+      phone: '9876543211',
       noOfLeads: 18,
       closedLeads: 56,
       pendingLeads: 1
@@ -36,6 +40,7 @@ export const EmployeeManagement: React.FC = () => {
       name: 'Rajesh Kumar',
       role: 'Employee 2',
       email: 'rajesh@gmail.com',
+      phone: '9876543212',
       noOfLeads: 20,
       closedLeads: 87,
       pendingLeads: 7
@@ -45,6 +50,7 @@ export const EmployeeManagement: React.FC = () => {
       name: 'Rajesh Kumar',
       role: 'Employee 3',
       email: 'rajesh@gmail.com',
+      phone: '9876543213',
       noOfLeads: 62,
       closedLeads: 72,
       pendingLeads: 0
@@ -55,6 +61,7 @@ export const EmployeeManagement: React.FC = () => {
   const [nameInput, setNameInput] = useState('Rajesh kumar');
   const [roleInput, setRoleInput] = useState('Manager');
   const [emailInput, setEmailInput] = useState('smtp.gmail.com');
+  const [phoneInput, setPhoneInput] = useState('');
   
   const [showRoleDropdown, setShowRoleDropdown] = useState(false);
   const roles = ['Manager', 'Employee 1', 'Employee 2', 'Employee 3', 'Admin'];
@@ -72,7 +79,8 @@ export const EmployeeManagement: React.FC = () => {
         ...emp,
         name: nameInput,
         role: roleInput,
-        email: emailInput
+        email: emailInput,
+        phone: phoneInput
       } : emp));
       setEditingId(null);
     } else {
@@ -83,6 +91,7 @@ export const EmployeeManagement: React.FC = () => {
         name: nameInput,
         role: roleInput,
         email: emailInput,
+        phone: phoneInput,
         noOfLeads: 0,
         closedLeads: 0,
         pendingLeads: 0
@@ -94,6 +103,7 @@ export const EmployeeManagement: React.FC = () => {
     setNameInput('Rajesh kumar');
     setRoleInput('Manager');
     setEmailInput('smtp.gmail.com');
+    setPhoneInput('');
   };
 
   const handleEditClick = (emp: Employee) => {
@@ -101,6 +111,14 @@ export const EmployeeManagement: React.FC = () => {
     setNameInput(emp.name);
     setRoleInput(emp.role);
     setEmailInput(emp.email);
+    setPhoneInput(emp.phone);
+
+    const scrollContainer = pageTopRef.current?.closest('main');
+    if (scrollContainer instanceof HTMLElement) {
+      scrollContainer.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   };
 
   const handleDeleteClick = (id: string) => {
@@ -115,7 +133,10 @@ export const EmployeeManagement: React.FC = () => {
   };
 
   return (
-    <div className="bg-white rounded-[5px] border border-gray-200/60 p-6 md:p-8 shadow-sm space-y-8 animate-fade-in font-poppins text-left">
+    <div
+      ref={pageTopRef}
+      className="bg-white rounded-[5px] border border-gray-200/60 p-6 md:p-8 shadow-sm space-y-8 animate-fade-in font-poppins text-left"
+    >
       <div>
         <h1 className="text-2xl md:text-3xl font-semibold text-[#0B2C5C] tracking-tight">Employee management</h1>
       </div>
@@ -177,6 +198,18 @@ export const EmployeeManagement: React.FC = () => {
           />
         </div>
 
+        {/* Phone No input */}
+        <div className="space-y-2">
+          <label className="text-sm font-semibold text-gray-900 block">Phone No</label>
+          <input
+            type="tel"
+            value={phoneInput}
+            onChange={(e) => setPhoneInput(e.target.value)}
+            className="w-full px-4 py-3 bg-white border border-[#E2E8F0] rounded-[6px] text-sm font-medium focus:outline-none focus:border-[#004B8F] text-gray-800 placeholder-gray-400"
+            placeholder="Enter phone number"
+          />
+        </div>
+
         {/* Add role button alignment */}
         <div className="flex items-end justify-end md:col-span-2 pt-2">
           <button
@@ -200,6 +233,7 @@ export const EmployeeManagement: React.FC = () => {
                 <th className="p-4 font-semibold text-[#0B2C5C]">Employee Name</th>
                 <th className="p-4 font-semibold text-[#0B2C5C]">Role</th>
                 <th className="p-4 font-semibold text-[#0B2C5C]">Email</th>
+                <th className="p-4 font-semibold text-[#0B2C5C]">Phone No</th>
                 <th className="p-4 font-semibold text-[#0B2C5C]">No.of Leads</th>
                 <th className="p-4 font-semibold text-[#0B2C5C]">Closed Leads</th>
                 <th className="p-4 font-semibold text-[#0B2C5C]">Pending Leads</th>
@@ -213,6 +247,7 @@ export const EmployeeManagement: React.FC = () => {
                   <td className="p-4 font-semibold text-gray-900">{emp.name}</td>
                   <td className="p-4 font-semibold text-gray-800">{emp.role}</td>
                   <td className="p-4 font-regular text-gray-400">{emp.email}</td>
+                  <td className="p-4 font-regular text-gray-400">{emp.phone || '—'}</td>
                   <td className="p-4 font-semibold text-slate-900">{emp.noOfLeads}</td>
                   <td className="p-4 font-semibold text-slate-900">{emp.closedLeads}</td>
                   <td className="p-4 font-semibold text-slate-900">{emp.pendingLeads.toString().padStart(2, '0')}</td>

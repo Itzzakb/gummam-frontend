@@ -525,7 +525,7 @@ export const CrmPortal: React.FC = () => {
               </div>
               
               {/* Row 1: Leads, Listings, Gold Plan on left, Scan & Verify on right */}
-              <div className="grid grid-cols-1 xl:grid-cols-[3fr_2fr] gap-6">
+              <div className="grid grid-cols-1 xl:grid-cols-[3fr_2fr] gap-3">
                 
                 {/* Left Column (Leads, Listings, Gold Plan) */}
                 <div className="space-y-6">
@@ -635,12 +635,12 @@ export const CrmPortal: React.FC = () => {
                 </div>
 
                 {/* Right Column (Scan & Verify) */}
-                <div className="space-y-6">
+                <div className="space-y-2">
                   {/* Master Scan and Verify Card */}
                   <div className="bg-white rounded-[5px] border border-gray-200/60 p-6 shadow-sm space-y-2 h-full flex flex-col justify-between">
                     
                     {/* Top Banner part */}
-                    <div className="flex items-start justify-between gap-4 border-b border-gray-100 pb-3">
+                    <div className="flex items-start justify-between gap-4 border-b border-gray-100">
                       <div className="space-y-3 flex-1">
                         <div className="w-12 h-12 rounded bg-[#EAF5EC] text-[#22C55E] flex items-center justify-center">
                           <img src="/images/green-tick-shield.png" alt="shield" className="object-contain" />
@@ -661,7 +661,7 @@ export const CrmPortal: React.FC = () => {
                     </div>
 
                     {/* Middle feature list */}
-                    <div className="space-y-4 my-auto">
+                    <div className="space-y-2 my-auto">
                       {/* Feature 1 */}
                       <div className="flex items-center justify-between group cursor-pointer">
                         <div className="flex items-center gap-3">
@@ -710,7 +710,7 @@ export const CrmPortal: React.FC = () => {
                     </div>
 
                     {/* Bottom Verification status tracker */}
-                    <div className="bg-[#F5F3FF] rounded-[12px] p-5 flex items-center gap-6 mt-4 border border-[#E8E3FF]">
+                    <div className="bg-[#F5F3FF] rounded-[12px] p-3 flex items-center gap-6 mt-2 border border-[#E8E3FF]">
                       {/* Left side circular chart */}
                       <div className="relative w-20 h-20 flex items-center justify-center shrink-0">
                         <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
@@ -744,7 +744,7 @@ export const CrmPortal: React.FC = () => {
                       <div className="h-16 w-[1px] bg-[#E5E0FF] shrink-0"></div>
 
                       {/* Right side text and button */}
-                      <div className="flex-1 flex  sm:flex-row xl:flex-col sm:items-center justify-between gap-4">
+                      <div className="flex-1 flex  sm:flex-row xl:flex-col sm:items-center justify-between gap-3">
                         <div className="space-y-1">
                           <h4 className="text-base font-bold text-[#0B2C5C] flex items-center gap-1.5 leading-tight">
                             Almost there! <span className="text-lg">🎉</span>

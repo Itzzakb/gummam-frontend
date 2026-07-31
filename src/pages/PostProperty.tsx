@@ -1392,69 +1392,6 @@ export const PostProperty: React.FC = () => {
               <div className="bg-white rounded-2xl shadow-[0_2px_15px_rgba(0,0,0,0.03)] border border-slate-100 p-8 sm:p-10 space-y-10">
                 {isLandsAcre ? (
                   <>
-                    {/* --- Land Acre Property Area & Cost Section --- */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {/* Property Area Column */}
-                      <div className="space-y-4">
-                        <label className="block text-sm font-semibold text-[#0B2C5C]">Property Area <span className="text-red-500">*</span></label>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <label className="block text-[11px] font-semibold text-slate-500 uppercase">Acre</label>
-                            <CustomSelect
-                              value={formData.landAcre || ''}
-                              onChange={e => handleLandChange('landAcre', e.target.value)}
-                              className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800 bg-white"
-                            >
-                              <option value="">Select Acres</option>
-                              {Array.from({ length: 100 }, (_, i) => i + 1).map(num => (
-                                <option key={num} value={String(num)}>{`${num} Acre${num > 1 ? 's' : ''}`}</option>
-                              ))}
-                            </CustomSelect>
-                          </div>
-                          <div className="space-y-2">
-                            <label className="block text-[11px] font-semibold text-slate-500 uppercase">Guntas</label>
-                            <CustomSelect
-                              value={formData.landGuntas || ''}
-                              onChange={e => handleLandChange('landGuntas', e.target.value)}
-                              className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800 bg-white"
-                            >
-                              <option value="">Select Guntas</option>
-                              {Array.from({ length: 40 }, (_, i) => i).map(num => (
-                                <option key={num} value={String(num)}>{`${num} Gunta${num !== 1 ? 's' : ''}`}</option>
-                              ))}
-                            </CustomSelect>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Cost per Acre Column */}
-                      <div className="space-y-4">
-                        <label className="block text-sm font-semibold text-[#0B2C5C]">Cost per Acre <span className="text-red-500">*</span></label>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <label className="block text-[11px] font-semibold text-slate-500 uppercase">Amount</label>
-                            <input
-                              type="number"
-                              placeholder="Enter cost"
-                              value={formData.costPerAcre || ''}
-                              onChange={e => handleLandChange('costPerAcre', e.target.value)}
-                              className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800"
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <label className="block text-[11px] font-semibold text-slate-500 uppercase">Total Cost</label>
-                            <input
-                              type="text"
-                              placeholder="Total Cost"
-                              value={formData.totalCost ? formatAmountInLacCr(formData.totalCost) : ''}
-                              disabled
-                              className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-500 font-medium"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
                     {/* --- Land Details Cards Section --- */}
                     <div>
                       <h3 className="text-lg font-bold text-[#0B2C5C] mb-4 pb-2 border-b border-slate-100">Land Details</h3>
@@ -1526,6 +1463,69 @@ export const PostProperty: React.FC = () => {
                       </div>
                     </div>
                   </div>
+
+                    {/* --- Land Acre Property Area & Cost Section --- */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {/* Property Area Column */}
+                      <div className="space-y-4">
+                        <label className="block text-sm font-semibold text-[#0B2C5C]">Property Area <span className="text-red-500">*</span></label>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <label className="block text-[11px] font-semibold text-slate-500 uppercase">Acre</label>
+                            <CustomSelect
+                              value={formData.landAcre || ''}
+                              onChange={e => handleLandChange('landAcre', e.target.value)}
+                              className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800 bg-white"
+                            >
+                              <option value="">Select Acres</option>
+                              {Array.from({ length: 100 }, (_, i) => i + 1).map(num => (
+                                <option key={num} value={String(num)}>{`${num} Acre${num > 1 ? 's' : ''}`}</option>
+                              ))}
+                            </CustomSelect>
+                          </div>
+                          <div className="space-y-2">
+                            <label className="block text-[11px] font-semibold text-slate-500 uppercase">Guntas</label>
+                            <CustomSelect
+                              value={formData.landGuntas || ''}
+                              onChange={e => handleLandChange('landGuntas', e.target.value)}
+                              className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800 bg-white"
+                            >
+                              <option value="">Select Guntas</option>
+                              {Array.from({ length: 40 }, (_, i) => i).map(num => (
+                                <option key={num} value={String(num)}>{`${num} Gunta${num !== 1 ? 's' : ''}`}</option>
+                              ))}
+                            </CustomSelect>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Cost per Acre Column */}
+                      <div className="space-y-4">
+                        <label className="block text-sm font-semibold text-[#0B2C5C]">Cost per Acre <span className="text-red-500">*</span></label>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <label className="block text-[11px] font-semibold text-slate-500 uppercase">Amount</label>
+                            <input
+                              type="number"
+                              placeholder="Enter cost"
+                              value={formData.costPerAcre || ''}
+                              onChange={e => handleLandChange('costPerAcre', e.target.value)}
+                              className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <label className="block text-[11px] font-semibold text-slate-500 uppercase">Total Cost</label>
+                            <input
+                              type="text"
+                              placeholder="Total Cost"
+                              value={formData.totalCost ? formatAmountInLacCr(formData.totalCost) : ''}
+                              disabled
+                              className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-500 font-medium"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
 
                     {/* --- Locality Details Section --- */}
                     <div>
@@ -1674,16 +1674,6 @@ export const PostProperty: React.FC = () => {
                         </CustomSelect>
                       </div>
                       <div className="space-y-2">
-                        <label className="block text-xs font-semibold text-slate-500 uppercase">Distance from ORR (KMs) <span className="text-red-500">*</span></label>
-                        <input
-                          type="text"
-                          placeholder="KMs"
-                          value={formData.distanceFromOrr || ''}
-                          onChange={e => updateFormData({ distanceFromOrr: e.target.value })}
-                          className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800"
-                        />
-                      </div>
-                      <div className="space-y-2">
                         <label className="block text-xs font-semibold text-slate-500 uppercase">ORR Exit Number</label>
                         <CustomSelect
                           value={formData.nearbyOrrExit || ''}
@@ -1695,6 +1685,16 @@ export const PostProperty: React.FC = () => {
                             <option key={exit} value={exit}>{exit}</option>
                           ))}
                         </CustomSelect>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="block text-xs font-semibold text-slate-500 uppercase">Distance from ORR (KMs) <span className="text-red-500">*</span></label>
+                        <input
+                          type="text"
+                          placeholder="KMs"
+                          value={formData.distanceFromOrr || ''}
+                          onChange={e => updateFormData({ distanceFromOrr: e.target.value })}
+                          className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800"
+                        />
                       </div>
                       <div className="space-y-2">
                         <label className="block text-xs font-semibold text-slate-500 uppercase">Road Faced Properties</label>
@@ -1772,6 +1772,28 @@ export const PostProperty: React.FC = () => {
                           <option value="No">No</option>
                         </CustomSelect>
                       </div>
+                      <div className="space-y-2">
+                        <label className="block text-xs font-semibold text-slate-500 uppercase">Permissions</label>
+                        <CustomSelect
+                          value={formData.permissions || ''}
+                          onChange={e => updateFormData({ permissions: e.target.value })}
+                          className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800 bg-white"
+                        >
+                          <option value="">Select Permission</option>
+                          <option value="HMDA">HMDA</option>
+                          <option value="DTCP">DTCP</option>
+                          <option value="FCDA">FCDA</option>
+                          <option value="KUDA">KUDA</option>
+                          <option value="SUDA">SUDA</option>
+                          <option value="YTDA">YTDA</option>
+                          <option value="VTADA">VTADA</option>
+                          <option value="QQSUDA">QQSUDA</option>
+                          <option value="HUDA">HUDA</option>
+                          <option value="GP">GP</option>
+                          <option value="FARM LAND">FARM LAND</option>
+                          <option value="Other">Other</option>
+                        </CustomSelect>
+                      </div>
                     </div>
 
                     {/* --- Property Brief Textarea --- */}
@@ -1817,7 +1839,7 @@ export const PostProperty: React.FC = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       {/* Plot Demensions Column */}
                       <div className="space-y-4">
-                        <label className="block text-sm font-semibold text-[#0B2C5C]">Plot Demensions <span className="text-red-500">*</span></label>
+                        <label className="block text-sm font-semibold text-[#0B2C5C]">Venture Details <span className="text-red-500">*</span></label>
                         <div className="grid grid-cols-3 gap-4">
                           <div className="space-y-2">
                             <label className="block text-[11px] font-semibold text-slate-500 uppercase">Plot Area(Sq.Yds) <span className="text-red-500">*</span></label>
@@ -1911,25 +1933,6 @@ export const PostProperty: React.FC = () => {
                         </CustomSelect>
                       </div>
                       <div className="space-y-2">
-                        <label className="block text-xs font-semibold text-slate-500 uppercase">Permissions</label>
-                        <CustomSelect
-                          value={formData.permissions || 'HMDA'}
-                          onChange={e => updateFormData({ permissions: e.target.value })}
-                          className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800 bg-white"
-                        >
-                          <option value="HMDA">HMDA</option>
-                          <option value="YTDA">YTDA</option>
-                          <option value="DTCP">DTCP</option>
-                          <option value="FARM LAND">FARM LAND</option>
-                          <option value="GP">GP</option>
-                          <option value="HUDA">HUDA</option>
-                          <option value="Others">Others</option>
-                        </CustomSelect>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-                      <div className="space-y-2">
                         <label className="block text-xs font-semibold text-slate-500 uppercase">Roads type at property</label>
                         <CustomSelect
                           value={formData.roadsType || 'Blacktop'}
@@ -1939,6 +1942,31 @@ export const PostProperty: React.FC = () => {
                           <option value="Blacktap">Blacktap</option>
                           <option value="CC Road">CC Road</option>
                           <option value="Others">Others</option>
+                        </CustomSelect>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                      <div className="space-y-2">
+                        <label className="block text-xs font-semibold text-slate-500 uppercase">Permissions</label>
+                        <CustomSelect
+                          value={formData.permissions || ''}
+                          onChange={e => updateFormData({ permissions: e.target.value })}
+                          className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800 bg-white"
+                        >
+                          <option value="">Select Permission</option>
+                          <option value="HMDA">HMDA</option>
+                          <option value="DTCP">DTCP</option>
+                          <option value="FCDA">FCDA</option>
+                          <option value="KUDA">KUDA</option>
+                          <option value="SUDA">SUDA</option>
+                          <option value="YTDA">YTDA</option>
+                          <option value="VTADA">VTADA</option>
+                          <option value="QQSUDA">QQSUDA</option>
+                          <option value="HUDA">HUDA</option>
+                          <option value="GP">GP</option>
+                          <option value="FARM LAND">FARM LAND</option>
+                          <option value="Other">Other</option>
                         </CustomSelect>
                       </div>
                       <div className="space-y-2">
@@ -1951,6 +1979,19 @@ export const PostProperty: React.FC = () => {
                           className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800"
                         />
                       </div>
+                      <div className="space-y-2">
+                        <label className="block text-xs font-semibold text-slate-500 uppercase">Rera Number</label>
+                        <input
+                          type="text"
+                          placeholder="Rera Number"
+                          value={formData.reraNumber || ''}
+                          onChange={e => updateFormData({ reraNumber: e.target.value })}
+                          className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                       <div className="space-y-2">
                         <label className="block text-xs font-semibold text-slate-500 uppercase">Facing <span className="text-red-500">*</span></label>
                         <CustomSelect
@@ -1968,19 +2009,6 @@ export const PostProperty: React.FC = () => {
                           <option value="South-East">South-East</option>
                           <option value="South-West">South-West</option>
                         </CustomSelect>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-                      <div className="space-y-2">
-                        <label className="block text-xs font-semibold text-slate-500 uppercase">Rera Number</label>
-                        <input
-                          type="text"
-                          placeholder="Rera Number"
-                          value={formData.reraNumber || ''}
-                          onChange={e => updateFormData({ reraNumber: e.target.value })}
-                          className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800"
-                        />
                       </div>
                       <div className="space-y-2">
                         <label className="block text-xs font-semibold text-slate-500 uppercase">New Project</label>
@@ -2019,8 +2047,8 @@ export const PostProperty: React.FC = () => {
                       <div className="space-y-2">
                         <label className="block text-xs font-semibold text-slate-500 uppercase">Venture Started on</label>
                         <input
-                          type="text"
-                          placeholder="DD-MM-YYYY"
+                          type="month"
+                          placeholder="MM-YYYY"
                           value={formData.ventureStartedOn || ''}
                           onChange={e => updateFormData({ ventureStartedOn: e.target.value })}
                           className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800"
@@ -2053,7 +2081,6 @@ export const PostProperty: React.FC = () => {
 
                     {/* --- Venture Details Section --- */}
                     <div>
-                      <h3 className="text-lg font-bold text-[#0B2C5C] mb-4 pb-2 border-b border-slate-100">Venture Details</h3>
                       <div className="space-y-6">
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div className="space-y-2">
@@ -2191,12 +2218,24 @@ export const PostProperty: React.FC = () => {
                             className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800 bg-white"
                           >
                             <option value="">Select Zone</option>
-                            <option value="Agricultural Zone">Agricultural Zone</option>
-                            <option value="Residential Zone">Residential Zone</option>
-                            <option value="Commercial Zone">Commercial Zone</option>
-                            <option value="Industrial Zone">Industrial Zone</option>
+                            <option value="Agriculture use zone">Agriculture use zone</option>
+                            <option value="Residential Use Zone-R1">Residential Use Zone-R1</option>
+                            <option value="Residential Use Zone-R2">Residential Use Zone-R2</option>
+                            <option value="Residential Use Zone-R3">Residential Use Zone-R3</option>
+                            <option value="Residential Use Zone-R4">Residential Use Zone-R4</option>
                             <option value="Conservation Zone">Conservation Zone</option>
-                            <option value="Others">Others</option>
+                            <option value="Peri-Urban Use Zone">Peri-Urban Use Zone</option>
+                            <option value="Commercial Use Zone">Commercial Use Zone</option>
+                            <option value="Manufacturing Use Zone">Manufacturing Use Zone</option>
+                            <option value="Recreation and open space use zone">Recreation and open space use zone</option>
+                            <option value="Multiple Use Zone">Multiple Use Zone</option>
+                            <option value="Public, Semi-Public Facilities and Utilities Use Zone">Public, Semi-Public Facilities and Utilities Use Zone</option>
+                            <option value="Forest Zone">Forest Zone</option>
+                            <option value="Water Bodies Zone">Water Bodies Zone</option>
+                            <option value="Agriculture Use Zone">Agriculture Use Zone</option>
+                            <option value="Traffic and Transportation Use Zone">Traffic and Transportation Use Zone</option>
+                            <option value="Recreation and Open Space Use Zone">Recreation and Open Space Use Zone</option>
+                            <option value="Special Reservations Zone">Special Reservations Zone</option>
                           </CustomSelect>
                         </div>
                         <div className="space-y-2">
@@ -2222,16 +2261,6 @@ export const PostProperty: React.FC = () => {
                           </CustomSelect>
                         </div>
                         <div className="space-y-2">
-                          <label className="block text-xs font-semibold text-slate-500 uppercase">Distance from NHW <span className="text-red-500">*</span></label>
-                          <input
-                            type="text"
-                            placeholder="Distance from NHW"
-                            value={formData.distanceFromNhw || ''}
-                            onChange={e => updateFormData({ distanceFromNhw: e.target.value })}
-                            className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800"
-                          />
-                        </div>
-                        <div className="space-y-2">
                           <label className="block text-xs font-semibold text-slate-500 uppercase">ORR Exit Number</label>
                           <CustomSelect
                             value={formData.nearbyOrrExit || ''}
@@ -2243,6 +2272,16 @@ export const PostProperty: React.FC = () => {
                               <option key={exit} value={exit}>{exit}</option>
                             ))}
                           </CustomSelect>
+                        </div>
+                        <div className="space-y-2">
+                          <label className="block text-xs font-semibold text-slate-500 uppercase">Distance from NHW <span className="text-red-500">*</span></label>
+                          <input
+                            type="text"
+                            placeholder="Distance from NHW"
+                            value={formData.distanceFromNhw || ''}
+                            onChange={e => updateFormData({ distanceFromNhw: e.target.value })}
+                            className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800"
+                          />
                         </div>
                       </div>
                     </div>
@@ -2312,26 +2351,13 @@ export const PostProperty: React.FC = () => {
                       />
                     </div>
 
-                    {/* --- Map Configuration --- */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                    {/* --- Property Location & Map --- */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                       <div className="space-y-2">
-                        <label className="block text-xs font-semibold text-slate-500 uppercase">Select Map options</label>
-                        <CustomSelect
-                          value={formData.mapOptions || ''}
-                          onChange={e => updateFormData({ mapOptions: e.target.value })}
-                          className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800 bg-white"
-                        >
-                          <option value="">Map Location link</option>
-                          <option value="Google Map Link">Google Map Link</option>
-                          <option value="Latitude & Longitude">Latitude & Longitude</option>
-                          <option value="Survey Number">Survey Number</option>
-                        </CustomSelect>
-                      </div>
-                      <div className="space-y-2">
-                        <label className="block text-xs font-semibold text-slate-500 uppercase">Map Link / Cordinates</label>
+                        <label className="block text-xs font-semibold text-slate-500 uppercase">Property Location</label>
                         <input
                           type="text"
-                          placeholder="Map Link / Cordinates"
+                          placeholder="Google map location"
                           value={formData.mapOptionValue || ''}
                           onChange={e => updateFormData({ mapOptionValue: e.target.value })}
                           className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800"
@@ -3543,7 +3569,7 @@ export const PostProperty: React.FC = () => {
             )}
 
                 {/* --- Amenities & Features Section --- */}
-                {!isLandsAcre && (
+                {!isLandsAcre && !isLandsPlots && (
                 <div>
                   <h3 className="text-lg font-bold text-[#0B2C5C] mb-4 pb-2 border-b border-slate-100">Amenities & Features</h3>
                   <div className="space-y-6">
@@ -3979,11 +4005,11 @@ export const PostProperty: React.FC = () => {
                       </div>
                       <div className="space-y-2">
                         <label className="block text-sm font-semibold text-[#0B2C5C]">
-                          {isLandsAcre ? 'Property Boundaries Map' : 'Floor Plan URL (Optional)'}
+                          {isLandsAcre || isLandsPlots ? 'Property Boundaries Map' : 'Floor Plan URL (Optional)'}
                         </label>
                         <input 
                           type="url" 
-                          placeholder={isLandsAcre ? 'e.g., Property boundaries map image or PDF link' : 'e.g., Floor plan image or PDF link'}
+                          placeholder={isLandsAcre || isLandsPlots ? 'e.g., Property boundaries map image or PDF link' : 'e.g., Floor plan image or PDF link'}
                           value={formData.floorPlanUrl || ''}
                           onChange={e => updateFormData({ floorPlanUrl: e.target.value })}
                           className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800"
@@ -3994,7 +4020,7 @@ export const PostProperty: React.FC = () => {
                 </div>
 
                 {/* --- Promotion options --- */}
-                {!isLandsAcre && (
+                {!isLandsAcre && !isLandsPlots && (
                 <div>
                   <h3 className="text-lg font-bold text-[#0B2C5C] mb-4 pb-2 border-b border-slate-100">Promotion Options</h3>
                   {/* Boost Post Radio Cards */}

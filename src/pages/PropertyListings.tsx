@@ -904,7 +904,14 @@ export const PropertyListings: React.FC = () => {
 
             {/* Modal Footer Actions */}
             <div className="px-8 py-6 flex items-center gap-3 bg-white border-t border-gray-100">
-              <button className="flex-1 bg-[#004B8F] hover:bg-[#003c73] text-white text-sm font-medium py-3 px-5 rounded-[12px] flex items-center justify-center gap-2 cursor-pointer transition-colors font-poppins">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowEditModal(false);
+                  navigate('/post-property');
+                }}
+                className="flex-1 bg-[#004B8F] hover:bg-[#003c73] text-white text-sm font-medium py-3 px-5 rounded-[12px] flex items-center justify-center gap-2 cursor-pointer transition-colors font-poppins"
+              >
                 <Pencil className="w-4 h-4 text-white" strokeWidth={2.2} />
                 <span>Edit Listing</span>
               </button>

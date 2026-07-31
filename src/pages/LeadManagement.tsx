@@ -313,6 +313,7 @@ interface Lead {
     area: string;
   };
   notes?: string;
+  notesSavedAt?: string;
 }
 
 export const LeadManagement: React.FC = () => {
@@ -443,7 +444,15 @@ export const LeadManagement: React.FC = () => {
   };
 
   const handleSaveNote = (id: string, text: string) => {
-    setLeads(prev => prev.map(lead => lead.id === id ? { ...lead, notes: text } : lead));
+    const savedAt = new Date().toLocaleString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+    });
+    setLeads(prev => prev.map(lead => lead.id === id ? { ...lead, notes: text, notesSavedAt: savedAt } : lead));
     setActiveEditingNoteLeadId(null);
     setNoteText('');
   };
@@ -933,7 +942,14 @@ export const LeadManagement: React.FC = () => {
             {/* Notes preview if present */}
             {lead.notes && (
               <div className="mt-4 p-3 bg-amber-50/50 border border-amber-100 rounded-[6px] text-xs text-gray-700 italic relative group-hover:bg-amber-50 transition-colors">
-                <span className="font-semibold text-amber-800 not-italic block text-[10px] uppercase tracking-wider mb-1">Saved Note:</span>
+                <div className="flex items-center justify-between gap-2 mb-1 not-italic">
+                  <span className="font-semibold text-amber-800 text-[10px] uppercase tracking-wider">Saved Note:</span>
+                  {lead.notesSavedAt && (
+                    <span className="text-[10px] font-medium text-amber-700/80 shrink-0">
+                      {lead.notesSavedAt}
+                    </span>
+                  )}
+                </div>
                 <div dangerouslySetInnerHTML={{ __html: lead.notes }} className="line-clamp-3 prose prose-xs" />
               </div>
             )}

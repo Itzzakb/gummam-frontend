@@ -11,10 +11,10 @@ import { PropertyCarousel } from '../features/landing/PropertyCarousel';
 type FlatStatus = 'available' | 'occupied' | 'sold' | 'mortgage';
 
 const FLAT_STATUS_COLORS: Record<FlatStatus, string> = {
-  available: '#22C55E',
-  occupied: '#F97316',
-  sold: '#EF4444',
-  mortgage: '#D1D5DB',
+  available: '#00C851',
+  occupied: '#FFB74D',
+  sold: '#FF0000',
+  mortgage: '#E0E0E0',
 };
 
 const FLAT_STATUS_LEGEND: { status: FlatStatus; label: string }[] = [
@@ -60,7 +60,7 @@ const propertyData = {
   wings: [
     {
       id: 'a-block',
-      label: 'A- Block',
+      label: 'A - Block',
       floors: [
         {
           label: '1st Floor',
@@ -280,8 +280,8 @@ export const PropertyDetails: React.FC = () => {
                   onClick={() => setActiveWingId(wing.id)}
                   className={`px-4 py-2 rounded-full text-[14px] font-medium transition-colors ${
                     isActive
-                      ? 'bg-[#E5E5EA] text-[#1A1A1A]'
-                      : 'bg-transparent text-[#636366] hover:bg-[#F3F4F6]'
+                      ? 'bg-[#E8E8ED] text-[#1A1A1A] border border-[#1A1A1A]/25'
+                      : 'bg-transparent text-[#1A1A1A] border border-transparent hover:bg-[#F3F4F6]'
                   }`}
                 >
                   {wing.label}
@@ -294,7 +294,7 @@ export const PropertyDetails: React.FC = () => {
             <div className="flex-1 w-full space-y-3 min-w-0">
               {activeWing.floors.map((floor) => (
                 <div key={floor.label} className="flex items-center gap-3 sm:gap-4">
-                  <span className="w-[72px] sm:w-[80px] shrink-0 text-[13px] sm:text-[14px] text-[#636366]">
+                  <span className="w-[72px] sm:w-[80px] shrink-0 text-[13px] sm:text-[14px] text-[#1A1A1A]">
                     {floor.label}
                   </span>
                   <div className="flex flex-1 gap-1.5 sm:gap-2 min-w-0">
@@ -302,7 +302,7 @@ export const PropertyDetails: React.FC = () => {
                       <div
                         key={`${floor.label}-${index}`}
                         title={FLAT_STATUS_LEGEND.find((item) => item.status === status)?.label}
-                        className="h-8 sm:h-9 flex-1 min-w-0 rounded-md"
+                        className="h-8 sm:h-9 flex-1 min-w-0 rounded-[6px] border border-[#E0E0E0]"
                         style={{ backgroundColor: FLAT_STATUS_COLORS[status] }}
                       />
                     ))}
@@ -313,14 +313,14 @@ export const PropertyDetails: React.FC = () => {
 
             <div className="hidden sm:block w-px self-stretch bg-[#E0E0E0] shrink-0" />
 
-            <div className="flex sm:flex-col flex-wrap gap-x-4 gap-y-3 sm:gap-4 sm:pt-1 shrink-0">
+            <div className="grid grid-cols-2 gap-x-6 gap-y-5 sm:pt-0.5 shrink-0">
               {FLAT_STATUS_LEGEND.map((item) => (
-                <div key={item.status} className="flex items-center gap-2.5">
+                <div key={item.status} className="flex flex-col items-start gap-1.5">
+                  <span className="text-[13px] text-[#1A1A1A]">{item.label}</span>
                   <span
-                    className="w-3.5 h-3.5 rounded-sm shrink-0"
+                    className="w-10 h-5 rounded-[4px] border border-[#E0E0E0] shrink-0"
                     style={{ backgroundColor: FLAT_STATUS_COLORS[item.status] }}
                   />
-                  <span className="text-[13px] text-[#636366]">{item.label}</span>
                 </div>
               ))}
             </div>

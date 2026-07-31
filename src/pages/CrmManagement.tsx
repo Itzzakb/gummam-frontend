@@ -3,7 +3,6 @@ import { createPortal } from 'react-dom';
 import {
   Search,
   Download,
-  Eye,
   X,
   Plus,
   ChevronDown,

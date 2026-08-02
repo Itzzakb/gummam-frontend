@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { formatDate } from '@/lib/utils';
 import {
   Download,
   Eye,
@@ -179,10 +180,10 @@ export const PricingSubscription: React.FC = () => {
 
   // Expiry monitoring list
   const [expiryRecords] = useState<ExpiryRecord[]>([
-    { id: 'E1', subscriber: 'Agent001', packageName: 'Silver', expiryDate: '05 Jun 2026', daysLeft: 5, autoRenewal: true },
-    { id: 'E2', subscriber: 'Owner005', packageName: 'Gold', expiryDate: '05 Jun 2026', daysLeft: 10, autoRenewal: true },
-    { id: 'E3', subscriber: 'Builder002', packageName: 'Platinum', expiryDate: '05 Jun 2026', daysLeft: 1, autoRenewal: false },
-    { id: 'E4', subscriber: 'Agent023', packageName: 'Enterprise', expiryDate: '05 Jun 2026', daysLeft: 15, autoRenewal: true }
+    { id: 'E1', subscriber: 'Agent001', packageName: 'Silver', expiryDate: '05-06-2026', daysLeft: 5, autoRenewal: true },
+    { id: 'E2', subscriber: 'Owner005', packageName: 'Gold', expiryDate: '05-06-2026', daysLeft: 10, autoRenewal: true },
+    { id: 'E3', subscriber: 'Builder002', packageName: 'Platinum', expiryDate: '05-06-2026', daysLeft: 1, autoRenewal: false },
+    { id: 'E4', subscriber: 'Agent023', packageName: 'Enterprise', expiryDate: '05-06-2026', daysLeft: 15, autoRenewal: true }
   ]);
 
   // GST Invoices list
@@ -472,7 +473,7 @@ export const PricingSubscription: React.FC = () => {
                   <tr key={rec.id} className="hover:bg-slate-50/30 transition-colors">
                     <td className="p-4 pl-6 font-semibold text-slate-900">{rec.subscriber}</td>
                     <td className="p-4 text-slate-600">{rec.packageName}</td>
-                    <td className="p-4 text-slate-500 whitespace-nowrap">{rec.expiryDate}</td>
+                    <td className="p-4 text-slate-500 whitespace-nowrap">{formatDate(rec.expiryDate)}</td>
                     <td className="p-4 min-w-[90px] whitespace-nowrap">
                       <span className={`px-2.5 py-0.5 rounded-[5px] text-[10px] font-semibold border whitespace-nowrap ${
                         rec.daysLeft <= 1 ? 'bg-red-50 text-red-700 border-red-200' :
@@ -545,7 +546,7 @@ export const PricingSubscription: React.FC = () => {
                     <td className="p-4 text-slate-700">{inv.customer}</td>
                     <td className="p-4 font-semibold text-slate-900">{inv.amount}</td>
                     <td className="p-4 text-slate-550">{inv.gst}</td>
-                    <td className="p-4 text-slate-500">{inv.date}</td>
+                    <td className="p-4 text-slate-500">{formatDate(inv.date)}</td>
                     <td className="p-4">
                       <span className={`px-2.5 py-0.5 rounded-[5px] text-[10px] font-semibold border ${
                         inv.status === 'Paid' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'
@@ -612,7 +613,7 @@ export const PricingSubscription: React.FC = () => {
                     <td className="p-4 text-slate-700">{tx.customer}</td>
                     <td className="p-4 font-semibold text-slate-900">{tx.amount}</td>
                     <td className="p-4 text-slate-550">{tx.gateway}</td>
-                    <td className="p-4 text-slate-500">{tx.date}</td>
+                    <td className="p-4 text-slate-500">{formatDate(tx.date)}</td>
                     <td className="p-4 pr-6">
                       <span className={`px-2.5 py-0.5 rounded-[5px] text-[10px] font-semibold border ${
                         tx.status === 'Success' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'

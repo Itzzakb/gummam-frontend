@@ -1,5 +1,5 @@
-import React, { useState, useRef } from 'react';
-import { ChevronDown, Edit2, Trash2 } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { ChevronDown, Edit2, Trash2, X } from 'lucide-react';
 
 interface Employee {
   id: string;
@@ -7,13 +7,27 @@ interface Employee {
   role: string;
   email: string;
   phone: string;
+  permissions: string[];
   noOfLeads: number;
   closedLeads: number;
   pendingLeads: number;
 }
 
+const CRM_PERMISSIONS = [
+  { id: 'overview', label: 'View Overview' },
+  { id: 'leads', label: 'Lead Management' },
+  { id: 'employees', label: 'Employee Management' },
+  { id: 'properties', label: 'Property listings' },
+  { id: 'crm', label: 'CRM Management' },
+  { id: 'subscription', label: 'Subscription' },
+  { id: 'settings', label: 'Settings' },
+];
+
 export const EmployeeManagement: React.FC = () => {
   const pageTopRef = useRef<HTMLDivElement>(null);
+  const roleDropdownRef = useRef<HTMLDivElement>(null);
+  const permissionsDropdownRef = useRef<HTMLDivElement>(null);
+
   const [employees, setEmployees] = useState<Employee[]>([
     {
       id: '001',
@@ -21,6 +35,7 @@ export const EmployeeManagement: React.FC = () => {
       role: 'Manager',
       email: 'rajesh@gmail.com',
       phone: '9876543210',
+      permissions: ['overview', 'leads', 'employees', 'properties', 'crm', 'subscription', 'settings'],
       noOfLeads: 22,
       closedLeads: 42,
       pendingLeads: 3
@@ -31,6 +46,7 @@ export const EmployeeManagement: React.FC = () => {
       role: 'Employee 1',
       email: 'rajesh@gmail.com',
       phone: '9876543211',
+      permissions: ['overview', 'leads', 'properties'],
       noOfLeads: 18,
       closedLeads: 56,
       pendingLeads: 1
@@ -41,6 +57,7 @@ export const EmployeeManagement: React.FC = () => {
       role: 'Employee 2',
       email: 'rajesh@gmail.com',
       phone: '9876543212',
+      permissions: ['overview', 'leads'],
       noOfLeads: 20,
       closedLeads: 87,
       pendingLeads: 7
@@ -51,6 +68,7 @@ export const EmployeeManagement: React.FC = () => {
       role: 'Employee 3',
       email: 'rajesh@gmail.com',
       phone: '9876543213',
+      permissions: ['leads'],
       noOfLeads: 62,
       closedLeads: 72,
       pendingLeads: 0
@@ -62,29 +80,57 @@ export const EmployeeManagement: React.FC = () => {
   const [roleInput, setRoleInput] = useState('Manager');
   const [emailInput, setEmailInput] = useState('smtp.gmail.com');
   const [phoneInput, setPhoneInput] = useState('');
+  const [permissionsInput, setPermissionsInput] = useState<string[]>(['overview', 'leads']);
   
   const [showRoleDropdown, setShowRoleDropdown] = useState(false);
+  const [showPermissionsDropdown, setShowPermissionsDropdown] = useState(false);
   const roles = ['Manager', 'Employee 1', 'Employee 2', 'Employee 3', 'Admin'];
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (roleDropdownRef.current && !roleDropdownRef.current.contains(event.target as Node)) {
+        setShowRoleDropdown(false);
+      }
+      if (permissionsDropdownRef.current && !permissionsDropdownRef.current.contains(event.target as Node)) {
+        setShowPermissionsDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const togglePermission = (permId: string) => {
+    setPermissionsInput((prev) =>
+      prev.includes(permId) ? prev.filter((id) => id !== permId) : [...prev, permId]
+    );
+  };
+
+  const resetForm = () => {
+    setNameInput('Rajesh kumar');
+    setRoleInput('Manager');
+    setEmailInput('smtp.gmail.com');
+    setPhoneInput('');
+    setPermissionsInput(['overview', 'leads']);
+    setEditingId(null);
+  };
 
   const handleAddOrUpdateRole = (e: React.FormEvent) => {
     e.preventDefault();
     if (!nameInput.trim() || !emailInput.trim()) return;
 
     if (editingId) {
-      // Update existing
       setEmployees(prev => prev.map(emp => emp.id === editingId ? {
         ...emp,
         name: nameInput,
         role: roleInput,
         email: emailInput,
-        phone: phoneInput
+        phone: phoneInput,
+        permissions: permissionsInput
       } : emp));
-      setEditingId(null);
     } else {
-      // Add new
       const nextId = (Math.max(...employees.map(e => parseInt(e.id))) + 1).toString().padStart(3, '0');
       const newEmp: Employee = {
         id: nextId,
@@ -92,6 +138,7 @@ export const EmployeeManagement: React.FC = () => {
         role: roleInput,
         email: emailInput,
         phone: phoneInput,
+        permissions: permissionsInput,
         noOfLeads: 0,
         closedLeads: 0,
         pendingLeads: 0
@@ -99,11 +146,7 @@ export const EmployeeManagement: React.FC = () => {
       setEmployees(prev => [...prev, newEmp]);
     }
 
-    // Reset inputs to default state values
-    setNameInput('Rajesh kumar');
-    setRoleInput('Manager');
-    setEmailInput('smtp.gmail.com');
-    setPhoneInput('');
+    resetForm();
   };
 
   const handleEditClick = (emp: Employee) => {
@@ -112,6 +155,7 @@ export const EmployeeManagement: React.FC = () => {
     setRoleInput(emp.role);
     setEmailInput(emp.email);
     setPhoneInput(emp.phone);
+    setPermissionsInput(emp.permissions || []);
 
     const scrollContainer = pageTopRef.current?.closest('main');
     if (scrollContainer instanceof HTMLElement) {
@@ -156,7 +200,7 @@ export const EmployeeManagement: React.FC = () => {
         </div>
 
         {/* Role select dropdown */}
-        <div className="space-y-2 relative">
+        <div className="space-y-2 relative" ref={roleDropdownRef}>
           <label className="text-sm font-semibold text-gray-900 block">Role</label>
           <button
             type="button"
@@ -210,6 +254,76 @@ export const EmployeeManagement: React.FC = () => {
           />
         </div>
 
+        {/* Permissions multi-select */}
+        <div className="space-y-2 relative md:col-span-2" ref={permissionsDropdownRef}>
+          <label className="text-sm font-semibold text-gray-900 block">Permissions</label>
+          <button
+            type="button"
+            onClick={() => setShowPermissionsDropdown(!showPermissionsDropdown)}
+            className={`w-full min-h-[48px] flex items-center justify-between gap-2 px-4 py-3 bg-white border rounded-[6px] text-sm font-medium text-left cursor-pointer ${
+              showPermissionsDropdown
+                ? 'border-[#004B8F] text-[#004B8F]'
+                : 'border-[#E2E8F0] text-gray-800'
+            }`}
+          >
+            <span className="truncate">
+              {permissionsInput.length === 0
+                ? 'Select permissions'
+                : permissionsInput.length === CRM_PERMISSIONS.length
+                  ? 'All permissions selected'
+                  : `${permissionsInput.length} permission${permissionsInput.length > 1 ? 's' : ''} selected`}
+            </span>
+            <ChevronDown className={`w-4 h-4 shrink-0 transition-transform ${showPermissionsDropdown ? 'rotate-180' : ''}`} />
+          </button>
+
+          {showPermissionsDropdown && (
+            <div className="absolute left-0 right-0 mt-1.5 bg-white border border-[#E2E8F0] rounded-[6px] shadow-lg z-50 py-1.5 max-h-56 overflow-y-auto [scrollbar-width:thin]">
+              {CRM_PERMISSIONS.map((perm) => {
+                const isChecked = permissionsInput.includes(perm.id);
+                return (
+                  <label
+                    key={perm.id}
+                    className={`w-full flex items-center gap-2.5 px-4 py-2 text-xs cursor-pointer transition-colors ${
+                      isChecked
+                        ? 'bg-[#E8F1FB] text-[#004B8F] font-semibold'
+                        : 'text-gray-700 hover:bg-slate-50 font-medium'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      onChange={() => togglePermission(perm.id)}
+                      className="w-3.5 h-3.5 rounded border-slate-300 text-[#004B8F] accent-[#004B8F]"
+                    />
+                    <span>{perm.label}</span>
+                  </label>
+                );
+              })}
+            </div>
+          )}
+
+          {permissionsInput.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 pt-1">
+              {CRM_PERMISSIONS.filter((p) => permissionsInput.includes(p.id)).map((perm) => (
+                <span
+                  key={perm.id}
+                  className="inline-flex items-center gap-1 bg-[#E8F1FB] text-[#004B8F] text-[10px] font-semibold px-2 py-1 rounded-[5px]"
+                >
+                  {perm.label}
+                  <button
+                    type="button"
+                    onClick={() => togglePermission(perm.id)}
+                    className="hover:text-[#0B2C5C] cursor-pointer"
+                    aria-label={`Remove ${perm.label}`}
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+
         {/* Add role button alignment */}
         <div className="flex items-end justify-end md:col-span-2 pt-2">
           <button
@@ -234,6 +348,7 @@ export const EmployeeManagement: React.FC = () => {
                 <th className="p-4 font-semibold text-[#0B2C5C]">Role</th>
                 <th className="p-4 font-semibold text-[#0B2C5C]">Email</th>
                 <th className="p-4 font-semibold text-[#0B2C5C]">Phone No</th>
+                <th className="p-4 font-semibold text-[#0B2C5C]">Permissions</th>
                 <th className="p-4 font-semibold text-[#0B2C5C]">No.of Leads</th>
                 <th className="p-4 font-semibold text-[#0B2C5C]">Closed Leads</th>
                 <th className="p-4 font-semibold text-[#0B2C5C]">Pending Leads</th>
@@ -248,6 +363,9 @@ export const EmployeeManagement: React.FC = () => {
                   <td className="p-4 font-semibold text-gray-800">{emp.role}</td>
                   <td className="p-4 font-regular text-gray-400">{emp.email}</td>
                   <td className="p-4 font-regular text-gray-400">{emp.phone || '—'}</td>
+                  <td className="p-4 font-semibold text-slate-700">
+                    {emp.permissions?.length || 0}/{CRM_PERMISSIONS.length}
+                  </td>
                   <td className="p-4 font-semibold text-slate-900">{emp.noOfLeads}</td>
                   <td className="p-4 font-semibold text-slate-900">{emp.closedLeads}</td>
                   <td className="p-4 font-semibold text-slate-900">{emp.pendingLeads.toString().padStart(2, '0')}</td>

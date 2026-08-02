@@ -5,7 +5,7 @@ import { ChevronRight, Calendar, Folder } from 'lucide-react';
 const featuredPost = {
   id: 101,
   title: 'High-Rise Townhouse',
-  date: 'January 10, 2026',
+  date: '10-01-2026',
   category: 'Technology',
   summary: "Practice rooms give learners the chance to put their knowledge to the test – literally. By going through exercises that closely match the certification exam, they'll get a good sense of how prepared they...",
   image: 'https://images.unsplash.com/photo-1519501025264-65ba15a82390?w=1200&q=80'
@@ -15,21 +15,21 @@ const sidebarPosts = [
   {
     id: 102,
     title: 'Want To Succeed In Real Estate? Focus On These Habits',
-    date: 'January 10, 2026',
+    date: '10-01-2026',
     category: 'Technology',
     image: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600&q=80'
   },
   {
     id: 103,
     title: 'Want To Succeed In Real Estate? Focus On These Habits',
-    date: 'January 10, 2026',
+    date: '10-01-2026',
     category: 'Technology',
     image: 'https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=600&q=80'
   },
   {
     id: 104,
     title: 'Want To Succeed In Real Estate? Focus On These Habits',
-    date: 'January 10, 2026',
+    date: '10-01-2026',
     category: 'Technology',
     image: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=600&q=80'
   }
@@ -39,7 +39,7 @@ const initialGridBlogs = [
   {
     id: 1,
     title: 'Want To Succeed In Real Estate? Focus On These Habits',
-    date: 'January 10, 2026',
+    date: '10-01-2026',
     category: 'Technology',
     summary: 'A fairy tale (alternative names include fairytale, fairy story, magic tale, or wonder tale) is a short story that belongs to the folklore genre.',
     image: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
@@ -48,7 +48,7 @@ const initialGridBlogs = [
   {
     id: 2,
     title: 'Want To Succeed In Real Estate? Focus On These Habits',
-    date: 'January 10, 2026',
+    date: '10-01-2026',
     category: 'Technology',
     summary: 'A fairy tale (alternative names include fairytale, fairy story, magic tale, or wonder tale) is a short story that belongs to the folklore genre.',
     image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80'
@@ -56,7 +56,7 @@ const initialGridBlogs = [
   {
     id: 3,
     title: 'Want To Succeed In Real Estate? Focus On These Habits',
-    date: 'January 10, 2026',
+    date: '10-01-2026',
     category: 'Technology',
     summary: 'A fairy tale (alternative names include fairytale, fairy story, magic tale, or wonder tale) is a short story that belongs to the folklore genre.',
     image: 'https://images.unsplash.com/photo-1600566753086-00f18efc2297?w=800&q=80'
@@ -64,7 +64,7 @@ const initialGridBlogs = [
   {
     id: 4,
     title: 'Want To Succeed In Real Estate? Focus On These Habits',
-    date: 'January 10, 2026',
+    date: '10-01-2026',
     category: 'Technology',
     summary: 'A fairy tale (alternative names include fairytale, fairy story, magic tale, or wonder tale) is a short story that belongs to the folklore genre.',
     image: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
@@ -73,7 +73,7 @@ const initialGridBlogs = [
   {
     id: 5,
     title: 'Want To Succeed In Real Estate? Focus On These Habits',
-    date: 'January 10, 2026',
+    date: '10-01-2026',
     category: 'Technology',
     summary: 'A fairy tale (alternative names include fairytale, fairy story, magic tale, or wonder tale) is a short story that belongs to the folklore genre.',
     image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80'
@@ -81,7 +81,7 @@ const initialGridBlogs = [
   {
     id: 6,
     title: 'Want To Succeed In Real Estate? Focus On These Habits',
-    date: 'January 10, 2026',
+    date: '10-01-2026',
     category: 'Technology',
     summary: 'A fairy tale (alternative names include fairytale, fairy story, magic tale, or wonder tale) is a short story that belongs to the folklore genre.',
     image: 'https://images.unsplash.com/photo-1600566753086-00f18efc2297?w=800&q=80'
@@ -89,7 +89,7 @@ const initialGridBlogs = [
   {
     id: 7,
     title: 'Want To Succeed In Real Estate? Focus On These Habits',
-    date: 'January 10, 2026',
+    date: '10-01-2026',
     category: 'Technology',
     summary: 'A fairy tale (alternative names include fairytale, fairy story, magic tale, or wonder tale) is a short story that belongs to the folklore genre.',
     image: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
@@ -98,7 +98,7 @@ const initialGridBlogs = [
   {
     id: 8,
     title: 'Want To Succeed In Real Estate? Focus On These Habits',
-    date: 'January 10, 2026',
+    date: '10-01-2026',
     category: 'Technology',
     summary: 'A fairy tale (alternative names include fairytale, fairy story, magic tale, or wonder tale) is a short story that belongs to the folklore genre.',
     image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80'
@@ -106,7 +106,7 @@ const initialGridBlogs = [
   {
     id: 9,
     title: 'Want To Succeed In Real Estate? Focus On These Habits',
-    date: 'January 10, 2026',
+    date: '10-01-2026',
     category: 'Technology',
     summary: 'A fairy tale (alternative names include fairytale, fairy story, magic tale, or wonder tale) is a short story that belongs to the folklore genre.',
     image: 'https://images.unsplash.com/photo-1600566753086-00f18efc2297?w=800&q=80'

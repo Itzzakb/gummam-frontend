@@ -669,8 +669,8 @@ export const CrmPortal: React.FC = () => {
                             <ShieldCheck className="w-6 h-6 text-green-600" />
                           </div>
                           <div>
-                            <h4 className="text-xs font-semibold text-[#0B2C5C]">Build Trust Instantly</h4>
-                            <p className="text-[10px] text-gray-500 leading-tight mt-0.5">Verified badge shows credibility and builds client trust.</p>
+                            <h4 className="text-[13px] font-semibold text-[#0B2C5C]">Build Trust Instantly</h4>
+                            <p className="text-[12px] text-gray-500 leading-tight mt-0.5">Verified badge shows credibility and builds client trust.</p>
                           </div>
                         </div>
                         <ChevronRight className="w-4 h-4 text-purple-600 shrink-0 group-hover:translate-x-0.5 transition-transform" />
@@ -685,8 +685,8 @@ export const CrmPortal: React.FC = () => {
                             <BarChart3 className="w-6 h-6" />
                           </div>
                           <div>
-                            <h4 className="text-xs font-semibold text-[#0B2C5C]">Rank Higher in Searches</h4>
-                            <p className="text-[10px] text-gray-500 leading-tight mt-0.5">Verified listings get more visibility and quality leads.</p>
+                            <h4 className="text-[13px] font-semibold text-[#0B2C5C]">Rank Higher in Searches</h4>
+                            <p className="text-[12px] text-gray-500 leading-tight mt-0.5">Verified listings get more visibility and quality leads.</p>
                           </div>
                         </div>
                         <ChevronRight className="w-4 h-4 text-purple-600 shrink-0 group-hover:translate-x-0.5 transition-transform" />
@@ -701,8 +701,8 @@ export const CrmPortal: React.FC = () => {
                             <span className="text-xl">🎁</span>
                           </div>
                           <div>
-                            <h4 className="text-xs font-semibold text-[#0B2C5C]">Unlock Exclusive Rewards</h4>
-                            <p className="text-[10px] text-gray-500 leading-tight mt-0.5">Verify more listings and earn valuable credits.</p>
+                            <h4 className="text-[13px] font-semibold text-[#0B2C5C]">Unlock Exclusive Rewards</h4>
+                            <p className="text-[12px] text-gray-500 leading-tight mt-0.5">Verify more listings and earn valuable credits.</p>
                           </div>
                         </div>
                         <ChevronRight className="w-4 h-4 text-purple-600 shrink-0 group-hover:translate-x-0.5 transition-transform" />

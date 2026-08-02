@@ -11,10 +11,10 @@ interface PaymentRecord {
 
 export const Subscription: React.FC = () => {
   const [payments] = useState<PaymentRecord[]>([
-    { date: 'Dec 20, 2024', plan: 'Premium Pro', amount: '₹4,999', status: 'Paid', invoice: 'INV-2024-001' },
-    { date: 'Nov 20, 2024', plan: 'Premium Pro', amount: '₹4,999', status: 'Paid', invoice: 'INV-2024-002' },
-    { date: 'Oct 20, 2024', plan: 'Premium Pro', amount: '₹4,999', status: 'Paid', invoice: 'INV-2024-003' },
-    { date: 'Sep 20, 2024', plan: 'Silver', amount: '₹2,999', status: 'Paid', invoice: 'INV-2024-004' }
+    { date: '20-12-2024', plan: 'Premium Pro', amount: '₹4,999', status: 'Paid', invoice: 'INV-2024-001' },
+    { date: '20-11-2024', plan: 'Premium Pro', amount: '₹4,999', status: 'Paid', invoice: 'INV-2024-002' },
+    { date: '20-10-2024', plan: 'Premium Pro', amount: '₹4,999', status: 'Paid', invoice: 'INV-2024-003' },
+    { date: '20-09-2024', plan: 'Silver', amount: '₹2,999', status: 'Paid', invoice: 'INV-2024-004' }
   ]);
 
   const silverFeatures = {
@@ -90,7 +90,7 @@ export const Subscription: React.FC = () => {
             <h2 className="text-2xl md:text-3xl font-semibold mt-1">Premium Pro</h2>
             <p className="text-xl font-medium mt-1">₹4,999</p>
           </div>
-          <p className="text-xs text-blue-100 opacity-90">Renews on January 20, 2025</p>
+          <p className="text-xs text-blue-100 opacity-90">Renews on 20-01-2025</p>
         </div>
 
         <div className="flex flex-col sm:flex-row md:items-center gap-6 md:gap-12">

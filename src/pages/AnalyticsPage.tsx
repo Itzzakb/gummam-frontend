@@ -573,7 +573,7 @@ export const AnalyticsPage: React.FC = () => {
           <div className="bg-slate-50/50 border border-slate-150 rounded-[8px] px-4 py-3 flex items-center justify-between text-xs">
             <div className="space-y-0.5">
               <div className="font-bold text-slate-800">Weekly Performance Report</div>
-              <div className="text-[10px] text-slate-400 font-semibold">Frequency: Weekly (Monday 9:00 AM) &nbsp;|&nbsp; Last sent: May 12, 2026</div>
+              <div className="text-[10px] text-slate-400 font-semibold">Frequency: Weekly (Monday 9:00 AM) &nbsp;|&nbsp; Last sent: 12-05-2026</div>
             </div>
             <button className="h-8 w-8 bg-[#035096] hover:bg-[#024078] text-white rounded-[5px] flex items-center justify-center transition cursor-pointer">
               <Download className="w-4 h-4" />
@@ -584,7 +584,7 @@ export const AnalyticsPage: React.FC = () => {
           <div className="bg-slate-50/50 border border-slate-150 rounded-[8px] px-4 py-3 flex items-center justify-between text-xs">
             <div className="space-y-0.5">
               <div className="font-bold text-slate-800">Monthly Financial Summary</div>
-              <div className="text-[10px] text-slate-400 font-semibold">Frequency: 1st of every month &nbsp;|&nbsp; Last sent: May 01, 2026</div>
+              <div className="text-[10px] text-slate-400 font-semibold">Frequency: 1st of every month &nbsp;|&nbsp; Last sent: 01-05-2026</div>
             </div>
             <button className="h-8 w-8 bg-[#035096] hover:bg-[#024078] text-white rounded-[5px] flex items-center justify-center transition cursor-pointer">
               <Download className="w-4 h-4" />
@@ -595,7 +595,7 @@ export const AnalyticsPage: React.FC = () => {
           <div className="bg-slate-50/50 border border-slate-150 rounded-[8px] px-4 py-3 flex items-center justify-between text-xs">
             <div className="space-y-0.5">
               <div className="font-bold text-slate-800">Agent Performance Report</div>
-              <div className="text-[10px] text-slate-400 font-semibold">Frequency: Daily (Today 5:00 PM) &nbsp;|&nbsp; Last sent: May 15, 2026</div>
+              <div className="text-[10px] text-slate-400 font-semibold">Frequency: Daily (Today 5:00 PM) &nbsp;|&nbsp; Last sent: 15-05-2026</div>
             </div>
             <button className="h-8 w-8 bg-[#035096] hover:bg-[#024078] text-white rounded-[5px] flex items-center justify-center transition cursor-pointer">
               <Download className="w-4 h-4" />

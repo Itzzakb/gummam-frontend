@@ -12,6 +12,7 @@ import { AdSection } from '../features/landing/AdSection';
 import { SmartSolutions } from '../features/landing/SmartSolutions';
 import { BlogSection } from '../features/landing/BlogSection';
 import { PostProperty } from '../features/landing/PostProperty';
+import { PropertyOptions } from '../features/landing/PropertyOptions';
 
 // Dummy data for property carousels
 const dummyProperties = [
@@ -46,6 +47,7 @@ export const LandingPage: React.FC = () => {
       <BlogSection />
       <Testimonials />
       <PostProperty />
+      <PropertyOptions />
     </>
   );
 };

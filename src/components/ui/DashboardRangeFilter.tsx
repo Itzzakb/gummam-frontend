@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
+import { formatDate } from '@/lib/utils';
 
-const formatDisplayDate = (date: Date) =>
-  date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+const formatDisplayDate = (date: Date) => formatDate(date);
 
 const isSameDay = (a: Date, b: Date) =>
   a.getFullYear() === b.getFullYear() &&

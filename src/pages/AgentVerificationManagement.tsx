@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Eye, Search, Download, X, Check, AlertCircle, Ban } from 'lucide-react';
+import { formatDate } from '@/lib/utils';
 
 interface VerificationRequest {
   id: string;
@@ -181,16 +182,16 @@ export const AgentVerificationManagement: React.FC = () => {
       state: 'Telangana',
       type: 'Agent',
       location: 'Hyderabad',
-      submittedDate: '05 Jun 2026',
+      submittedDate: '05-06-2026',
       documentsCount: 4,
       status: 'Approved',
       experience: 3,
       documents: [
-        { name: 'Government ID', submittedDate: '05 Jun 2026' },
-        { name: 'PAN Card', submittedDate: '05 Jun 2026' },
-        { name: 'RERA Certificate', submittedDate: '05 Jun 2026' },
-        { name: 'Agency License', submittedDate: '05 Jun 2026' },
-        { name: 'Profile Photo', submittedDate: '05 Jun 2026' }
+        { name: 'Government ID', submittedDate: '05-06-2026' },
+        { name: 'PAN Card', submittedDate: '05-06-2026' },
+        { name: 'RERA Certificate', submittedDate: '05-06-2026' },
+        { name: 'Agency License', submittedDate: '05-06-2026' },
+        { name: 'Profile Photo', submittedDate: '05-06-2026' }
       ]
     },
     {
@@ -203,15 +204,15 @@ export const AgentVerificationManagement: React.FC = () => {
       state: 'Maharashtra',
       type: 'Agent',
       location: 'Mumbai',
-      submittedDate: '04 Jun 2026',
+      submittedDate: '04-06-2026',
       documentsCount: 4,
       status: 'Pending',
       experience: 5,
       documents: [
-        { name: 'Government ID', submittedDate: '04 Jun 2026' },
-        { name: 'PAN Card', submittedDate: '04 Jun 2026' },
-        { name: 'RERA Certificate', submittedDate: '04 Jun 2026' },
-        { name: 'Profile Photo', submittedDate: '04 Jun 2026' }
+        { name: 'Government ID', submittedDate: '04-06-2026' },
+        { name: 'PAN Card', submittedDate: '04-06-2026' },
+        { name: 'RERA Certificate', submittedDate: '04-06-2026' },
+        { name: 'Profile Photo', submittedDate: '04-06-2026' }
       ]
     },
     {
@@ -224,15 +225,15 @@ export const AgentVerificationManagement: React.FC = () => {
       state: 'Maharashtra',
       type: 'Owner',
       location: 'Pune',
-      submittedDate: '04 Jun 2026',
+      submittedDate: '04-06-2026',
       documentsCount: 4,
       status: 'Approved',
       experience: 1,
       documents: [
-        { name: 'Government ID', submittedDate: '04 Jun 2026' },
-        { name: 'PAN Card', submittedDate: '04 Jun 2026' },
-        { name: 'Property Tax Receipt', submittedDate: '04 Jun 2026' },
-        { name: 'Profile Photo', submittedDate: '04 Jun 2026' }
+        { name: 'Government ID', submittedDate: '04-06-2026' },
+        { name: 'PAN Card', submittedDate: '04-06-2026' },
+        { name: 'Property Tax Receipt', submittedDate: '04-06-2026' },
+        { name: 'Profile Photo', submittedDate: '04-06-2026' }
       ]
     },
     {
@@ -245,15 +246,15 @@ export const AgentVerificationManagement: React.FC = () => {
       state: 'Delhi',
       type: 'Owner',
       location: 'Delhi',
-      submittedDate: '04 Jun 2026',
+      submittedDate: '04-06-2026',
       documentsCount: 4,
       status: 'Under Review',
       experience: 2,
       documents: [
-        { name: 'Government ID', submittedDate: '04 Jun 2026' },
-        { name: 'PAN Card', submittedDate: '04 Jun 2026' },
-        { name: 'Property Deeds', submittedDate: '04 Jun 2026' },
-        { name: 'Profile Photo', submittedDate: '04 Jun 2026' }
+        { name: 'Government ID', submittedDate: '04-06-2026' },
+        { name: 'PAN Card', submittedDate: '04-06-2026' },
+        { name: 'Property Deeds', submittedDate: '04-06-2026' },
+        { name: 'Profile Photo', submittedDate: '04-06-2026' }
       ]
     },
     {
@@ -266,15 +267,15 @@ export const AgentVerificationManagement: React.FC = () => {
       state: 'Karnataka',
       type: 'Agent',
       location: 'Bangalore',
-      submittedDate: '04 Jun 2026',
+      submittedDate: '04-06-2026',
       documentsCount: 4,
       status: 'Approved',
       experience: 4,
       documents: [
-        { name: 'Government ID', submittedDate: '04 Jun 2026' },
-        { name: 'PAN Card', submittedDate: '04 Jun 2026' },
-        { name: 'RERA Certificate', submittedDate: '04 Jun 2026' },
-        { name: 'Agency License', submittedDate: '04 Jun 2026' }
+        { name: 'Government ID', submittedDate: '04-06-2026' },
+        { name: 'PAN Card', submittedDate: '04-06-2026' },
+        { name: 'RERA Certificate', submittedDate: '04-06-2026' },
+        { name: 'Agency License', submittedDate: '04-06-2026' }
       ]
     },
     {
@@ -287,15 +288,15 @@ export const AgentVerificationManagement: React.FC = () => {
       state: 'Telangana',
       type: 'Agent',
       location: 'Hyderabad',
-      submittedDate: '04 Jun 2026',
+      submittedDate: '04-06-2026',
       documentsCount: 4,
       status: 'Pending',
       experience: 3,
       documents: [
-        { name: 'Government ID', submittedDate: '04 Jun 2026' },
-        { name: 'PAN Card', submittedDate: '04 Jun 2026' },
-        { name: 'RERA Certificate', submittedDate: '04 Jun 2026' },
-        { name: 'Profile Photo', submittedDate: '04 Jun 2026' }
+        { name: 'Government ID', submittedDate: '04-06-2026' },
+        { name: 'PAN Card', submittedDate: '04-06-2026' },
+        { name: 'RERA Certificate', submittedDate: '04-06-2026' },
+        { name: 'Profile Photo', submittedDate: '04-06-2026' }
       ]
     },
     {
@@ -308,15 +309,15 @@ export const AgentVerificationManagement: React.FC = () => {
       state: 'Telangana',
       type: 'Owner',
       location: 'Hyderabad',
-      submittedDate: '04 Jun 2026',
+      submittedDate: '04-06-2026',
       documentsCount: 4,
       status: 'Approved',
       experience: 1,
       documents: [
-        { name: 'Government ID', submittedDate: '04 Jun 2026' },
-        { name: 'PAN Card', submittedDate: '04 Jun 2026' },
-        { name: 'Property Tax Receipt', submittedDate: '04 Jun 2026' },
-        { name: 'Profile Photo', submittedDate: '04 Jun 2026' }
+        { name: 'Government ID', submittedDate: '04-06-2026' },
+        { name: 'PAN Card', submittedDate: '04-06-2026' },
+        { name: 'Property Tax Receipt', submittedDate: '04-06-2026' },
+        { name: 'Profile Photo', submittedDate: '04-06-2026' }
       ]
     },
     {
@@ -329,15 +330,15 @@ export const AgentVerificationManagement: React.FC = () => {
       state: 'Telangana',
       type: 'Owner',
       location: 'Hyderabad',
-      submittedDate: '04 Jun 2026',
+      submittedDate: '04-06-2026',
       documentsCount: 4,
       status: 'Under Review',
       experience: 2,
       documents: [
-        { name: 'Government ID', submittedDate: '04 Jun 2026' },
-        { name: 'PAN Card', submittedDate: '04 Jun 2026' },
-        { name: 'Property Deeds', submittedDate: '04 Jun 2026' },
-        { name: 'Profile Photo', submittedDate: '04 Jun 2026' }
+        { name: 'Government ID', submittedDate: '04-06-2026' },
+        { name: 'PAN Card', submittedDate: '04-06-2026' },
+        { name: 'Property Deeds', submittedDate: '04-06-2026' },
+        { name: 'Profile Photo', submittedDate: '04-06-2026' }
       ]
     }
   ]);
@@ -463,7 +464,7 @@ export const AgentVerificationManagement: React.FC = () => {
                     <td className="p-4 pl-6 font-semibold text-slate-900">{req.name}</td>
                     <td className="p-4 font-semibold text-[#035096]">{req.type}</td>
                     <td className="p-4 text-slate-500 font-medium">{req.location}</td>
-                    <td className="p-4 text-slate-500 font-medium">{req.submittedDate}</td>
+                    <td className="p-4 text-slate-500 font-medium">{formatDate(req.submittedDate)}</td>
                     <td className="p-4 text-slate-550 font-semibold">{req.documentsCount} Docs</td>
                     <td className="p-4 font-semibold">
                       <span className={`px-2.5 py-0.5 rounded-[4px] text-[10px] font-semibold ${
@@ -568,7 +569,7 @@ export const AgentVerificationManagement: React.FC = () => {
                     <div key={idx} className="flex items-center justify-between p-3 border border-slate-100 rounded-[8px] bg-slate-50/20 text-xs">
                       <div>
                         <span className="text-slate-800 block font-semibold">{doc.name}</span>
-                        <span className="text-[10px] text-slate-400 block mt-0.5 font-medium">{doc.submittedDate}</span>
+                        <span className="text-[10px] text-slate-400 block mt-0.5 font-medium">{formatDate(doc.submittedDate)}</span>
                       </div>
                       <div className="flex items-center gap-3">
                         <button

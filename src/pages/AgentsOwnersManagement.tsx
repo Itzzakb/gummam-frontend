@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Eye, Search, Download, X, Lock, Shield, Star, ChevronDown } from 'lucide-react';
+import { formatDate } from '@/lib/utils';
 
 interface AgentOwner {
   position: string;
@@ -711,7 +712,7 @@ export const AgentsOwnersManagement: React.FC = () => {
                 </div>
                 <div>
                   <div className="text-slate-400 font-semibold mb-1">Join Date</div>
-                  <div className="text-slate-900 font-semibold">{selectedItem.joinDate}</div>
+                  <div className="text-slate-900 font-semibold">{formatDate(selectedItem.joinDate)}</div>
                 </div>
                 <div>
                   <div className="text-slate-400 font-semibold mb-1">Agent ID</div>

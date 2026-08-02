@@ -1,16 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
+import { PropertyLocationMap } from '@/components/map/PropertyLocationMap';
 import { 
-  Building2, 
+  Building2,
+  Building,
   Home, 
+  House,
+  Hotel,
   Key, 
   Map, 
+  MapPinned,
   User, 
   UserCheck, 
   Users,
+  UserRound,
+  Globe,
   Hammer, 
-  Briefcase, 
+  Briefcase,
+  Store,
+  Presentation,
+  Warehouse,
+  Factory,
+  LandPlot,
   Upload, 
   Check,
   MapPin,
@@ -174,6 +186,7 @@ interface PropertyFormData {
   mapOptions?: string;
   mapOptionValue?: string;
   isMap?: string;
+  sublocality?: string;
   plotAreaSqYds?: string;
   plotLength?: string;
   plotWidth?: string;
@@ -543,6 +556,8 @@ const initialFormData: PropertyFormData = {
   ventureAmenities: [],
   additionalAmenities: '',
   locationHighlights: '',
+  mapOptionValue: '',
+  sublocality: '',
   roomSizes: [],
   shutterSizes: [],
   available: 'Girls',
@@ -718,7 +733,7 @@ export const PostProperty: React.FC = () => {
           }
         } else if (isLandsPlots) {
           if (!formData.plotAreaSqYds) return triggerError('Plot Area is required.');
-          if (!formData.costPerYd) return triggerError('Cost per yds is required.');
+          if (!formData.costPerYd) return triggerError('Amount per yd is required.');
           if (!formData.facing) return triggerError('Facing is required.');
           if (!formData.fenceSecurity) return triggerError('Fence Security is required.');
           if (!formData.village) return triggerError('Village is required.');
@@ -1007,7 +1022,7 @@ export const PostProperty: React.FC = () => {
               <h2 className="text-xl font-bold text-black mb-1">What is this property for?</h2>
               <p className="text-xs text-slate-400 mb-6">Choose whether you want to sell your property or rent/lease it out.</p>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 {/* Sell Card */}
                 <div 
                   onClick={() => updateFormData({ intent: 'sell' })}
@@ -1018,8 +1033,8 @@ export const PostProperty: React.FC = () => {
                   }`}
                 >
                   <div className="flex items-center gap-4">
-                    <div className={`p-3.5 rounded-2xl ${formData.intent === 'sell' ? 'bg-white shadow-sm text-[#035096]' : 'bg-[#F0F4F9] text-slate-500'}`}>
-                      <Building2 className="w-6 h-6" />
+                    <div className={`p-4 rounded-2xl ${formData.intent === 'sell' ? 'bg-white shadow-sm text-[#035096]' : 'bg-[#F0F4F9] text-slate-500'}`}>
+                      <Building2 className="w-10 h-10" />
                     </div>
                     <div>
                       <h3 className="font-bold text-base text-[#0B2C5C]">Sell</h3>
@@ -1043,8 +1058,8 @@ export const PostProperty: React.FC = () => {
                   }`}
                 >
                   <div className="flex items-center gap-4">
-                    <div className={`p-3.5 rounded-2xl ${formData.intent === 'rent' ? 'bg-white shadow-sm text-[#035096]' : 'bg-[#F0F4F9] text-slate-500'}`}>
-                      <Key className="w-6 h-6" />
+                    <div className={`p-4 rounded-2xl ${formData.intent === 'rent' ? 'bg-white shadow-sm text-[#035096]' : 'bg-[#F0F4F9] text-slate-500'}`}>
+                      <Key className="w-10 h-10" />
                     </div>
                     <div>
                       <h3 className="font-bold text-base text-[#0B2C5C]">Rent / Lease</h3>
@@ -1068,9 +1083,9 @@ export const PostProperty: React.FC = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                   {[
                     { key: 'Family', title: 'Family', desc: 'For families and couples', icon: Users },
-                    { key: 'Bachelors', title: 'Bachelors', desc: 'For students/bachelors', icon: User },
-                    { key: 'Company', title: 'Company', desc: 'For corporate/companies', icon: Briefcase },
-                    { key: 'Anyone', title: 'Anyone', desc: 'Open to any tenant type', icon: Check }
+                    { key: 'Bachelors', title: 'Bachelors', desc: 'For students/bachelors', icon: UserRound },
+                    { key: 'Company', title: 'Company', desc: 'For corporate/companies', icon: Building },
+                    { key: 'Anyone', title: 'Anyone', desc: 'Open to any tenant type', icon: Globe }
                   ].map(item => {
                     const IconComponent = item.icon;
                     const isSelected = formData.rentFor === item.key;
@@ -1085,8 +1100,8 @@ export const PostProperty: React.FC = () => {
                         }`}
                       >
                         <div className="flex items-center gap-4">
-                          <div className={`p-3.5 rounded-2xl ${isSelected ? 'bg-white shadow-sm text-[#035096]' : 'bg-[#F0F4F9] text-slate-500'}`}>
-                            <IconComponent className="w-6 h-6" />
+                          <div className={`p-4 rounded-2xl ${isSelected ? 'bg-white shadow-sm text-[#035096]' : 'bg-[#F0F4F9] text-slate-500'}`}>
+                            <IconComponent className="w-10 h-10" />
                           </div>
                           <div>
                             <h3 className="font-bold text-base text-[#0B2C5C]">{item.title}</h3>
@@ -1121,8 +1136,8 @@ export const PostProperty: React.FC = () => {
                   }`}
                 >
                   <div className="flex items-center gap-4">
-                    <div className={`p-3.5 rounded-2xl ${formData.role === 'owner' ? 'bg-white shadow-sm text-[#035096]' : 'bg-[#F0F4F9] text-slate-500'}`}>
-                      <User className="w-6 h-6" />
+                    <div className={`p-4 rounded-2xl ${formData.role === 'owner' ? 'bg-white shadow-sm text-[#035096]' : 'bg-[#F0F4F9] text-slate-500'}`}>
+                      <User className="w-10 h-10" />
                     </div>
                     <div>
                       <h3 className="font-bold text-base text-[#0B2C5C]">Owner</h3>
@@ -1146,8 +1161,8 @@ export const PostProperty: React.FC = () => {
                   }`}
                 >
                   <div className="flex items-center gap-4">
-                    <div className={`p-3.5 rounded-2xl ${formData.role === 'agent' ? 'bg-white shadow-sm text-[#035096]' : 'bg-[#F0F4F9] text-slate-500'}`}>
-                      <UserCheck className="w-6 h-6" />
+                    <div className={`p-4 rounded-2xl ${formData.role === 'agent' ? 'bg-white shadow-sm text-[#035096]' : 'bg-[#F0F4F9] text-slate-500'}`}>
+                      <UserCheck className="w-10 h-10" />
                     </div>
                     <div>
                       <h3 className="font-bold text-base text-[#0B2C5C]">Agent</h3>
@@ -1171,8 +1186,8 @@ export const PostProperty: React.FC = () => {
                   }`}
                 >
                   <div className="flex items-center gap-4">
-                    <div className={`p-3.5 rounded-2xl ${formData.role === 'builder/developer' ? 'bg-white shadow-sm text-[#035096]' : 'bg-[#F0F4F9] text-slate-500'}`}>
-                      <Hammer className="w-6 h-6" />
+                    <div className={`p-4 rounded-2xl ${formData.role === 'builder/developer' ? 'bg-white shadow-sm text-[#035096]' : 'bg-[#F0F4F9] text-slate-500'}`}>
+                      <Hammer className="w-10 h-10" />
                     </div>
                     <div>
                       <h3 className="font-bold text-base text-[#0B2C5C]">Builder/Developer</h3>
@@ -1196,8 +1211,8 @@ export const PostProperty: React.FC = () => {
                   }`}
                 >
                   <div className="flex items-center gap-4">
-                    <div className={`p-3.5 rounded-2xl ${formData.role === 'marketing employee' ? 'bg-white shadow-sm text-[#035096]' : 'bg-[#F0F4F9] text-slate-500'}`}>
-                      <Briefcase className="w-6 h-6" />
+                    <div className={`p-4 rounded-2xl ${formData.role === 'marketing employee' ? 'bg-white shadow-sm text-[#035096]' : 'bg-[#F0F4F9] text-slate-500'}`}>
+                      <Briefcase className="w-10 h-10" />
                     </div>
                     <div>
                       <h3 className="font-bold text-base text-[#0B2C5C]">Marketing Employee</h3>
@@ -1237,10 +1252,10 @@ export const PostProperty: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                 {[
                   { title: 'High-rise Apts', desc: 'Luxury apartments in towers', icon: Building2 },
-                  { title: 'Standalone Apts', desc: 'Independent apartment complexes', icon: Building2 },
+                  { title: 'Standalone Apts', desc: 'Independent apartment complexes', icon: Building },
                   { title: 'Villa Gated Communities', desc: 'Private villas in secure communities', icon: Home },
-                  { title: 'Independent Houses', desc: 'Stand-alone houses and homes', icon: Home },
-                  { title: 'PG/Hostel', desc: 'Paying guest and shared hostels', icon: Home },
+                  { title: 'Independent Houses', desc: 'Stand-alone houses and homes', icon: House },
+                  { title: 'PG/Hostel', desc: 'Paying guest and shared hostels', icon: Hotel },
                 ].map(item => (
                   <div 
                     key={item.title}
@@ -1260,8 +1275,8 @@ export const PostProperty: React.FC = () => {
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <div className={`p-3 rounded-xl ${formData.propertyType === item.title ? 'bg-white text-[#035096]' : 'bg-[#F0F4F9] text-slate-500'}`}>
-                        <item.icon className="w-5 h-5" />
+                      <div className={`p-4 rounded-xl ${formData.propertyType === item.title ? 'bg-white text-[#035096]' : 'bg-[#F0F4F9] text-slate-500'}`}>
+                        <item.icon className="w-10 h-10" />
                       </div>
                       <div>
                         <h3 className="font-bold text-sm text-[#0B2C5C]">{item.title}</h3>
@@ -1286,11 +1301,11 @@ export const PostProperty: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                 {[
                   { title: 'Office Space', desc: 'Offices and co-working spaces', icon: Briefcase },
-                  { title: 'Shops', desc: 'Retail stores and shops', icon: Briefcase },
-                  { title: 'Showrooms', desc: 'Front-facing displays and showrooms', icon: Briefcase },
-                  { title: 'Warehouse/Godown', desc: 'Storage and logistics warehouses', icon: Briefcase },
-                  { title: 'Industrial Buildings', desc: 'Manufacturing plants and facilities', icon: Briefcase },
-                  { title: 'Industrial Space/shed', desc: 'Industrial sheds and storage yards', icon: Briefcase },
+                  { title: 'Shops', desc: 'Retail stores and shops', icon: Store },
+                  { title: 'Showrooms', desc: 'Front-facing displays and showrooms', icon: Presentation },
+                  { title: 'Warehouse/Godown', desc: 'Storage and logistics warehouses', icon: Warehouse },
+                  { title: 'Industrial Buildings', desc: 'Manufacturing plants and facilities', icon: Factory },
+                  { title: 'Industrial Space/shed', desc: 'Industrial sheds and storage yards', icon: LandPlot },
                 ].map(item => (
                   <div 
                     key={item.title}
@@ -1302,8 +1317,8 @@ export const PostProperty: React.FC = () => {
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <div className={`p-3 rounded-xl ${formData.propertyType === item.title ? 'bg-white text-[#035096]' : 'bg-[#F0F4F9] text-slate-500'}`}>
-                        <item.icon className="w-5 h-5" />
+                      <div className={`p-4 rounded-xl ${formData.propertyType === item.title ? 'bg-white text-[#035096]' : 'bg-[#F0F4F9] text-slate-500'}`}>
+                        <item.icon className="w-10 h-10" />
                       </div>
                       <div>
                         <h3 className="font-bold text-sm text-[#0B2C5C]">{item.title}</h3>
@@ -1328,7 +1343,7 @@ export const PostProperty: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                 {[
                   { title: 'Acre', desc: 'Large area lands and farms', icon: Map },
-                  { title: 'Plots', desc: 'Residential and commercial plots', icon: Map },
+                  { title: 'Plots', desc: 'Residential and commercial plots', icon: MapPinned },
                 ].map(item => (
                   <div 
                     key={item.title}
@@ -1347,8 +1362,8 @@ export const PostProperty: React.FC = () => {
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <div className={`p-3 rounded-xl ${formData.propertyType === item.title ? 'bg-white text-[#035096]' : 'bg-[#F0F4F9] text-slate-500'}`}>
-                        <item.icon className="w-5 h-5" />
+                      <div className={`p-4 rounded-xl ${formData.propertyType === item.title ? 'bg-white text-[#035096]' : 'bg-[#F0F4F9] text-slate-500'}`}>
+                        <item.icon className="w-10 h-10" />
                       </div>
                       <div>
                         <h3 className="font-bold text-sm text-[#0B2C5C]">{item.title}</h3>
@@ -1808,95 +1823,104 @@ export const PostProperty: React.FC = () => {
                     </div>
 
                     {/* --- Property Location & Map --- */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                      <div className="space-y-2">
-                        <label className="block text-xs font-semibold text-slate-500 uppercase">Property Location</label>
-                        <input
-                          type="text"
-                          placeholder="Google map location"
-                          value={formData.mapOptionValue || ''}
-                          onChange={e => updateFormData({ mapOptionValue: e.target.value })}
-                          className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800"
-                        />
+                    <div className="space-y-6">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                          <label className="block text-xs font-semibold text-slate-500 uppercase">Property Location</label>
+                          <input
+                            type="text"
+                            placeholder="e.g. Ameerpet"
+                            value={formData.mapOptionValue || ''}
+                            onChange={e => updateFormData({ mapOptionValue: e.target.value })}
+                            className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="block text-xs font-semibold text-slate-500 uppercase">Sublocality/Area/Street</label>
+                          <input
+                            type="text"
+                            placeholder="e.g. Street / colony / landmark"
+                            value={formData.sublocality || ''}
+                            onChange={e => updateFormData({ sublocality: e.target.value })}
+                            className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800"
+                          />
+                        </div>
                       </div>
-                      <div className="space-y-2">
-                        <label className="block text-xs font-semibold text-slate-500 uppercase">Is Map?</label>
-                        <input
-                          type="text"
-                          value="Exactly"
-                          disabled
-                          className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-500"
-                        />
-                        <p className="text-[11px] text-slate-400 mt-1 italic">
-                          (Select any one as per your convinence)
-                        </p>
-                      </div>
+                      <PropertyLocationMap
+                        location={formData.mapOptionValue || ''}
+                        sublocality={formData.sublocality || ''}
+                      />
                     </div>
                   </>
                 ) : isLandsPlots ? (
                   <>
-                    {/* --- Plot Demensions & Cost per yds Section --- */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {/* Plot Demensions Column */}
-                      <div className="space-y-4">
-                        <label className="block text-sm font-semibold text-[#0B2C5C]">Venture Details <span className="text-red-500">*</span></label>
-                        <div className="grid grid-cols-3 gap-4">
-                          <div className="space-y-2">
-                            <label className="block text-[11px] font-semibold text-slate-500 uppercase">Plot Area(Sq.Yds) <span className="text-red-500">*</span></label>
-                            <input
-                              type="number"
-                              placeholder="Plot Area"
-                              value={formData.plotAreaSqYds || ''}
-                              onChange={e => handlePlotChange('plotAreaSqYds', e.target.value)}
-                              className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800"
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <label className="block text-[11px] font-semibold text-slate-500 uppercase">Length (Sft)</label>
-                            <input
-                              type="number"
-                              placeholder="Length"
-                              value={formData.plotLength || ''}
-                              onChange={e => handlePlotChange('plotLength', e.target.value)}
-                              className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800"
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <label className="block text-[11px] font-semibold text-slate-500 uppercase">Width (Sft)</label>
-                            <input
-                              type="number"
-                              placeholder="Width"
-                              value={formData.plotWidth || ''}
-                              onChange={e => handlePlotChange('plotWidth', e.target.value)}
-                              className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800"
-                            />
+                    {/* --- Venture Details Section --- */}
+                    <div>
+                      <h3 className="text-lg font-bold text-[#0B2C5C] mb-4 pb-2 border-b border-slate-100">Venture Details</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* Plot Dimensions Column */}
+                        <div className="space-y-4">
+                          <label className="block text-sm font-semibold text-[#0B2C5C]">Plot Dimensions <span className="text-red-500">*</span></label>
+                          <div className="grid grid-cols-3 gap-4">
+                            <div className="space-y-2">
+                              <label className="block text-[11px] font-semibold text-slate-500 uppercase">Plot Area(Sq.Yds) <span className="text-red-500">*</span></label>
+                              <input
+                                type="number"
+                                placeholder="Plot Area"
+                                value={formData.plotAreaSqYds || ''}
+                                onChange={e => handlePlotChange('plotAreaSqYds', e.target.value)}
+                                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <label className="block text-[11px] font-semibold text-slate-500 uppercase">Length (Sft)</label>
+                              <input
+                                type="number"
+                                placeholder="Length"
+                                value={formData.plotLength || ''}
+                                onChange={e => handlePlotChange('plotLength', e.target.value)}
+                                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <label className="block text-[11px] font-semibold text-slate-500 uppercase">Width (Sft)</label>
+                              <input
+                                type="number"
+                                placeholder="Width"
+                                value={formData.plotWidth || ''}
+                                onChange={e => handlePlotChange('plotWidth', e.target.value)}
+                                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800"
+                              />
+                            </div>
                           </div>
                         </div>
-                      </div>
 
-                      {/* Cost per yds Column */}
-                      <div className="space-y-4">
-                        <label className="block text-sm font-semibold text-[#0B2C5C]">Cost per yds <span className="text-red-500">*</span></label>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <label className="block text-[11px] font-semibold text-slate-500 uppercase">Amount</label>
-                            <input
-                              type="number"
-                              placeholder="Enter cost"
-                              value={formData.costPerYd || ''}
-                              onChange={e => handlePlotChange('costPerYd', e.target.value)}
-                              className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800"
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <label className="block text-[11px] font-semibold text-slate-500 uppercase">Total Cost</label>
-                            <input
-                              type="text"
-                              placeholder="Total Cost"
-                              value={formData.totalCost ? formatAmountInLacCr(formData.totalCost) : ''}
-                              disabled
-                              className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-500 font-medium"
-                            />
+                        {/* Amount per yd / Total Cost */}
+                        <div className="space-y-4">
+                          <label className="block text-sm font-semibold text-[#0B2C5C] invisible select-none" aria-hidden="true">
+                            &nbsp;
+                          </label>
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <label className="block text-[11px] font-semibold text-slate-500 uppercase">Amount per yd <span className="text-red-500">*</span></label>
+                              <input
+                                type="number"
+                                placeholder="Enter amount"
+                                value={formData.costPerYd || ''}
+                                onChange={e => handlePlotChange('costPerYd', e.target.value)}
+                                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <label className="block text-[11px] font-semibold text-slate-500 uppercase">Total Cost</label>
+                              <input
+                                type="text"
+                                placeholder="Total Cost"
+                                value={formData.totalCost ? formatAmountInLacCr(formData.totalCost) : ''}
+                                disabled
+                                className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-500 font-medium"
+                              />
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -2352,29 +2376,33 @@ export const PostProperty: React.FC = () => {
                     </div>
 
                     {/* --- Property Location & Map --- */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                      <div className="space-y-2">
-                        <label className="block text-xs font-semibold text-slate-500 uppercase">Property Location</label>
-                        <input
-                          type="text"
-                          placeholder="Google map location"
-                          value={formData.mapOptionValue || ''}
-                          onChange={e => updateFormData({ mapOptionValue: e.target.value })}
-                          className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800"
-                        />
+                    <div className="space-y-6">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                          <label className="block text-xs font-semibold text-slate-500 uppercase">Property Location</label>
+                          <input
+                            type="text"
+                            placeholder="e.g. Ameerpet"
+                            value={formData.mapOptionValue || ''}
+                            onChange={e => updateFormData({ mapOptionValue: e.target.value })}
+                            className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="block text-xs font-semibold text-slate-500 uppercase">Sublocality/Area/Street</label>
+                          <input
+                            type="text"
+                            placeholder="e.g. Street / colony / landmark"
+                            value={formData.sublocality || ''}
+                            onChange={e => updateFormData({ sublocality: e.target.value })}
+                            className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800"
+                          />
+                        </div>
                       </div>
-                      <div className="space-y-2">
-                        <label className="block text-xs font-semibold text-slate-500 uppercase">Is Map?</label>
-                        <input
-                          type="text"
-                          value="Exactly"
-                          disabled
-                          className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-500"
-                        />
-                        <p className="text-[11px] text-slate-400 mt-1 italic">
-                          (Select any one as per your convinence)
-                        </p>
-                      </div>
+                      <PropertyLocationMap
+                        location={formData.mapOptionValue || ''}
+                        sublocality={formData.sublocality || ''}
+                      />
                     </div>
                   </>
                 ) : (

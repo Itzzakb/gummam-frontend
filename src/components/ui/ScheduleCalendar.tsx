@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight, Mail } from 'lucide-react';
+import { formatDate } from '@/lib/utils';
 
 type ScheduleStatus = 'Scheduled' | 'Pending' | 'Follow-up' | 'Completed';
 
@@ -174,14 +175,7 @@ export const ScheduleCalendar: React.FC = () => {
   const month = viewDate.getMonth();
 
   const monthLabel = viewDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-  const selectedLabel = useMemo(() => {
-    const [y, m, d] = selectedDate.split('-').map(Number);
-    return new Date(y, m - 1, d).toLocaleDateString('en-US', {
-      weekday: 'short',
-      month: 'short',
-      year: 'numeric',
-    });
-  }, [selectedDate]);
+  const selectedLabel = useMemo(() => formatDate(selectedDate), [selectedDate]);
 
   const calendarDays = useMemo(() => {
     const firstDay = new Date(year, month, 1).getDay();

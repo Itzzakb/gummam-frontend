@@ -1,14 +1,21 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 import {
-  ChevronRight, MapPin, Heart, Share2,
+  ChevronLeft, ChevronRight, MapPin, Heart, Share2,
   BedDouble, Bath, Square, Calendar, Car,
-  Play, Star, Phone, Clock
+  Play, Star, Phone, Clock, X
 } from 'lucide-react';
 import { PromoSidebarCard } from '../components/ui/PromoSidebarCard';
 import { PropertyCarousel } from '../features/landing/PropertyCarousel';
 
 type FlatStatus = 'available' | 'occupied' | 'sold' | 'mortgage';
+
+type GalleryItem = {
+  type: 'image' | 'video';
+  src: string;
+  poster?: string;
+};
 
 const FLAT_STATUS_COLORS: Record<FlatStatus, string> = {
   available: '#00C851',
@@ -32,13 +39,33 @@ const propertyData = {
   price: '₹7.46 Cr',
   rating: 4.8,
   reviews: 24,
-  images: [
-    'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1200&q=80', // main
-    'https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=600&q=80',
-    'https://images.unsplash.com/photo-1600566753086-00f18efc2297?w=600&q=80',
-    'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600&q=80',
-    'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=600&q=80',
-  ],
+  gallery: [
+    {
+      type: 'image' as const,
+      src: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1200&q=80',
+    },
+    {
+      type: 'video' as const,
+      src: 'https://www.w3schools.com/html/mov_bbb.mp4',
+      poster: 'https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80',
+    },
+    {
+      type: 'image' as const,
+      src: 'https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=800&q=80',
+    },
+    {
+      type: 'image' as const,
+      src: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80',
+    },
+    {
+      type: 'image' as const,
+      src: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&q=80',
+    },
+    {
+      type: 'image' as const,
+      src: 'https://images.unsplash.com/photo-1600047509807-ba8f99d2cdbc?w=800&q=80',
+    },
+  ] satisfies GalleryItem[],
   overview: {
     bedrooms: 2,
     bathrooms: 2,
@@ -177,8 +204,55 @@ export const PropertyDetails: React.FC = () => {
 
   // In a real app, we'd fetch property by ID here. Using dummy data for now.
   const data = propertyData;
+  const gallery = data.gallery;
+  const previewCount = Math.min(5, gallery.length);
+  const extraCount = Math.max(0, gallery.length - previewCount);
+
   const [activeWingId, setActiveWingId] = useState(data.wings[0].id);
+  const [galleryOpen, setGalleryOpen] = useState(false);
+  const [galleryIndex, setGalleryIndex] = useState(0);
   const activeWing = data.wings.find((wing) => wing.id === activeWingId) ?? data.wings[0];
+
+  const openGallery = (index: number) => {
+    setGalleryIndex(index);
+    setGalleryOpen(true);
+  };
+
+  const closeGallery = () => setGalleryOpen(false);
+
+  const showPrev = () => {
+    setGalleryIndex((prev) => (prev === 0 ? gallery.length - 1 : prev - 1));
+  };
+
+  const showNext = () => {
+    setGalleryIndex((prev) => (prev === gallery.length - 1 ? 0 : prev + 1));
+  };
+
+  useEffect(() => {
+    if (!galleryOpen) return;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') closeGallery();
+      if (event.key === 'ArrowLeft') {
+        setGalleryIndex((prev) => (prev === 0 ? gallery.length - 1 : prev - 1));
+      }
+      if (event.key === 'ArrowRight') {
+        setGalleryIndex((prev) => (prev === gallery.length - 1 ? 0 : prev + 1));
+      }
+    };
+
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.body.style.overflow = '';
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [galleryOpen, gallery.length]);
+
+  const thumbSrc = (item: GalleryItem) =>
+    item.type === 'video' ? item.poster || item.src : item.src;
+
+  const activeMedia = gallery[galleryIndex];
 
   return (
     <div className="bg-[#FAFAFA] min-h-screen pb-20 font-poppins">
@@ -193,43 +267,47 @@ export const PropertyDetails: React.FC = () => {
 
         {/* Header Section */}
         <div className="mb-6">
-          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-3">
-            <h1 className="text-[28px] lg:text-[32px] font-semibold text-[#1A1A1A]">
-              {data.title}
-            </h1>
-            <div className="flex items-center mt-3 lg:mt-0">
-              <div className="flex text-[#F6931D] gap-0.5">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="w-[15px] h-[15px] fill-current" />
-                ))}
+          <div className="flex flex-col lg:flex-row justify-between items-start gap-4 mb-3">
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                <h1 className="text-[28px] lg:text-[32px] font-semibold text-[#1A1A1A]">
+                  {data.title}
+                </h1>
+                <span className="hidden sm:block w-px h-8 bg-slate-300 shrink-0" aria-hidden="true" />
+                <div className="flex items-baseline gap-2">
+                  <div className="text-[28px] lg:text-[32px] font-bold text-[#E67E22] leading-none">
+                    ₹7.46 Cr
+                  </div>
+                  <div className="text-[15px] text-gray-500">
+                    6,800/Sft.
+                  </div>
+                </div>
               </div>
-              <span className="text-[14px] text-gray-500 ml-2">(2 Reviews)</span>
-              <span className="ml-4 bg-[#0B2C5C] text-white text-[13px] px-3 py-1 rounded-md">For Rent</span>
-            </div>
-          </div>
-
-          <div className="flex items-center text-gray-500 text-[15px] mb-6">
-            <MapPin className="w-[18px] h-[18px] mr-1.5" />
-            Uppal, Hyderabad
-          </div>
-
-          <div className="flex justify-between items-end">
-            <div className="flex items-baseline gap-2">
-              <div className="text-[36px] font-bold text-[#E67E22]">
-                ₹7.46 Cr
-              </div>
-              <div className="text-[15px] text-gray-500">
-                6,800/Sft.
+              <div className="flex items-center text-gray-500 text-[15px] mt-2">
+                <MapPin className="w-[18px] h-[18px] mr-1.5 shrink-0" />
+                Uppal, Hyderabad
               </div>
             </div>
 
-            <div className="flex gap-4 mb-2">
-              <button className="text-gray-700 hover:text-[#E67E22] transition-colors">
-                <Heart className="w-6 h-6" />
-              </button>
-              <button className="text-gray-700 hover:text-[#E67E22] transition-colors">
-                <Share2 className="w-6 h-6" />
-              </button>
+            <div className="flex flex-col items-start lg:items-end gap-2.5 shrink-0">
+              <div className="flex items-center flex-wrap gap-y-2">
+                <div className="flex text-[#F6931D] gap-0.5">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className="w-[15px] h-[15px] fill-current" />
+                  ))}
+                </div>
+                <span className="text-[14px] text-gray-500 ml-2">(2 Reviews)</span>
+                <span className="ml-4 bg-[#0B2C5C] text-white text-[13px] px-3 py-1 rounded-md">For Rent</span>
+              </div>
+
+              <div className="flex gap-4">
+                <button className="text-gray-700 hover:text-[#E67E22] transition-colors">
+                  <Heart className="w-6 h-6" />
+                </button>
+                <button className="text-gray-700 hover:text-[#E67E22] transition-colors">
+                  <Share2 className="w-6 h-6" />
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -237,34 +315,150 @@ export const PropertyDetails: React.FC = () => {
         {/* Image Gallery */}
         <div className="grid grid-cols-1 lg:grid-cols-[1.5fr_1fr] gap-2 mb-10 h-[400px] md:h-[500px]">
           {/* Main Large Image */}
-          <div className="h-full rounded-[8px] overflow-hidden relative">
-            <img src={data.images[0]} alt="Main" className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
-          </div>
+          <button
+            type="button"
+            onClick={() => openGallery(0)}
+            className="h-full rounded-[8px] overflow-hidden relative cursor-pointer text-left"
+          >
+            <img
+              src={thumbSrc(gallery[0])}
+              alt="Main"
+              className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+            />
+          </button>
 
           {/* 4 Small Images Grid */}
           <div className="hidden lg:grid grid-cols-2 grid-rows-2 gap-2 h-full">
-            <div className="rounded-[8px] overflow-hidden relative group cursor-pointer">
-              <img src={data.images[1]} alt="Gallery 1" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-              <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
-                <div className="w-[50px] h-[50px] rounded-full border-2 border-white flex items-center justify-center bg-white/20 backdrop-blur-sm">
-                  <Play className="w-5 h-5 text-white fill-current ml-1" />
-                </div>
-              </div>
-            </div>
-            <div className="rounded-[8px] overflow-hidden relative">
-              <img src={data.images[2]} alt="Gallery 2" className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
-            </div>
-            <div className="rounded-[8px] overflow-hidden relative">
-              <img src={data.images[3]} alt="Gallery 3" className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
-            </div>
-            <div className="rounded-[8px] overflow-hidden relative group cursor-pointer">
-              <img src={data.images[4]} alt="Gallery 4" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-              <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                <span className="text-white text-[28px] font-medium">+1</span>
-              </div>
-            </div>
+            {gallery.slice(1, 5).map((item, offset) => {
+              const index = offset + 1;
+              const isVideo = item.type === 'video';
+              const isLastPreview = index === 4;
+              const showMoreOverlay = isLastPreview && extraCount > 0;
+
+              return (
+                <button
+                  key={`${item.src}-${index}`}
+                  type="button"
+                  onClick={() => openGallery(index)}
+                  className="rounded-[8px] overflow-hidden relative group cursor-pointer"
+                >
+                  <img
+                    src={thumbSrc(item)}
+                    alt={`Gallery ${index}`}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  {isVideo && !showMoreOverlay && (
+                    <div className="absolute inset-0 bg-black/20 flex items-center justify-center pointer-events-none">
+                      <div className="w-[50px] h-[50px] rounded-full border-2 border-white flex items-center justify-center bg-white/20 backdrop-blur-sm">
+                        <Play className="w-5 h-5 text-white fill-current ml-1" />
+                      </div>
+                    </div>
+                  )}
+                  {showMoreOverlay && (
+                    <div className="absolute inset-0 bg-black/60 flex items-center justify-center pointer-events-none">
+                      <span className="text-white text-[28px] font-medium">+{extraCount}</span>
+                    </div>
+                  )}
+                </button>
+              );
+            })}
           </div>
         </div>
+
+        {/* Gallery Lightbox */}
+        {galleryOpen && createPortal(
+          <div
+            className="fixed inset-0 z-[2000] bg-black/90 flex flex-col"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Property gallery"
+          >
+            <div className="flex items-center justify-between px-4 sm:px-6 py-4 text-white">
+              <span className="text-sm font-medium">
+                {galleryIndex + 1} / {gallery.length}
+                {activeMedia?.type === 'video' ? ' · Video' : ''}
+              </span>
+              <button
+                type="button"
+                onClick={closeGallery}
+                className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors cursor-pointer"
+                aria-label="Close gallery"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="relative flex-1 flex items-center justify-center px-4 sm:px-16 pb-6 min-h-0">
+              <button
+                type="button"
+                onClick={showPrev}
+                className="absolute left-3 sm:left-6 z-10 w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer"
+                aria-label="Previous media"
+              >
+                <ChevronLeft className="w-6 h-6" />
+              </button>
+
+              <div className="w-full max-w-5xl h-full flex items-center justify-center">
+                {activeMedia?.type === 'video' ? (
+                  <video
+                    key={activeMedia.src}
+                    src={activeMedia.src}
+                    poster={activeMedia.poster}
+                    controls
+                    autoPlay
+                    className="max-h-full max-w-full rounded-lg bg-black"
+                  />
+                ) : (
+                  <img
+                    key={activeMedia?.src}
+                    src={activeMedia?.src}
+                    alt={`Gallery item ${galleryIndex + 1}`}
+                    className="max-h-full max-w-full object-contain rounded-lg"
+                  />
+                )}
+              </div>
+
+              <button
+                type="button"
+                onClick={showNext}
+                className="absolute right-3 sm:right-6 z-10 w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer"
+                aria-label="Next media"
+              >
+                <ChevronRight className="w-6 h-6" />
+              </button>
+            </div>
+
+            <div className="px-4 sm:px-6 pb-5 overflow-x-auto">
+              <div className="flex items-center justify-center gap-2 min-w-min mx-auto">
+                {gallery.map((item, index) => (
+                  <button
+                    key={`thumb-${item.src}-${index}`}
+                    type="button"
+                    onClick={() => setGalleryIndex(index)}
+                    className={`relative w-16 h-12 sm:w-20 sm:h-14 rounded-md overflow-hidden shrink-0 border-2 transition-all cursor-pointer ${
+                      index === galleryIndex
+                        ? 'border-[#E67E22] opacity-100'
+                        : 'border-transparent opacity-60 hover:opacity-100'
+                    }`}
+                    aria-label={`Go to gallery item ${index + 1}`}
+                  >
+                    <img
+                      src={thumbSrc(item)}
+                      alt=""
+                      className="w-full h-full object-cover"
+                    />
+                    {item.type === 'video' && (
+                      <span className="absolute inset-0 flex items-center justify-center bg-black/25">
+                        <Play className="w-3.5 h-3.5 text-white fill-current" />
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
 
         {/* List of plats (Flats & Wings) — full width, no card */}
         <div className="w-full mb-10">

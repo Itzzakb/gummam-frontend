@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Eye, Search, Download, X, Check, Ban, AlertCircle, MapPin } from 'lucide-react';
+import { formatDate } from '@/lib/utils';
 
 type DocReviewStatus = 'Pending' | 'Approved' | 'Rejected';
 
@@ -200,7 +201,7 @@ export const PropertyApprovalManagement: React.FC = () => {
       ownerAgent: 'Rajesh Kumar',
       type: 'Apartment',
       category: 'Residential',
-      submittedDate: '07 Jun 2026',
+      submittedDate: '07-06-2026',
       status: 'Approved',
       price: '₹2.50 Cr',
       area: 3500,
@@ -232,7 +233,7 @@ export const PropertyApprovalManagement: React.FC = () => {
       ownerAgent: 'Rahul Sharma',
       type: 'House',
       category: 'Residential',
-      submittedDate: '07 Jun 2026',
+      submittedDate: '07-06-2026',
       status: 'Pending',
       price: '₹95 Lakhs',
       area: 1800,
@@ -263,7 +264,7 @@ export const PropertyApprovalManagement: React.FC = () => {
       ownerAgent: 'Rajesh Kumar',
       type: 'Commercial',
       category: 'Office Space',
-      submittedDate: '07 Jun 2026',
+      submittedDate: '07-06-2026',
       status: 'Approved',
       price: '₹25 Cr',
       area: 5000,
@@ -293,7 +294,7 @@ export const PropertyApprovalManagement: React.FC = () => {
       ownerAgent: 'Rajesh Kumar',
       type: 'Apartment',
       category: 'Residential',
-      submittedDate: '07 Jun 2026',
+      submittedDate: '07-06-2026',
       status: 'Under Review',
       price: '₹45 Lakhs',
       area: 650,
@@ -323,7 +324,7 @@ export const PropertyApprovalManagement: React.FC = () => {
       ownerAgent: 'Rajesh Kumar',
       type: 'Land',
       category: 'Plot',
-      submittedDate: '07 Jun 2026',
+      submittedDate: '07-06-2026',
       status: 'Approved',
       price: '₹3.50 Cr',
       area: 3000,
@@ -353,7 +354,7 @@ export const PropertyApprovalManagement: React.FC = () => {
       ownerAgent: 'Rajesh Kumar',
       type: 'Apartment',
       category: 'Residential',
-      submittedDate: '07 Jun 2026',
+      submittedDate: '07-06-2026',
       status: 'Pending',
       price: '₹4.50 Cr',
       area: 4200,
@@ -383,7 +384,7 @@ export const PropertyApprovalManagement: React.FC = () => {
       ownerAgent: 'Rajesh Kumar',
       type: 'House',
       category: 'Residential',
-      submittedDate: '07 Jun 2026',
+      submittedDate: '07-06-2026',
       status: 'Approved',
       price: '₹12 Cr',
       area: 6000,
@@ -413,7 +414,7 @@ export const PropertyApprovalManagement: React.FC = () => {
       ownerAgent: 'Rajesh Kumar',
       type: 'Apartment',
       category: 'Residential',
-      submittedDate: '07 Jun 2026',
+      submittedDate: '07-06-2026',
       status: 'Under Review',
       price: '₹2.50 Cr',
       area: 3500,
@@ -664,7 +665,7 @@ export const PropertyApprovalManagement: React.FC = () => {
                         {req.type}
                       </span>
                     </td>
-                    <td className="p-4 text-slate-500 font-medium">{req.submittedDate}</td>
+                    <td className="p-4 text-slate-500 font-medium">{formatDate(req.submittedDate)}</td>
                     <td className="p-4 font-semibold">
                       <span className={`px-2.5 py-0.5 rounded-[4px] text-[10px] font-semibold ${
                         req.status === 'Approved' ? 'bg-emerald-50 text-emerald-700' :

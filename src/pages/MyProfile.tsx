@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { formatDate } from '@/lib/utils';
 import {
   User as UserIcon,
   Building,
@@ -776,7 +777,7 @@ export const MyProfile: React.FC = () => {
                       <span className="font-bold text-sm text-[#0B2C5C]">{query.buyerName}</span>
                       <span className="text-slate-300">•</span>
                       <span className="text-xs text-gray-400 font-semibold flex items-center gap-1">
-                        <Calendar className="w-3.5 h-3.5" /> {query.date}
+                        <Calendar className="w-3.5 h-3.5" /> {formatDate(query.date)}
                       </span>
                     </div>
 

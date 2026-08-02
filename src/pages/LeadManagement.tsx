@@ -1,6 +1,9 @@
 import React, { useState, useLayoutEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { useNavigate } from 'react-router-dom';
 import { Search, SlidersHorizontal, Share2, Phone, FileText, ChevronDown } from 'lucide-react';
+import { formatDate } from '@/lib/utils';
+
 interface DualRangeSliderProps {
   min: number;
   max: number;
@@ -317,6 +320,7 @@ interface Lead {
 }
 
 export const LeadManagement: React.FC = () => {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTab, setSelectedTab] = useState<'New' | 'Today' | 'Last month' | 'Callback' | 'Scheduled'>('New');
   
@@ -444,14 +448,12 @@ export const LeadManagement: React.FC = () => {
   };
 
   const handleSaveNote = (id: string, text: string) => {
-    const savedAt = new Date().toLocaleString('en-IN', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
+    const now = new Date();
+    const savedAt = `${formatDate(now)}, ${now.toLocaleTimeString('en-IN', {
       hour: '2-digit',
       minute: '2-digit',
       hour12: true,
-    });
+    })}`;
     setLeads(prev => prev.map(lead => lead.id === id ? { ...lead, notes: text, notesSavedAt: savedAt } : lead));
     setActiveEditingNoteLeadId(null);
     setNoteText('');
@@ -780,7 +782,14 @@ export const LeadManagement: React.FC = () => {
               >
                 {lead.initials}
               </div>
-              <h3 className="text-sm font-semibold text-gray-900 mt-3">{lead.name}</h3>
+              <button
+                type="button"
+                onClick={() => navigate('/agent-crm/crm-management?openEdit=first')}
+                className="text-sm font-semibold text-[#035096] hover:text-[#0B2C5C] hover:underline mt-3 cursor-pointer transition-colors"
+                title="Open in CRM Management"
+              >
+                {lead.name}
+              </button>
               <p className="text-[11px] font-medium text-gray-500 mt-1">
                 Contacted <span className="font-semibold text-gray-900">{lead.timeAgo}</span>
               </p>

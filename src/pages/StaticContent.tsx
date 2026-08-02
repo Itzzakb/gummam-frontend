@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, Plus, Pencil, Trash2 } from 'lucide-react';
+import { formatDate, todayDisplayDate } from '@/lib/utils';
 
 interface FaqRecord {
   id: string;
@@ -23,18 +24,18 @@ export const StaticContent: React.FC = () => {
 
   // Initial FAQ data matching mockup
   const [faqs, setFaqs] = useState<FaqRecord[]>([
-    { id: 'FAQ1', question: 'Documents needed for property verification?', views: 245, lastUpdated: '2026-06-07', status: 'Published' },
-    { id: 'FAQ2', question: 'What is the process to buy a property?', views: 189, lastUpdated: '2026-06-07', status: 'Published' },
-    { id: 'FAQ3', question: 'How to list my property for sale?', views: 512, lastUpdated: '2026-06-07', status: 'Draft' },
-    { id: 'FAQ4', question: 'What are rental regulations?', views: 134, lastUpdated: '2026-06-07', status: 'Published' }
+    { id: 'FAQ1', question: 'Documents needed for property verification?', views: 245, lastUpdated: '07-06-2026', status: 'Published' },
+    { id: 'FAQ2', question: 'What is the process to buy a property?', views: 189, lastUpdated: '07-06-2026', status: 'Published' },
+    { id: 'FAQ3', question: 'How to list my property for sale?', views: 512, lastUpdated: '07-06-2026', status: 'Draft' },
+    { id: 'FAQ4', question: 'What are rental regulations?', views: 134, lastUpdated: '07-06-2026', status: 'Published' }
   ]);
 
   // Initial Policies matching mockup
   const [policies, setPolicies] = useState<PolicyRecord[]>([
-    { id: 'POL1', name: 'Privacy Policy', lastUpdated: '2026-06-07', status: 'Published' },
-    { id: 'POL2', name: 'Terms & Conditions', lastUpdated: '2026-06-07', status: 'Published' },
-    { id: 'POL3', name: 'Refund Policy', lastUpdated: '2026-06-07', status: 'Draft' },
-    { id: 'POL4', name: 'Cookie Policy', lastUpdated: '2026-06-07', status: 'Published' }
+    { id: 'POL1', name: 'Privacy Policy', lastUpdated: '07-06-2026', status: 'Published' },
+    { id: 'POL2', name: 'Terms & Conditions', lastUpdated: '07-06-2026', status: 'Published' },
+    { id: 'POL3', name: 'Refund Policy', lastUpdated: '07-06-2026', status: 'Draft' },
+    { id: 'POL4', name: 'Cookie Policy', lastUpdated: '07-06-2026', status: 'Published' }
   ]);
 
   // FAQ Form State
@@ -51,7 +52,7 @@ export const StaticContent: React.FC = () => {
       id: `FAQ${faqs.length + 1}`,
       question: faqForm.question || 'New Frequently Asked Question',
       views: 0,
-      lastUpdated: new Date().toISOString().split('T')[0],
+      lastUpdated: todayDisplayDate(),
       status: 'Published'
     };
     setFaqs([...faqs, newFaq]);
@@ -79,7 +80,7 @@ export const StaticContent: React.FC = () => {
     // Update last updated date for the policy in the table list
     const updated = policies.map((p) => {
       if (p.name === selectedPolicyType) {
-        return { ...p, lastUpdated: new Date().toISOString().split('T')[0], status: 'Published' as const };
+        return { ...p, lastUpdated: todayDisplayDate(), status: 'Published' as const };
       }
       return p;
     });
@@ -90,7 +91,7 @@ export const StaticContent: React.FC = () => {
   const handleSavePolicyDraft = () => {
     const updated = policies.map((p) => {
       if (p.name === selectedPolicyType) {
-        return { ...p, lastUpdated: new Date().toISOString().split('T')[0], status: 'Draft' as const };
+        return { ...p, lastUpdated: todayDisplayDate(), status: 'Draft' as const };
       }
       return p;
     });
@@ -168,7 +169,7 @@ export const StaticContent: React.FC = () => {
                     <tr key={faq.id} className="hover:bg-slate-50/30 transition-colors">
                       <td className="p-4 pl-6 font-semibold text-slate-900 max-w-[340px] truncate">{faq.question}</td>
                       <td className="p-4 text-slate-650">{faq.views}</td>
-                      <td className="p-4 text-slate-500 font-semibold">{faq.lastUpdated}</td>
+                      <td className="p-4 text-slate-500 font-semibold">{formatDate(faq.lastUpdated)}</td>
                       <td className="p-4">
                         <span className={`px-2.5 py-0.5 rounded-[5px] text-[10px] font-semibold ${
                           faq.status === 'Published'
@@ -226,7 +227,7 @@ export const StaticContent: React.FC = () => {
                     {policies.map((p) => (
                       <tr key={p.id} className="hover:bg-slate-50/30 transition-colors">
                         <td className="p-4 pl-6 font-semibold text-slate-900">{p.name}</td>
-                        <td className="p-4 text-slate-500 font-semibold">{p.lastUpdated}</td>
+                        <td className="p-4 text-slate-500 font-semibold">{formatDate(p.lastUpdated)}</td>
                         <td className="p-4">
                           <span className={`px-2.5 py-0.5 rounded-[5px] text-[10px] font-semibold ${
                             p.status === 'Published'
@@ -275,7 +276,7 @@ export const StaticContent: React.FC = () => {
                     setPolicies([...policies, {
                       id: `POL${policies.length + 1}`,
                       name: newName,
-                      lastUpdated: new Date().toISOString().split('T')[0],
+                      lastUpdated: todayDisplayDate(),
                       status: 'Draft'
                     }]);
                   }

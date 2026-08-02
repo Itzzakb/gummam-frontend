@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { useSearchParams } from 'react-router-dom';
 import {
   Search,
   Download,
@@ -13,9 +14,12 @@ import {
   Edit2,
   Clock,
   MessageCircle,
-  Bell
+  Bell,
+  FileText,
+  History
 } from 'lucide-react';
 import { DashboardRangeFilter } from '@/components/ui/DashboardRangeFilter';
+import { formatDate, todayDisplayDate } from '@/lib/utils';
 
 // Interfaces for our Lead data
 interface LeadTimelineItem {
@@ -24,6 +28,22 @@ interface LeadTimelineItem {
   time: string;
   notes: string;
   lastUpdated?: string;
+}
+
+interface AssignmentHistoryItem {
+  fromAgent: string;
+  toAgent: string;
+  reason: string;
+  date: string;
+  time: string;
+}
+
+interface StatusChangeHistoryItem {
+  fromStatus: string;
+  toStatus: string;
+  note: string;
+  date: string;
+  time: string;
 }
 
 type TimelineKey = 'inquiry' | 'lastFollowUp' | 'nextFollowUp';
@@ -48,6 +68,8 @@ interface Lead {
     lastFollowUp: LeadTimelineItem;
     nextFollowUp: LeadTimelineItem;
   };
+  assignmentHistory?: AssignmentHistoryItem[];
+  statusChangeHistory?: StatusChangeHistoryItem[];
 }
 
 // Custom Filter Dropdown Component to match Table Filter Bar Dropdown
@@ -171,6 +193,7 @@ const CustomFilterDropdown: React.FC<CustomFilterDropdownProps> = ({
 };
 
 export const CrmManagement: React.FC = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [dashboardRange, setDashboardRange] = useState('Last Month');
   const [customStartDate, setCustomStartDate] = useState<Date | null>(null);
   const [customEndDate, setCustomEndDate] = useState<Date | null>(null);
@@ -185,6 +208,13 @@ export const CrmManagement: React.FC = () => {
   const [viewAgentDropdownOpen, setViewAgentDropdownOpen] = useState(false);
   const viewAgentTriggerRef = useRef<HTMLButtonElement>(null);
   const [viewAgentCoords, setViewAgentCoords] = useState({ top: 0, left: 0, width: 0 });
+  const [pendingReassignAgent, setPendingReassignAgent] = useState('');
+  const [showReassignReasonModal, setShowReassignReasonModal] = useState(false);
+  const [reassignReason, setReassignReason] = useState('');
+  const [pendingStatusChange, setPendingStatusChange] = useState('');
+  const [statusChangeNote, setStatusChangeNote] = useState('');
+  const [showStatusNoteModal, setShowStatusNoteModal] = useState(false);
+  const [showTimelinePopup, setShowTimelinePopup] = useState(false);
 
   useEffect(() => {
     if (viewAgentDropdownOpen && viewAgentTriggerRef.current) {
@@ -233,6 +263,18 @@ export const CrmManagement: React.FC = () => {
   const [showRescheduleModal, setShowRescheduleModal] = useState(false);
   const [rescheduleLead, setRescheduleLead] = useState<Lead | null>(null);
   const [rescheduleTimelineKey, setRescheduleTimelineKey] = useState<TimelineKey>('nextFollowUp');
+
+  // Reset pending edit state when switching/closing the lead edit popup
+  useEffect(() => {
+    setPendingReassignAgent('');
+    setShowReassignReasonModal(false);
+    setReassignReason('');
+    setViewAgentDropdownOpen(false);
+    setPendingStatusChange('');
+    setStatusChangeNote('');
+    setShowStatusNoteModal(false);
+    setShowTimelinePopup(false);
+  }, [selectedLeadForView?.id]);
 
   // Form states for scheduling a new visit
   const [scheduleForm, setScheduleForm] = useState({
@@ -428,6 +470,19 @@ export const CrmManagement: React.FC = () => {
     }
   ]);
 
+  // Open first row edit popup when navigated from Lead Management (stub until real lead linking)
+  useEffect(() => {
+    if (searchParams.get('openEdit') !== 'first') return;
+    const firstLead = leads[0];
+    if (!firstLead) return;
+
+    setSelectedLeadForView(firstLead);
+
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete('openEdit');
+    setSearchParams(nextParams, { replace: true });
+  }, [searchParams, setSearchParams, leads]);
+
   // Options lists
   const statusOptions = [
     { label: 'All Status', value: 'All Status' },
@@ -456,6 +511,12 @@ export const CrmManagement: React.FC = () => {
     alert("Exporting lead listings data. Downloading file: gummam_crm_leads.csv");
   };
 
+  const timelineStatusOptions: { key: TimelineKey; label: string }[] = [
+    { key: 'inquiry', label: 'Inquiry Date' },
+    { key: 'lastFollowUp', label: 'Last Follow-up' },
+    { key: 'nextFollowUp', label: 'Next Follow-up' },
+  ];
+
   const triggerTimelineEdit = (lead: Lead, key: TimelineKey) => {
     const item = lead.timeline[key];
     setRescheduleLead(lead);
@@ -466,6 +527,17 @@ export const CrmManagement: React.FC = () => {
       reason: item.notes !== '-' ? item.notes : ''
     });
     setShowRescheduleModal(true);
+  };
+
+  const handleTimelineStatusChange = (key: TimelineKey) => {
+    if (!rescheduleLead) return;
+    const item = rescheduleLead.timeline[key];
+    setRescheduleTimelineKey(key);
+    setRescheduleForm({
+      newDate: item.date !== '-' ? item.date : '',
+      newTime: item.time !== '-' ? item.time : '',
+      reason: item.notes !== '-' ? item.notes : ''
+    });
   };
 
   const handleRescheduleSubmit = (e: React.FormEvent) => {
@@ -543,28 +615,64 @@ export const CrmManagement: React.FC = () => {
     });
   };
 
-  const handleUpdateStatus = (leadId: string, newStatus: string) => {
-    setLeads(leads.map(l => {
-      if (l.id === leadId) {
-        return { ...l, status: newStatus };
-      }
-      return l;
-    }));
-    if (selectedLeadForView && selectedLeadForView.id === leadId) {
-      setSelectedLeadForView({ ...selectedLeadForView, status: newStatus });
-    }
+  const handleStatusSelect = (newStatus: string) => {
+    if (!selectedLeadForView || selectedLeadForView.status === newStatus) return;
+    setPendingStatusChange(newStatus);
+    setStatusChangeNote('');
+    setShowStatusNoteModal(true);
   };
 
-  const handleAssignAgent = (leadId: string, agentName: string) => {
-    setLeads(leads.map(l => {
-      if (l.id === leadId) {
-        return { ...l, assigned: agentName };
-      }
-      return l;
-    }));
-    if (selectedLeadForView && selectedLeadForView.id === leadId) {
-      setSelectedLeadForView({ ...selectedLeadForView, assigned: agentName });
-    }
+  const handleConfirmStatusChange = () => {
+    if (!selectedLeadForView || !pendingStatusChange) return;
+
+    const note = statusChangeNote.trim();
+    const now = new Date();
+    const historyItem: StatusChangeHistoryItem = {
+      fromStatus: selectedLeadForView.status,
+      toStatus: pendingStatusChange,
+      note: note || 'No note added',
+      date: todayDisplayDate(),
+      time: now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+    };
+
+    const updatedLead: Lead = {
+      ...selectedLeadForView,
+      status: pendingStatusChange,
+      note: note || selectedLeadForView.note,
+      statusChangeHistory: [historyItem, ...(selectedLeadForView.statusChangeHistory || [])],
+    };
+
+    setLeads((prev) => prev.map((l) => (l.id === updatedLead.id ? updatedLead : l)));
+    setSelectedLeadForView(updatedLead);
+    setPendingStatusChange('');
+    setStatusChangeNote('');
+    setShowStatusNoteModal(false);
+  };
+
+  const handleConfirmReassign = () => {
+    if (!selectedLeadForView || !pendingReassignAgent || !reassignReason.trim()) return;
+    if (pendingReassignAgent === selectedLeadForView.assigned) return;
+
+    const now = new Date();
+    const historyItem: AssignmentHistoryItem = {
+      fromAgent: selectedLeadForView.assigned,
+      toAgent: pendingReassignAgent,
+      reason: reassignReason.trim(),
+      date: todayDisplayDate(),
+      time: now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+    };
+
+    const updatedLead: Lead = {
+      ...selectedLeadForView,
+      assigned: pendingReassignAgent,
+      assignmentHistory: [historyItem, ...(selectedLeadForView.assignmentHistory || [])],
+    };
+
+    setLeads((prev) => prev.map((l) => (l.id === updatedLead.id ? updatedLead : l)));
+    setSelectedLeadForView(updatedLead);
+    setPendingReassignAgent('');
+    setReassignReason('');
+    setShowReassignReasonModal(false);
   };
 
   const renderStatusBadge = (status: string) => {
@@ -814,7 +922,7 @@ export const CrmManagement: React.FC = () => {
                     <td className="p-4">{renderSourceBadge(lead.source)}</td>
                     <td className="p-4">{renderStatusBadge(lead.status)}</td>
                     <td className="p-4">{renderAssigned(lead.assigned)}</td>
-                    <td className="p-4 text-slate-450">{lead.followUp}</td>
+                    <td className="p-4 text-slate-450">{formatDate(lead.followUp)}</td>
                     <td className="p-4 text-slate-900 font-semibold">{lead.budget}</td>
                     <td className="p-4 pr-6">
                       <div className="flex items-center justify-center">
@@ -947,7 +1055,7 @@ export const CrmManagement: React.FC = () => {
                             </span>
                             <span className="text-[11px] font-semibold text-slate-800 truncate">{item.type}</span>
                           </div>
-                          <span className="text-[11px] font-medium text-slate-700">{item.date || '–'}</span>
+                          <span className="text-[11px] font-medium text-slate-700">{item.date && item.date !== '-' ? formatDate(item.date) : '–'}</span>
                           <span className="text-[11px] font-medium text-slate-700">{item.time || '–'}</span>
                           <span className="text-[11px] font-medium text-slate-500">{item.lastUpdated || (item.date !== '-' ? '2hrs Ago' : '–')}</span>
                           <span className="text-[11px] font-medium text-slate-600 truncate" title={item.notes}>
@@ -970,7 +1078,17 @@ export const CrmManagement: React.FC = () => {
 
               {/* Update Status */}
               <div className="space-y-2">
-                <h4 className="text-xs font-bold text-[#035096] uppercase tracking-wider">Update Lead Status</h4>
+                <div className="flex items-center justify-between gap-2">
+                  <h4 className="text-xs font-bold text-[#035096] uppercase tracking-wider">Update Lead Status</h4>
+                  <button
+                    type="button"
+                    onClick={() => setShowTimelinePopup(true)}
+                    className="w-7 h-7 rounded-[5px] border border-slate-200 bg-slate-50 text-slate-500 hover:bg-[#E8F1FB] hover:text-[#035096] hover:border-[#035096]/30 flex items-center justify-center transition cursor-pointer"
+                    title="View status change notes"
+                  >
+                    <History className="w-3.5 h-3.5" />
+                  </button>
+                </div>
                 <div className="grid grid-cols-4 gap-2">
                   {statusOptions.slice(1).map((opt) => {
                     const isActive = selectedLeadForView.status === opt.value;
@@ -978,7 +1096,7 @@ export const CrmManagement: React.FC = () => {
                       <button
                         key={opt.value}
                         type="button"
-                        onClick={() => handleUpdateStatus(selectedLeadForView.id, opt.value)}
+                        onClick={() => handleStatusSelect(opt.value)}
                         className={`py-1.5 text-[10px] font-semibold rounded-[5px] transition-colors text-center cursor-pointer ${
                           isActive
                             ? 'bg-[#035096] text-white'
@@ -992,53 +1110,106 @@ export const CrmManagement: React.FC = () => {
                 </div>
               </div>
 
-              {/* Assign Agent Dropdown */}
-              <div className="space-y-2">
-                <h4 className="text-xs font-bold text-[#035096] uppercase tracking-wider">Assign Agent</h4>
-                <div className="relative">
-                  <button
-                    ref={viewAgentTriggerRef}
-                    type="button"
-                    onClick={() => setViewAgentDropdownOpen(!viewAgentDropdownOpen)}
-                    className="w-full bg-white border border-slate-200 rounded-[5px] px-3 py-2 text-xs font-semibold text-slate-700 flex items-center justify-between hover:border-slate-350 cursor-pointer"
-                  >
-                    <span>{selectedLeadForView.assigned}</span>
-                    <ChevronDown className="w-3.5 h-3.5 text-slate-500" />
-                  </button>
-                  {viewAgentDropdownOpen && createPortal(
-                    <div
-                      className="bg-white border border-slate-200 rounded-[5px] shadow-lg z-[9999] py-1 max-h-36 overflow-y-auto"
-                      style={{
-                        position: 'absolute',
-                        top: viewAgentCoords.top,
-                        left: viewAgentCoords.left,
-                        width: viewAgentCoords.width
-                      }}
-                    >
-                      {agentOptions.map((agent) => (
+              {/* Assigned / Reassign Agent */}
+              <div className="space-y-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <h4 className="text-xs font-bold text-[#035096] uppercase tracking-wider">Assigned Agent</h4>
+                    <div className="w-full bg-slate-50 border border-slate-200 rounded-[5px] px-3 py-2 text-xs font-semibold text-slate-600">
+                      {selectedLeadForView.assigned}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <h4 className="text-xs font-bold text-[#035096] uppercase tracking-wider">Reassign Agent</h4>
+                    <div className="flex items-center gap-2">
+                      <div className="relative flex-1 min-w-0">
                         <button
-                          key={agent}
+                          ref={viewAgentTriggerRef}
                           type="button"
-                          onClick={() => {
-                            handleAssignAgent(selectedLeadForView.id, agent);
-                            setViewAgentDropdownOpen(false);
-                          }}
-                          className={`w-full text-left px-3 py-1.5 text-xs transition-colors flex items-center justify-between cursor-pointer ${
-                            agent === selectedLeadForView.assigned
-                              ? 'bg-[#F0F4F9]/60 font-semibold text-[#035096]'
-                              : 'text-slate-700 hover:bg-slate-50'
-                          }`}
+                          onClick={() => setViewAgentDropdownOpen(!viewAgentDropdownOpen)}
+                          className="w-full bg-white border border-slate-200 rounded-[5px] px-3 py-2 text-xs font-semibold text-slate-700 flex items-center justify-between hover:border-slate-350 cursor-pointer"
                         >
-                          <span>{agent}</span>
-                          {agent === selectedLeadForView.assigned && (
-                            <Check className="w-3.5 h-3.5 text-[#035096] shrink-0" />
-                          )}
+                          <span className="truncate">{pendingReassignAgent || 'Select Agent'}</span>
+                          <ChevronDown className="w-3.5 h-3.5 text-slate-500 shrink-0" />
                         </button>
-                      ))}
-                    </div>,
-                    document.body
-                  )}
+                        {viewAgentDropdownOpen && createPortal(
+                          <div
+                            className="bg-white border border-slate-200 rounded-[5px] shadow-lg z-[9999] py-1 max-h-36 overflow-y-auto"
+                            style={{
+                              position: 'absolute',
+                              top: viewAgentCoords.top,
+                              left: viewAgentCoords.left,
+                              width: viewAgentCoords.width
+                            }}
+                          >
+                            {agentOptions.map((agent) => (
+                              <button
+                                key={agent}
+                                type="button"
+                                onClick={() => {
+                                  setPendingReassignAgent(agent);
+                                  setViewAgentDropdownOpen(false);
+                                }}
+                                className={`w-full text-left px-3 py-1.5 text-xs transition-colors flex items-center justify-between cursor-pointer ${
+                                  agent === pendingReassignAgent
+                                    ? 'bg-[#F0F4F9]/60 font-semibold text-[#035096]'
+                                    : 'text-slate-700 hover:bg-slate-50'
+                                }`}
+                              >
+                                <span>{agent}</span>
+                                {agent === pendingReassignAgent && (
+                                  <Check className="w-3.5 h-3.5 text-[#035096] shrink-0" />
+                                )}
+                              </button>
+                            ))}
+                          </div>,
+                          document.body
+                        )}
+                      </div>
+                      {pendingReassignAgent && pendingReassignAgent !== selectedLeadForView.assigned && (
+                        <button
+                          type="button"
+                          onClick={() => setShowReassignReasonModal(true)}
+                          className="w-9 h-9 shrink-0 rounded-[5px] border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 flex items-center justify-center cursor-pointer transition"
+                          title="Add reason for reassignment"
+                        >
+                          <FileText className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
                 </div>
+
+                {/* Assignment timeline */}
+                {(selectedLeadForView.assignmentHistory?.length ?? 0) > 0 && (
+                  <div className="space-y-2 pt-1">
+                    <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Assignment Timeline</h4>
+                    <div className="space-y-2 max-h-36 overflow-y-auto pr-1">
+                      {selectedLeadForView.assignmentHistory!.map((entry, index) => (
+                        <div
+                          key={`${entry.date}-${entry.time}-${index}`}
+                          className="relative pl-4 border-l-2 border-[#035096]/25 pb-2 last:pb-0"
+                        >
+                          <span className="absolute -left-[5px] top-1.5 w-2 h-2 rounded-full bg-[#035096]" />
+                          <div className="bg-slate-50 border border-slate-100 rounded-[6px] px-3 py-2">
+                            <div className="flex items-center justify-between gap-2">
+                              <p className="text-[11px] font-semibold text-slate-800">
+                                {entry.fromAgent} → {entry.toAgent}
+                              </p>
+                              <span className="text-[10px] text-slate-400 shrink-0">
+                                {formatDate(entry.date)} · {entry.time}
+                              </span>
+                            </div>
+                            <p className="text-[11px] text-slate-600 mt-1 leading-relaxed">
+                              <span className="font-semibold text-slate-500">Reason:</span> {entry.reason}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -1055,6 +1226,182 @@ export const CrmManagement: React.FC = () => {
                 type="button"
                 onClick={() => setSelectedLeadForView(null)}
                 className="flex-1 h-9 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-[5px] cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ================= REASSIGN REASON MODAL ================= */}
+      {showReassignReasonModal && selectedLeadForView && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center z-[1200] p-4">
+          <div className="bg-white w-full max-w-[380px] rounded-[5px] overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200 text-left flex flex-col">
+            <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+              <h2 className="text-base font-semibold text-slate-900">Reassignment Reason</h2>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowReassignReasonModal(false);
+                  setReassignReason('');
+                }}
+                className="w-8 h-8 rounded-[5px] hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-600 transition cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="p-5 space-y-3">
+              <p className="text-xs text-slate-500">
+                Reassign from <span className="font-semibold text-slate-800">{selectedLeadForView.assigned}</span>
+                {' '}to <span className="font-semibold text-slate-800">{pendingReassignAgent}</span>
+              </p>
+              <div>
+                <label className="block text-[10px] font-semibold text-slate-500 mb-1">Reason</label>
+                <textarea
+                  value={reassignReason}
+                  onChange={(e) => setReassignReason(e.target.value)}
+                  rows={4}
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-[5px] text-xs outline-none focus:border-[#035096] resize-none"
+                  placeholder="Enter reason for reassignment"
+                />
+              </div>
+            </div>
+            <div className="px-5 py-4 border-t border-slate-100 flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowReassignReasonModal(false);
+                  setReassignReason('');
+                }}
+                className="flex-1 h-9 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-[5px] cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmReassign}
+                disabled={!reassignReason.trim()}
+                className="flex-1 h-9 bg-[#035096] hover:bg-[#024078] disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-semibold rounded-[5px] cursor-pointer"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ================= STATUS CHANGE NOTE MODAL ================= */}
+      {showStatusNoteModal && selectedLeadForView && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center z-[1200] p-4">
+          <div className="bg-white w-full max-w-[400px] rounded-[5px] overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200 text-left flex flex-col">
+            <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+              <h2 className="text-base font-semibold text-slate-900">Add a note here for the status change</h2>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowStatusNoteModal(false);
+                  setPendingStatusChange('');
+                  setStatusChangeNote('');
+                }}
+                className="w-8 h-8 rounded-[5px] hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-600 transition cursor-pointer shrink-0"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="p-5 space-y-3">
+              <p className="text-xs text-slate-500">
+                Changing status from{' '}
+                <span className="font-semibold text-slate-800">{selectedLeadForView.status}</span>
+                {' '}to{' '}
+                <span className="font-semibold text-slate-800">{pendingStatusChange}</span>
+              </p>
+              <div>
+                <label className="block text-[10px] font-semibold text-slate-500 mb-1">Note</label>
+                <textarea
+                  value={statusChangeNote}
+                  onChange={(e) => setStatusChangeNote(e.target.value)}
+                  rows={4}
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-[5px] text-xs outline-none focus:border-[#035096] resize-none"
+                  placeholder="Write a note for this status change"
+                  autoFocus
+                />
+              </div>
+            </div>
+            <div className="px-5 py-4 border-t border-slate-100 flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowStatusNoteModal(false);
+                  setPendingStatusChange('');
+                  setStatusChangeNote('');
+                }}
+                className="flex-1 h-9 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-[5px] cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmStatusChange}
+                className="flex-1 h-9 bg-[#035096] hover:bg-[#024078] text-white text-xs font-semibold rounded-[5px] cursor-pointer"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ================= STATUS NOTES TIMELINE POPUP ================= */}
+      {showTimelinePopup && selectedLeadForView && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center z-[1200] p-4">
+          <div className="bg-white w-full max-w-[420px] rounded-[5px] overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200 text-left flex flex-col max-h-[90vh]">
+            <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+              <h2 className="text-base font-semibold text-slate-900">Status Change Notes</h2>
+              <button
+                type="button"
+                onClick={() => setShowTimelinePopup(false)}
+                className="w-8 h-8 rounded-[5px] hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-600 transition cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="p-5 overflow-y-auto">
+              {(selectedLeadForView.statusChangeHistory?.length ?? 0) === 0 ? (
+                <p className="text-xs text-slate-400 text-center py-6">
+                  No status change notes yet.
+                </p>
+              ) : (
+                <div className="space-y-2 max-h-[50vh] overflow-y-auto pr-1">
+                  {selectedLeadForView.statusChangeHistory!.map((entry, index) => (
+                    <div
+                      key={`${entry.date}-${entry.time}-${index}`}
+                      className="relative pl-4 border-l-2 border-[#035096]/25 pb-2 last:pb-0"
+                    >
+                      <span className="absolute -left-[5px] top-1.5 w-2 h-2 rounded-full bg-[#035096]" />
+                      <div className="bg-slate-50 border border-slate-100 rounded-[6px] px-3 py-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-[11px] font-semibold text-slate-800">
+                            {entry.fromStatus} → {entry.toStatus}
+                          </p>
+                          <span className="text-[10px] text-slate-400 shrink-0">
+                            {formatDate(entry.date)} · {entry.time}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-slate-600 mt-1 leading-relaxed">
+                          <span className="font-semibold text-slate-500">Note:</span> {entry.note}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="px-5 py-4 border-t border-slate-100 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setShowTimelinePopup(false)}
+                className="h-9 px-5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-[5px] cursor-pointer"
               >
                 Close
               </button>
@@ -1340,9 +1687,7 @@ export const CrmManagement: React.FC = () => {
           <div className="bg-white w-full max-w-[400px] rounded-[5px] overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200 text-left flex flex-col max-h-[90vh]">
             {/* Header */}
             <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-              <h2 className="text-base font-semibold text-slate-900">
-                {rescheduleLead.timeline[rescheduleTimelineKey].type}
-              </h2>
+              <h2 className="text-base font-semibold text-slate-900">Lead Timeline</h2>
               <button
                 onClick={() => {
                   setShowRescheduleModal(false);
@@ -1357,44 +1702,57 @@ export const CrmManagement: React.FC = () => {
             {/* Form */}
             <form onSubmit={handleRescheduleSubmit} className="flex flex-col">
               <div className="p-6 space-y-4 text-xs text-slate-600">
-                {/* Property Display */}
+                {/* Status */}
                 <div>
-                  <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Property</span>
-                  <p className="text-slate-800 font-semibold mt-0.5">{rescheduleLead.property}</p>
+                  <label className="block text-[10px] font-semibold text-slate-500 mb-1">Status</label>
+                  <div className="relative">
+                    <select
+                      value={rescheduleTimelineKey}
+                      onChange={(e) => handleTimelineStatusChange(e.target.value as TimelineKey)}
+                      className="w-full h-9 px-2.5 pr-8 bg-white border border-slate-200 rounded-[5px] text-xs font-medium text-slate-800 outline-none focus:border-[#035096] appearance-none cursor-pointer"
+                    >
+                      {timelineStatusOptions.map((opt) => (
+                        <option key={opt.key} value={opt.key}>
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  </div>
                 </div>
 
-                {/* New Date */}
+                {/* Follow-up Date */}
                 <div>
-                  <label className="block text-[10px] font-semibold text-slate-500 mb-1">Date</label>
+                  <label className="block text-[10px] font-semibold text-slate-500 mb-1">Follow-up Date</label>
                   <input
                     type="text"
                     required
-                    placeholder="YYYY-MM-DD"
+                    placeholder="dd-mm-yyyy"
                     value={rescheduleForm.newDate}
                     onChange={(e) => setRescheduleForm({...rescheduleForm, newDate: e.target.value})}
-                    className="w-full h-8 px-2.5 bg-white border border-slate-200 rounded-[5px] text-xs outline-none focus:border-[#035096]"
+                    className="w-full h-9 px-2.5 bg-white border border-slate-200 rounded-[5px] text-xs outline-none focus:border-[#035096]"
                   />
                 </div>
 
-                {/* New Time */}
+                {/* Follow-up Time */}
                 <div>
-                  <label className="block text-[10px] font-semibold text-slate-500 mb-1">Time</label>
+                  <label className="block text-[10px] font-semibold text-slate-500 mb-1">Follow-up Time</label>
                   <input
                     type="text"
                     required
-                    placeholder="e.g. 01:00PM"
+                    placeholder="--:--"
                     value={rescheduleForm.newTime}
                     onChange={(e) => setRescheduleForm({...rescheduleForm, newTime: e.target.value})}
-                    className="w-full h-8 px-2.5 bg-white border border-slate-200 rounded-[5px] text-xs outline-none focus:border-[#035096]"
+                    className="w-full h-9 px-2.5 bg-white border border-slate-200 rounded-[5px] text-xs outline-none focus:border-[#035096]"
                   />
                 </div>
 
-                {/* Note */}
+                {/* Notes */}
                 <div>
-                  <label className="block text-[10px] font-semibold text-slate-500 mb-1">Note</label>
+                  <label className="block text-[10px] font-semibold text-slate-500 mb-1">Notes</label>
                   <textarea
                     rows={3}
-                    placeholder="Enter note..."
+                    placeholder="Enter notes..."
                     value={rescheduleForm.reason}
                     onChange={(e) => setRescheduleForm({...rescheduleForm, reason: e.target.value})}
                     className="w-full bg-white border border-slate-200 rounded-[5px] px-2.5 py-1.5 text-xs outline-none focus:border-[#035096] resize-none"
@@ -1418,7 +1776,7 @@ export const CrmManagement: React.FC = () => {
                   type="submit"
                   className="flex-1 h-9 bg-[#035096] hover:bg-[#024078] text-white text-xs font-semibold rounded-[5px] cursor-pointer"
                 >
-                  update
+                  Update
                 </button>
               </div>
             </form>

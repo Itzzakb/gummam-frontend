@@ -268,7 +268,7 @@ export const CrmSettings: React.FC = () => {
                   <Icon icon="ri:checkbox-circle-line" className="w-5 h-5" />
                   <span className="text-sm font-semibold">Profile Verified</span>
                 </div>
-                <span className="block text-[10px] text-gray-400 font-medium mt-3">Verified on Dec 15, 2024</span>
+                <span className="block text-[10px] text-gray-400 font-medium mt-3">Verified on 15-12-2024</span>
               </div>
 
               {/* Card 2: Pending Approval */}
@@ -286,7 +286,7 @@ export const CrmSettings: React.FC = () => {
                   <Icon icon="ri:checkbox-circle-line" className="w-5 h-5" />
                   <span className="text-sm font-semibold">Phone Verified</span>
                 </div>
-                <span className="block text-[10px] text-gray-400 font-medium mt-3">Verified on Dec 10, 2024</span>
+                <span className="block text-[10px] text-gray-400 font-medium mt-3">Verified on 10-12-2024</span>
               </div>
             </div>
 
@@ -301,7 +301,7 @@ export const CrmSettings: React.FC = () => {
                   </div>
                   <div>
                     <span className="block text-[10px] uppercase font-semibold text-gray-400">Valid Until</span>
-                    <p className="text-sm font-semibold text-gray-800 mt-1">2025-12-31</p>
+                    <p className="text-sm font-semibold text-gray-800 mt-1">31-12-2025</p>
                   </div>
                 </div>
                 <div className="space-y-4">

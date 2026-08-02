@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { formatDate } from '@/lib/utils';
 import {
   LayoutDashboard,
   Users,
@@ -287,9 +288,9 @@ export const AdminPortal: React.FC = () => {
       joinDate: '2026-05-15',
       lastLogin: '2 minutes ago',
       loginHistory: [
-        { date: 'May 15, 2026 at 2:30 PM', device: 'Chrome on Windows' },
-        { date: 'May 14, 2026 at 11:15 AM', device: 'Safari on iPhone' },
-        { date: 'May 13, 2026 at 4:45 PM', device: 'Chrome on Windows' }
+        { date: '15-05-2026 at 2:30 PM', device: 'Chrome on Windows' },
+        { date: '14-05-2026 at 11:15 AM', device: 'Safari on iPhone' },
+        { date: '13-05-2026 at 4:45 PM', device: 'Chrome on Windows' }
       ]
     },
     {
@@ -304,8 +305,8 @@ export const AdminPortal: React.FC = () => {
       joinDate: '2026-05-20',
       lastLogin: '1 hour ago',
       loginHistory: [
-        { date: 'May 20, 2026 at 10:15 AM', device: 'Chrome on Windows' },
-        { date: 'May 19, 2026 at 3:30 PM', device: 'Safari on iOS' }
+        { date: '20-05-2026 at 10:15 AM', device: 'Chrome on Windows' },
+        { date: '19-05-2026 at 3:30 PM', device: 'Safari on iOS' }
       ]
     },
     {
@@ -320,7 +321,7 @@ export const AdminPortal: React.FC = () => {
       joinDate: '2026-04-12',
       lastLogin: '4 hours ago',
       loginHistory: [
-        { date: 'May 12, 2026 at 5:12 PM', device: 'Firefox on Linux' }
+        { date: '12-05-2026 at 5:12 PM', device: 'Firefox on Linux' }
       ]
     },
     {
@@ -335,7 +336,7 @@ export const AdminPortal: React.FC = () => {
       joinDate: '2026-03-24',
       lastLogin: '1 day ago',
       loginHistory: [
-        { date: 'May 14, 2026 at 9:00 AM', device: 'Chrome on Windows' }
+        { date: '14-05-2026 at 9:00 AM', device: 'Chrome on Windows' }
       ]
     },
     {
@@ -350,7 +351,7 @@ export const AdminPortal: React.FC = () => {
       joinDate: '2026-05-18',
       lastLogin: '30 minutes ago',
       loginHistory: [
-        { date: 'May 18, 2026 at 8:45 PM', device: 'Chrome on Windows' }
+        { date: '18-05-2026 at 8:45 PM', device: 'Chrome on Windows' }
       ]
     },
     {
@@ -365,7 +366,7 @@ export const AdminPortal: React.FC = () => {
       joinDate: '2026-05-02',
       lastLogin: '3 days ago',
       loginHistory: [
-        { date: 'May 02, 2026 at 11:20 AM', device: 'Safari on macOS' }
+        { date: '02-05-2026 at 11:20 AM', device: 'Safari on macOS' }
       ]
     },
     {
@@ -380,7 +381,7 @@ export const AdminPortal: React.FC = () => {
       joinDate: '2026-05-11',
       lastLogin: '2 hours ago',
       loginHistory: [
-        { date: 'May 11, 2026 at 2:00 PM', device: 'Edge on Windows' }
+        { date: '11-05-2026 at 2:00 PM', device: 'Edge on Windows' }
       ]
     },
     {
@@ -395,7 +396,7 @@ export const AdminPortal: React.FC = () => {
       joinDate: '2026-02-15',
       lastLogin: '5 days ago',
       loginHistory: [
-        { date: 'May 10, 2026 at 4:30 PM', device: 'Safari on iPhone' }
+        { date: '10-05-2026 at 4:30 PM', device: 'Safari on iPhone' }
       ]
     }
   ]);
@@ -1209,7 +1210,7 @@ export const AdminPortal: React.FC = () => {
                 </div>
                 <div>
                   <div className="text-slate-400 font-semibold mb-1">Join Date</div>
-                  <div className="text-slate-900 font-semibold">{selectedUser.joinDate}</div>
+                  <div className="text-slate-900 font-semibold">{formatDate(selectedUser.joinDate)}</div>
                 </div>
                 <div>
                   <div className="text-slate-400 font-semibold mb-1">Last Login</div>
@@ -1243,7 +1244,7 @@ export const AdminPortal: React.FC = () => {
                   {selectedUser.loginHistory.map((history, idx) => (
                     <div key={idx} className="bg-slate-50 border border-slate-100/60 rounded-[5px] px-4 py-3 flex items-center justify-between">
                       <div>
-                        <div className="text-xs font-semibold text-slate-800">{history.date}</div>
+                        <div className="text-xs font-semibold text-slate-800">{formatDate(history.date)}</div>
                         <div className="text-[10px] text-slate-500 mt-0.5">{history.device}</div>
                       </div>
                       <span className="w-5 h-5 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600">

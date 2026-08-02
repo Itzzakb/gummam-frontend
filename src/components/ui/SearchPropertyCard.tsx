@@ -87,7 +87,7 @@ export const SearchPropertyCard: React.FC<SearchPropertyCardProps> = ({
             </div>
             <div className="border border-gray-200 rounded px-2.5 py-1.5 text-[12px] flex items-center overflow-hidden whitespace-nowrap">
               <span className="text-gray-600 mr-1 flex-shrink-0">Availability: </span>
-              <span className="text-[#035096] font-bold truncate">01 Jan 2026</span>
+              <span className="text-[#035096] font-bold truncate">01-01-2026</span>
             </div>
           </div>
 

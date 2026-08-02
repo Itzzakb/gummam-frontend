@@ -6,6 +6,7 @@ interface UserRole {
   name: string;
   roleName: string;
   email: string;
+  phone: string;
   description: string;
   permissions: string[];
 }
@@ -34,6 +35,7 @@ export const UserRolesManagement: React.FC = () => {
       name: 'Rajesh kumar',
       roleName: 'Manager',
       email: 'smtp.gmail.com',
+      phone: '9876543210',
       description: 'Management and moderation access',
       permissions: ['overview', 'users', 'agents', 'verification', 'properties', 'approval', 'inquiries', 'blogs', 'analytics', 'settings']
     },
@@ -42,6 +44,7 @@ export const UserRolesManagement: React.FC = () => {
       name: 'Suresh Raina',
       roleName: 'Super Admin',
       email: 'suresh@gummaam.com',
+      phone: '9876543211',
       description: 'Full administrative control of the platform',
       permissions: AVAILABLE_PERMISSIONS.map(p => p.id)
     },
@@ -50,12 +53,21 @@ export const UserRolesManagement: React.FC = () => {
       name: 'Aditi Rao',
       roleName: 'Support Agent',
       email: 'aditi@gummaam.com',
+      phone: '9876543212',
       description: 'Customer inquiries and basic operations support',
       permissions: ['overview', 'inquiries', 'settings']
     }
   ]);
 
   const [selectedRoleId, setSelectedRoleId] = useState<string>('1');
+
+  // Role options for the assign-form dropdown (grows when admin adds a role)
+  const [availableRoleOptions, setAvailableRoleOptions] = useState<string[]>([
+    'Super Admin',
+    'Manager',
+    'Support Agent',
+    'Content Editor',
+  ]);
 
   // Modals state
   const [showAddModal, setShowAddModal] = useState(false);
@@ -64,10 +76,7 @@ export const UserRolesManagement: React.FC = () => {
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
   // Add User Role Form state
-  const [newName, setNewName] = useState('');
   const [newRoleName, setNewRoleName] = useState('');
-  const [newEmail, setNewEmail] = useState('');
-  const [newPermissions, setNewPermissions] = useState<string[]>(['overview', 'users']);
 
   // Get currently selected role
   const selectedRole = roles.find(r => r.id === selectedRoleId) || roles[0];
@@ -75,11 +84,16 @@ export const UserRolesManagement: React.FC = () => {
   // Role dropdown on main page
   const [showRoleDropdown, setShowRoleDropdown] = useState(false);
   const roleDropdownRef = useRef<HTMLDivElement>(null);
+  const [showPermissionsDropdown, setShowPermissionsDropdown] = useState(false);
+  const permissionsDropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (roleDropdownRef.current && !roleDropdownRef.current.contains(event.target as Node)) {
         setShowRoleDropdown(false);
+      }
+      if (permissionsDropdownRef.current && !permissionsDropdownRef.current.contains(event.target as Node)) {
+        setShowPermissionsDropdown(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -92,38 +106,42 @@ export const UserRolesManagement: React.FC = () => {
     setRoles(prev => prev.map(r => r.id === selectedRole.id ? { ...r, [field]: value } : r));
   };
 
+  const toggleSelectedPermission = (permId: string) => {
+    if (!selectedRole) return;
+    const current = selectedRole.permissions;
+    const updated = current.includes(permId)
+      ? current.filter((id) => id !== permId)
+      : [...current, permId];
+    handleUpdateSelectedRole('permissions', updated);
+  };
+
   // Add new role handler
   const handleAddRole = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newName || !newRoleName || !newEmail) return;
+    const trimmedName = newRoleName.trim();
+    if (!trimmedName) return;
 
     const newRole: UserRole = {
       id: Date.now().toString(),
-      name: newName,
-      roleName: newRoleName,
-      email: newEmail,
-      description: `${newRoleName} administrative role`,
-      permissions: newPermissions
+      name: '',
+      roleName: trimmedName,
+      email: '',
+      phone: '',
+      description: `${trimmedName} administrative role`,
+      permissions: []
     };
 
     setRoles(prev => [...prev, newRole]);
+    setAvailableRoleOptions((prev) =>
+      prev.some((r) => r.toLowerCase() === trimmedName.toLowerCase())
+        ? prev
+        : [...prev, trimmedName]
+    );
     setSelectedRoleId(newRole.id);
     
     // Reset form
-    setNewName('');
     setNewRoleName('');
-    setNewEmail('');
-    setNewPermissions(['overview', 'users']);
     setShowAddModal(false);
-  };
-
-  // Toggle permission checkbox in add modal
-  const togglePermissionInAdd = (id: string) => {
-    if (newPermissions.includes(id)) {
-      setNewPermissions(prev => prev.filter(p => p !== id));
-    } else {
-      setNewPermissions(prev => [...prev, id]);
-    }
   };
 
   // Open Edit Permissions Modal
@@ -229,8 +247,8 @@ export const UserRolesManagement: React.FC = () => {
               </button>
 
               {showRoleDropdown && (
-                <div className="absolute left-0 right-0 mt-1.5 bg-white border border-slate-200 rounded-[8px] shadow-lg z-50 py-1 flex flex-col">
-                  {['Super Admin', 'Manager', 'Support Agent', 'Content Editor'].map((r) => (
+                <div className="absolute left-0 right-0 mt-1.5 bg-white border border-slate-200 rounded-[8px] shadow-lg z-50 py-1 flex flex-col max-h-56 overflow-y-auto [scrollbar-width:thin]">
+                  {availableRoleOptions.map((r) => (
                     <button
                       key={r}
                       type="button"
@@ -258,7 +276,7 @@ export const UserRolesManagement: React.FC = () => {
             </div>
 
             {/* Email Input */}
-            <div className="space-y-2 md:col-span-2">
+            <div className="space-y-2">
               <label className="text-xs font-semibold text-slate-700 block">Email</label>
               <input
                 type="email"
@@ -267,6 +285,98 @@ export const UserRolesManagement: React.FC = () => {
                 className="w-full h-10 px-4 bg-white border border-slate-200 rounded-[8px] text-xs outline-none transition focus:border-[#035096]"
                 placeholder="Enter email"
               />
+            </div>
+
+            {/* Phone No Input */}
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-slate-700 block">Phone No</label>
+              <input
+                type="tel"
+                value={selectedRole.phone}
+                onChange={(e) => handleUpdateSelectedRole('phone', e.target.value)}
+                className="w-full h-10 px-4 bg-white border border-slate-200 rounded-[8px] text-xs outline-none transition focus:border-[#035096]"
+                placeholder="Enter phone number"
+              />
+            </div>
+
+            {/* Permissions multi-select */}
+            <div className="space-y-2 relative md:col-span-2" ref={permissionsDropdownRef}>
+              <label className="text-xs font-semibold text-slate-700 block">Permissions</label>
+              <button
+                type="button"
+                onClick={() => setShowPermissionsDropdown(!showPermissionsDropdown)}
+                className={`w-full min-h-10 px-3.5 py-2 bg-white border rounded-[8px] text-xs font-semibold transition-all focus:outline-none flex items-center justify-between gap-2 cursor-pointer ${
+                  showPermissionsDropdown
+                    ? 'border-[#035096] text-[#035096]'
+                    : 'border-slate-200 hover:border-slate-300 text-slate-700'
+                }`}
+              >
+                <span className="text-left truncate">
+                  {selectedRole.permissions.length === 0
+                    ? 'Select permissions'
+                    : selectedRole.permissions.length === AVAILABLE_PERMISSIONS.length
+                      ? 'All permissions selected'
+                      : `${selectedRole.permissions.length} permission${selectedRole.permissions.length > 1 ? 's' : ''} selected`}
+                </span>
+                <svg
+                  className={`w-3.5 h-3.5 shrink-0 transition-transform duration-200 ${
+                    showPermissionsDropdown ? 'rotate-180 text-[#035096]' : 'text-slate-500'
+                  }`}
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                </svg>
+              </button>
+
+              {showPermissionsDropdown && (
+                <div className="absolute left-0 right-0 mt-1.5 bg-white border border-slate-200 rounded-[8px] shadow-lg z-50 py-1.5 max-h-56 overflow-y-auto [scrollbar-width:thin]">
+                  {AVAILABLE_PERMISSIONS.map((perm) => {
+                    const isChecked = selectedRole.permissions.includes(perm.id);
+                    return (
+                      <label
+                        key={perm.id}
+                        className={`w-full flex items-center gap-2.5 px-3.5 py-2 text-xs cursor-pointer transition-colors ${
+                          isChecked
+                            ? 'bg-[#F0F4F9]/60 text-[#035096] font-semibold'
+                            : 'text-slate-700 hover:bg-slate-50 font-medium'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={() => toggleSelectedPermission(perm.id)}
+                          className="w-3.5 h-3.5 rounded border-slate-300 text-[#035096] accent-[#035096]"
+                        />
+                        <span>{perm.label}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              )}
+
+              {selectedRole.permissions.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  {AVAILABLE_PERMISSIONS.filter((p) => selectedRole.permissions.includes(p.id)).map((perm) => (
+                    <span
+                      key={perm.id}
+                      className="inline-flex items-center gap-1 bg-[#E8F1FB] text-[#035096] text-[10px] font-semibold px-2 py-1 rounded-[5px]"
+                    >
+                      {perm.label}
+                      <button
+                        type="button"
+                        onClick={() => toggleSelectedPermission(perm.id)}
+                        className="hover:text-[#0B2C5C] cursor-pointer"
+                        aria-label={`Remove ${perm.label}`}
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -359,67 +469,19 @@ export const UserRolesManagement: React.FC = () => {
               </button>
             </div>
 
-            {/* Form & Permissions List */}
+            {/* Form */}
             <form onSubmit={handleAddRole}>
-              <div className="p-6 space-y-4 max-h-[60vh] overflow-y-auto [scrollbar-width:thin]">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <label className="text-[11px] font-semibold text-slate-600 block">Name</label>
-                    <input
-                      type="text"
-                      value={newName}
-                      onChange={(e) => setNewName(e.target.value)}
-                      className="w-full h-9 px-3 bg-white border border-slate-200 rounded-[6px] text-xs outline-none transition focus:border-[#035096]"
-                      placeholder="Enter name"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-[11px] font-semibold text-slate-600 block">Role</label>
-                    <input
-                      type="text"
-                      value={newRoleName}
-                      onChange={(e) => setNewRoleName(e.target.value)}
-                      className="w-full h-9 px-3 bg-white border border-slate-200 rounded-[6px] text-xs outline-none transition focus:border-[#035096]"
-                      placeholder="Enter Role"
-                      required
-                    />
-                  </div>
-                </div>
-
+              <div className="p-6 space-y-4">
                 <div className="space-y-1">
-                  <label className="text-[11px] font-semibold text-slate-600 block">Email</label>
+                  <label className="text-[11px] font-semibold text-slate-600 block">Role</label>
                   <input
-                    type="email"
-                    value={newEmail}
-                    onChange={(e) => setNewEmail(e.target.value)}
+                    type="text"
+                    value={newRoleName}
+                    onChange={(e) => setNewRoleName(e.target.value)}
                     className="w-full h-9 px-3 bg-white border border-slate-200 rounded-[6px] text-xs outline-none transition focus:border-[#035096]"
-                    placeholder="Enter email"
+                    placeholder="Enter Role"
                     required
                   />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-[11px] font-semibold text-slate-600 block">Permissions</label>
-                  <div className="space-y-2 border border-slate-100 rounded-[8px] p-2 bg-slate-50/30 max-h-[220px] overflow-y-auto [scrollbar-width:thin]">
-                    {AVAILABLE_PERMISSIONS.map((perm) => {
-                      const isChecked = newPermissions.includes(perm.id);
-                      return (
-                        <label
-                          key={perm.id}
-                          className="flex items-center gap-3 p-2 bg-white border border-slate-100 rounded-[6px] cursor-pointer hover:bg-slate-50 transition"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={isChecked}
-                            onChange={() => togglePermissionInAdd(perm.id)}
-                            className="w-4 h-4 rounded border-slate-200 text-[#035096] focus:ring-[#035096] accent-[#035096]"
-                          />
-                          <span className="text-[11px] font-medium text-slate-750">{perm.label}</span>
-                        </label>
-                      );
-                    })}
-                  </div>
                 </div>
               </div>
 

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { formatDate } from '@/lib/utils';
 import {
   Search,
   Filter,
@@ -154,10 +155,10 @@ const mockProperties: Property[] = [
       'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=600&auto=format&fit=crop&q=60'
     ],
     qualityScore: 10,
-    lastAdded: '19 May 2026',
+    lastAdded: '19-05-2026',
     leads: 2,
-    occupancyDate: '31 Mar 2029',
-    validUntil: '18 Jul 2026',
+    occupancyDate: '31-03-2029',
+    validUntil: '18-07-2026',
     sector: 'Residential',
     propertyType: 'Apartment',
     locality: 'Tukkuguda',
@@ -177,10 +178,10 @@ const mockProperties: Property[] = [
       'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=600&auto=format&fit=crop&q=60'
     ],
     qualityScore: 10,
-    lastAdded: '19 May 2026',
+    lastAdded: '19-05-2026',
     leads: 2,
-    occupancyDate: '31 Mar 2029',
-    validUntil: '18 Jul 2026',
+    occupancyDate: '31-03-2029',
+    validUntil: '18-07-2026',
     sector: 'Residential',
     propertyType: 'Apartment',
     locality: 'Tukkuguda',
@@ -200,10 +201,10 @@ const mockProperties: Property[] = [
       'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=600&auto=format&fit=crop&q=60'
     ],
     qualityScore: 10,
-    lastAdded: '19 May 2026',
+    lastAdded: '19-05-2026',
     leads: 2,
-    occupancyDate: '31 Mar 2029',
-    validUntil: '18 Jul 2026',
+    occupancyDate: '31-03-2029',
+    validUntil: '18-07-2026',
     sector: 'Residential',
     propertyType: 'Apartment',
     locality: 'Tukkuguda',
@@ -222,10 +223,10 @@ const mockProperties: Property[] = [
       'https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=600&auto=format&fit=crop&q=60'
     ],
     qualityScore: 8,
-    lastAdded: '10 May 2026',
+    lastAdded: '10-05-2026',
     leads: 0,
-    occupancyDate: '01 Jan 2028',
-    validUntil: '30 May 2026',
+    occupancyDate: '01-01-2028',
+    validUntil: '30-05-2026',
     sector: 'Residential',
     propertyType: 'Villa',
     locality: 'Gachibowli',
@@ -244,10 +245,10 @@ const mockProperties: Property[] = [
       'https://images.unsplash.com/photo-1497366216548-37526070297c?w=600&auto=format&fit=crop&q=60'
     ],
     qualityScore: 9,
-    lastAdded: '15 Apr 2026',
+    lastAdded: '15-04-2026',
     leads: 14,
     occupancyDate: 'Ready to Move',
-    validUntil: '15 Oct 2026',
+    validUntil: '15-10-2026',
     sector: 'Commercial',
     propertyType: 'Office Space',
     locality: 'Madhapur',
@@ -266,10 +267,10 @@ const mockProperties: Property[] = [
       'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=600&auto=format&fit=crop&q=60'
     ],
     qualityScore: 5,
-    lastAdded: '01 Jan 2026',
+    lastAdded: '01-01-2026',
     leads: 1,
     occupancyDate: 'Immediate',
-    validUntil: '01 Jun 2026',
+    validUntil: '01-06-2026',
     sector: 'Residential',
     propertyType: 'Plot',
     locality: 'Shadnagar',
@@ -735,7 +736,7 @@ export const PropertyListings: React.FC = () => {
                       <span className="text-[11px] font-medium" style={{ color: '#7A7A7A' }}>Prop Added on</span>
                       <div className="flex items-center gap-1.5 text-gray-700 font-semibold text-[10px]">
                         <Calendar className="w-3.5 h-3.5" style={{ color: '#7A7A7A' }} />
-                        <span>{property.lastAdded}</span>
+                        <span>{formatDate(property.lastAdded)}</span>
                       </div>
                     </div>
 
@@ -847,7 +848,11 @@ export const PropertyListings: React.FC = () => {
                     <Home className="w-4 h-4 text-slate-500" strokeWidth={2} />
                     <span className="font-normal text-slate-500 font-poppins">Occupancy Date</span>
                   </div>
-                  <p className="text-[17px] font-semibold text-gray-950 font-poppins" style={{ fontWeight: 600 }}>31 Mar 2029</p>
+                  <p className="text-[17px] font-semibold text-gray-950 font-poppins" style={{ fontWeight: 600 }}>
+                    {selectedProperty.occupancyDate.includes('-')
+                      ? formatDate(selectedProperty.occupancyDate)
+                      : selectedProperty.occupancyDate}
+                  </p>
                 </div>
 
                 <div className="bg-[#EBF3FE] rounded-[12px] p-4 flex flex-col justify-between text-left h-24">
@@ -855,7 +860,9 @@ export const PropertyListings: React.FC = () => {
                     <Calendar className="w-4 h-4 text-slate-500" strokeWidth={2} />
                     <span className="font-normal text-slate-500 font-poppins">Valid Until</span>
                   </div>
-                  <p className="text-[17px] font-semibold text-gray-950 font-poppins" style={{ fontWeight: 600 }}>18 Jul 2026</p>
+                  <p className="text-[17px] font-semibold text-gray-950 font-poppins" style={{ fontWeight: 600 }}>
+                    {formatDate(selectedProperty.validUntil)}
+                  </p>
                 </div>
               </div>
 
@@ -863,11 +870,15 @@ export const PropertyListings: React.FC = () => {
               <div className="grid grid-cols-3 gap-4 text-left px-1">
                 <div>
                   <p className="text-[11px] font-normal font-poppins" style={{ color: '#7A7A7A' }}>Property Created On</p>
-                  <p className="text-[13px] font-semibold text-gray-950 font-poppins mt-1.5" style={{ fontWeight: 600 }}>19 May 2026</p>
+                  <p className="text-[13px] font-semibold text-gray-950 font-poppins mt-1.5" style={{ fontWeight: 600 }}>
+                    {formatDate(selectedProperty.lastAdded)}
+                  </p>
                 </div>
                 <div>
                   <p className="text-[11px] font-normal font-poppins" style={{ color: '#7A7A7A' }}>Prop Added on</p>
-                  <p className="text-[13px] font-semibold text-gray-950 font-poppins mt-1.5" style={{ fontWeight: 600 }}>19 May 2026</p>
+                  <p className="text-[13px] font-semibold text-gray-950 font-poppins mt-1.5" style={{ fontWeight: 600 }}>
+                    {formatDate(selectedProperty.lastAdded)}
+                  </p>
                 </div>
                 <div>
                   <p className="text-[11px] font-normal font-poppins" style={{ color: '#7A7A7A' }}>Total Leads</p>

@@ -2,6 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { PropertyLocationMap } from '@/components/map/PropertyLocationMap';
+import {
+  UnitInventorySection,
+  createDefaultUnitInventory,
+  emptyUnitInventory,
+  type UnitInventoryData,
+  FLAT_STATUS_META,
+} from '@/components/property/UnitInventorySection';
 import { 
   Building2,
   Building,
@@ -45,15 +52,13 @@ interface ShutterSize {
 
 // Types for form state
 interface PropertyFormData {
-  // Step 1: Intent
+  // Step 1: Intent & Type
   intent: 'sell' | 'rent' | '';
   role: string;
-  
-  // Step 2: Type
   propertyType: string; 
   category: 'Residential' | 'Commercial' | 'Lands' | '';
 
-  // Step 3: Details (General)
+  // Step 2: Details (General)
   title: string;
   description: string;
   floorNumber: string;
@@ -218,6 +223,9 @@ interface PropertyFormData {
   room_type?: string;
   sharing_room?: string;
   pg_hostel_name?: string;
+
+  /** Multi-unit inventory for apartments / gated communities */
+  unitInventory?: UnitInventoryData;
 }
 
 const amenityCategories = {
@@ -432,6 +440,41 @@ const CustomSelect: React.FC<{
   );
 };
 
+const SelectOptionCard: React.FC<{
+  selected: boolean;
+  onClick: () => void;
+  icon: React.ElementType;
+  title: string;
+  desc: string;
+}> = ({ selected, onClick, icon: Icon, title, desc }) => (
+  <button
+    type="button"
+    onClick={onClick}
+    className={`flex items-center justify-between gap-3 w-full px-4 py-3.5 rounded-xl border text-left transition-all ${
+      selected
+        ? 'border-[#4A90E2] bg-[#EAF3FF]'
+        : 'border-[#E0E0E0] bg-white hover:border-slate-300'
+    }`}
+  >
+    <div className="flex items-center gap-3 min-w-0">
+      <div className="shrink-0 w-[46px] h-[46px] rounded-[10px] bg-[#EEF7FF] shadow-[0px_2px_2px_0px_rgba(0,0,0,0.25)] flex items-center justify-center text-[#4A90E2]">
+        <Icon className="w-[22px] h-[22px]" strokeWidth={1.75} />
+      </div>
+      <div className="min-w-0">
+        <h3 className="font-bold text-sm text-black leading-tight">{title}</h3>
+        <p className="text-xs text-[#757575] mt-0.5 leading-snug">{desc}</p>
+      </div>
+    </div>
+    <div
+      className={`w-5 h-5 rounded-full border-[1.5px] flex items-center justify-center shrink-0 ${
+        selected ? 'bg-[#4A90E2] border-[#4A90E2]' : 'border-[#C4C4C4] bg-white'
+      }`}
+    >
+      {selected && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
+    </div>
+  </button>
+);
+
 const initialFormData: PropertyFormData = {
   intent: '',
   role: '',
@@ -565,6 +608,7 @@ const initialFormData: PropertyFormData = {
   room_type: 'Sharing',
   sharing_room: '1',
   pg_hostel_name: '',
+  unitInventory: emptyUnitInventory(),
 };
 
 export const PostProperty: React.FC = () => {
@@ -576,7 +620,7 @@ export const PostProperty: React.FC = () => {
       navigate('/');
       openAuthDialog('agent');
     } else if (user?.role !== 'agent') {
-      alert("Only agents are allowed to access the Post Property page.");
+      alert('Only agents are allowed to access the Post Property page.');
       navigate('/');
       openAuthDialog('agent');
     }
@@ -585,6 +629,10 @@ export const PostProperty: React.FC = () => {
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [formData, setFormData] = useState<PropertyFormData>(initialFormData);
   const [validationError, setValidationError] = useState<string>('');
+
+  if (!isAuthenticated || user?.role !== 'agent') {
+    return null;
+  }
 
   const isLandsAcre = formData.category === 'Lands' && formData.propertyType === 'Acre' && (formData.intent === 'sell' || formData.intent === 'rent');
   const isLandsPlots = formData.category === 'Lands' && formData.propertyType === 'Plots' && (formData.intent === 'sell' || formData.intent === 'rent');
@@ -596,6 +644,13 @@ export const PostProperty: React.FC = () => {
   const isCommercialOfficeSpace = formData.category === 'Commercial' && formData.propertyType === 'Office Space' && (formData.intent === 'sell' || formData.intent === 'rent');
   const isHighRiseAptSell = (formData.category === 'Residential' && (formData.intent === 'sell' || formData.intent === 'rent')) || isCommercialOfficeSpace || isCommercialShop || isCommercialShowroom || isCommercialGodown || isCommercialIndustrial || isCommercialShed || isLandsAcre || isLandsPlots;
   const isAmenitiesDisabled = formData.propertyType === 'Independent Houses' || formData.propertyType === 'PG/Hostel' || isLandsAcre || isLandsPlots;
+  const isApartmentInventory =
+    formData.category === 'Residential' &&
+    (formData.propertyType === 'High-rise Apts' ||
+      formData.propertyType === 'Standalone Apts' ||
+      formData.propertyType === 'Villa Gated Communities');
+  const inventoryUnitLabel =
+    formData.propertyType === 'Villa Gated Communities' ? 'villas' : 'flats';
 
   const updateFormData = (fields: Partial<PropertyFormData>) => {
     setFormData(prev => ({ ...prev, ...fields }));
@@ -705,14 +760,12 @@ export const PostProperty: React.FC = () => {
         setValidationError('Please select who is listing this property.');
         return false;
       }
-    }
-    if (step === 2) {
       if (!formData.propertyType) {
         setValidationError('Please select a property type.');
         return false;
       }
     }
-    if (step === 3) {
+    if (step === 2) {
       if (isHighRiseAptSell) {
         if (isLandsAcre) {
           if (!formData.landAcre) return triggerError('Acre is required.');
@@ -760,7 +813,7 @@ export const PostProperty: React.FC = () => {
           }
         }
         
-        // Auto-populate required fields for step 4/api compatibility
+        // Auto-populate required fields for review/api compatibility
         const isComm = isCommercialOfficeSpace || isCommercialShop || isCommercialShowroom || isCommercialGodown || isCommercialIndustrial || isCommercialShed;
         const bedroomStr = (isCommercialOfficeSpace || isCommercialIndustrial) 
           ? `${formData.seatingsCount || '0'} Seats` 
@@ -844,14 +897,14 @@ export const PostProperty: React.FC = () => {
 
   const handleNext = () => {
     if (validateStep(currentStep)) {
-      setCurrentStep(prev => prev + 1);
+      setCurrentStep((prev) => Math.min(prev + 1, 3));
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
   const handlePrevious = () => {
     setValidationError('');
-    setCurrentStep(prev => prev - 1);
+    setCurrentStep((prev) => Math.max(prev - 1, 1));
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -876,7 +929,7 @@ export const PostProperty: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validateStep(3)) return;
+    if (!validateStep(2)) return;
     
     alert('Property listed successfully!');
     navigate('/');
@@ -921,8 +974,8 @@ export const PostProperty: React.FC = () => {
 
         {/* Stepper Header */}
         <div className="bg-white rounded-2xl shadow-[0_2px_15px_rgba(0,0,0,0.03)] border border-slate-100 p-8 mb-8">
-          <div className="flex items-center justify-between w-full mb-8 overflow-x-auto pb-2 scrollbar-none">
-            {/* Step 1 */}
+          <div className="flex items-center justify-between w-full mb-6 overflow-x-auto pb-2 scrollbar-none">
+            {/* Step 1: Intent + Type */}
             <div 
               onClick={() => handleStepClick(1)}
               className="flex items-center gap-3 shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
@@ -936,13 +989,12 @@ export const PostProperty: React.FC = () => {
               }`}>
                 {currentStep > 1 ? <Check className="w-5 h-5" /> : '1'}
               </div>
-              <span className={`text-base font-semibold ${currentStep === 1 ? 'text-[#0B2C5C]' : 'text-slate-800'}`}>Property Intent</span>
+              <span className={`text-base font-semibold ${currentStep === 1 ? 'text-[#0B2C5C]' : 'text-slate-800'}`}>Intent & Type</span>
             </div>
 
-            {/* Line 1-2 */}
             <div className={`h-1.5 flex-1 min-w-[30px] mx-4 rounded-full transition-all ${currentStep > 1 ? 'bg-[#00C800]' : 'bg-[#E5E9F0]'}`} />
 
-            {/* Step 2 */}
+            {/* Step 2: Details */}
             <div 
               onClick={() => handleStepClick(2)}
               className="flex items-center gap-3 shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
@@ -956,55 +1008,89 @@ export const PostProperty: React.FC = () => {
               }`}>
                 {currentStep > 2 ? <Check className="w-5 h-5" /> : '2'}
               </div>
-              <span className={`text-base font-semibold ${currentStep === 2 ? 'text-[#0B2C5C]' : 'text-slate-800'}`}>Property Type</span>
+              <span className={`text-base font-semibold ${currentStep === 2 ? 'text-[#0B2C5C]' : 'text-slate-800'}`}>Property Details</span>
             </div>
 
-            {/* Line 2-3 */}
             <div className={`h-1.5 flex-1 min-w-[30px] mx-4 rounded-full transition-all ${currentStep > 2 ? 'bg-[#00C800]' : 'bg-[#E5E9F0]'}`} />
 
-            {/* Step 3 */}
+            {/* Step 3: Review */}
             <div 
               onClick={() => handleStepClick(3)}
               className="flex items-center gap-3 shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
             >
               <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-base transition-all ${
-                currentStep > 3 
-                  ? 'bg-[#00C800] text-white' 
-                  : currentStep === 3 
+                currentStep === 3 
                   ? 'bg-[#035096] text-white' 
                   : 'bg-[#D0E7FF] text-[#035096]'
               }`}>
-                {currentStep > 3 ? <Check className="w-5 h-5" /> : '3'}
+                3
               </div>
-              <span className={`text-base font-semibold ${currentStep === 3 ? 'text-[#0B2C5C]' : 'text-slate-800'}`}>Property Details</span>
-            </div>
-
-            {/* Line 3-4 */}
-            <div className={`h-1.5 flex-1 min-w-[30px] mx-4 rounded-full transition-all ${currentStep > 3 ? 'bg-[#00C800]' : 'bg-[#E5E9F0]'}`} />
-
-            {/* Step 4 */}
-            <div 
-              onClick={() => handleStepClick(4)}
-              className="flex items-center gap-3 shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
-            >
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-base transition-all ${
-                currentStep === 4 
-                  ? 'bg-[#035096] text-white' 
-                  : 'bg-[#D0E7FF] text-[#035096]'
-              }`}>
-                4
-              </div>
-              <span className={`text-base font-semibold ${currentStep === 4 ? 'text-[#0B2C5C]' : 'text-slate-800'}`}>Review & Submit</span>
+              <span className={`text-base font-semibold ${currentStep === 3 ? 'text-[#0B2C5C]' : 'text-slate-800'}`}>Review & Submit</span>
             </div>
           </div>
 
-          {/* Stepper Progress Bar */}
-          <div className="w-full bg-[#E5E9F0] h-[8px] rounded-full relative overflow-hidden">
-            <div 
-              className="bg-[#035096] h-full transition-all duration-300 rounded-full"
-              style={{ width: `${((currentStep - 1) / 3) * 100}%` }}
-            />
-          </div>
+          {/* Step-1 selection breadcrumbs */}
+          {(formData.intent || formData.role || formData.propertyType) && (
+            <div className="pt-2 border-t border-slate-100">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-2 text-sm">
+                <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 mr-1">
+                  Selected
+                </span>
+                {[
+                  formData.intent
+                    ? {
+                        key: 'intent',
+                        label:
+                          formData.intent === 'rent'
+                            ? formData.rentFor
+                              ? `Rent / Lease · ${formData.rentFor}`
+                              : 'Rent / Lease'
+                            : 'Sell',
+                      }
+                    : null,
+                  formData.role
+                    ? {
+                        key: 'role',
+                        label:
+                          formData.role === 'builder/developer'
+                            ? 'Builder/Developer'
+                            : formData.role === 'marketing employee'
+                              ? 'Marketing Employee'
+                              : formData.role.charAt(0).toUpperCase() + formData.role.slice(1),
+                      }
+                    : null,
+                  formData.category
+                    ? { key: 'category', label: formData.category }
+                    : null,
+                  formData.propertyType
+                    ? { key: 'type', label: formData.propertyType }
+                    : null,
+                ]
+                  .filter(Boolean)
+                  .map((crumb, index) => (
+                    <React.Fragment key={(crumb as { key: string }).key}>
+                      {index > 0 && (
+                        <span className="text-slate-400 font-medium select-none" aria-hidden>
+                          &gt;
+                        </span>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => handleStepClick(1)}
+                        title="Edit in Intent & Type"
+                        className={`text-sm font-medium transition-colors cursor-pointer ${
+                          currentStep === 1
+                            ? 'text-[#035096]'
+                            : 'text-slate-700 hover:text-[#035096]'
+                        }`}
+                      >
+                        {(crumb as { label: string }).label}
+                      </button>
+                    </React.Fragment>
+                  ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Validation Alert */}
@@ -1014,7 +1100,7 @@ export const PostProperty: React.FC = () => {
           </div>
         )}
 
-        {/* --- STEP 1: PROPERTY INTENT --- */}
+        {/* --- STEP 1: INTENT & TYPE --- */}
         {currentStep === 1 && (
           <div className="bg-white rounded-2xl shadow-[0_2px_15px_rgba(0,0,0,0.03)] border border-slate-100 p-8 sm:p-10 text-left">
             {/* Intent Section */}
@@ -1022,56 +1108,20 @@ export const PostProperty: React.FC = () => {
               <h2 className="text-xl font-bold text-black mb-1">What is this property for?</h2>
               <p className="text-xs text-slate-400 mb-6">Choose whether you want to sell your property or rent/lease it out.</p>
               
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                {/* Sell Card */}
-                <div 
-                  onClick={() => updateFormData({ intent: 'sell' })}
-                  className={`flex items-center justify-between p-6 rounded-2xl border cursor-pointer transition-all ${
-                    formData.intent === 'sell' 
-                      ? 'border-[#4885FF] bg-[#F0F4F9]/60 shadow-[0_4px_15px_rgba(72,133,255,0.1)]' 
-                      : 'border-slate-100 hover:border-slate-300 bg-white'
-                  }`}
-                >
-                  <div className="flex items-center gap-4">
-                    <div className={`p-4 rounded-2xl ${formData.intent === 'sell' ? 'bg-white shadow-sm text-[#035096]' : 'bg-[#F0F4F9] text-slate-500'}`}>
-                      <Building2 className="w-10 h-10" />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-base text-[#0B2C5C]">Sell</h3>
-                      <p className="text-xs text-slate-500 mt-0.5">List your property for sale</p>
-                    </div>
-                  </div>
-                  <div className={`w-6 h-6 rounded-full border flex items-center justify-center ${
-                    formData.intent === 'sell' ? 'bg-[#4885FF] border-[#4885FF]' : 'border-slate-300'
-                  }`}>
-                    {formData.intent === 'sell' && <Check className="w-4 h-4 text-white" />}
-                  </div>
-                </div>
-
-                {/* Rent Card */}
-                <div 
-                  onClick={() => updateFormData({ intent: 'rent' })}
-                  className={`flex items-center justify-between p-6 rounded-2xl border cursor-pointer transition-all ${
-                    formData.intent === 'rent' 
-                      ? 'border-[#4885FF] bg-[#F0F4F9]/60 shadow-[0_4px_15px_rgba(72,133,255,0.1)]' 
-                      : 'border-slate-100 hover:border-slate-300 bg-white'
-                  }`}
-                >
-                  <div className="flex items-center gap-4">
-                    <div className={`p-4 rounded-2xl ${formData.intent === 'rent' ? 'bg-white shadow-sm text-[#035096]' : 'bg-[#F0F4F9] text-slate-500'}`}>
-                      <Key className="w-10 h-10" />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-base text-[#0B2C5C]">Rent / Lease</h3>
-                      <p className="text-xs text-slate-500 mt-0.5">List your property for rent or lease</p>
-                    </div>
-                  </div>
-                  <div className={`w-6 h-6 rounded-full border flex items-center justify-center ${
-                    formData.intent === 'rent' ? 'bg-[#4885FF] border-[#4885FF]' : 'border-slate-300'
-                  }`}>
-                    {formData.intent === 'rent' && <Check className="w-4 h-4 text-white" />}
-                  </div>
-                </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {[
+                  { key: 'sell' as const, title: 'Sell', desc: 'List your property for sale', icon: Building2 },
+                  { key: 'rent' as const, title: 'Rent / Lease', desc: 'List your property for rent or lease', icon: Key },
+                ].map(item => (
+                  <SelectOptionCard
+                    key={item.key}
+                    selected={formData.intent === item.key}
+                    onClick={() => updateFormData({ intent: item.key })}
+                    icon={item.icon}
+                    title={item.title}
+                    desc={item.desc}
+                  />
+                ))}
               </div>
             </div>
 
@@ -1080,42 +1130,22 @@ export const PostProperty: React.FC = () => {
                 <h2 className="text-xl font-bold text-black mb-1">Rent For?</h2>
                 <p className="text-xs text-slate-400 mb-6">Select the target tenants for your property.</p>
                 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {[
                     { key: 'Family', title: 'Family', desc: 'For families and couples', icon: Users },
                     { key: 'Bachelors', title: 'Bachelors', desc: 'For students/bachelors', icon: UserRound },
                     { key: 'Company', title: 'Company', desc: 'For corporate/companies', icon: Building },
                     { key: 'Anyone', title: 'Anyone', desc: 'Open to any tenant type', icon: Globe }
-                  ].map(item => {
-                    const IconComponent = item.icon;
-                    const isSelected = formData.rentFor === item.key;
-                    return (
-                      <div 
-                        key={item.key}
-                        onClick={() => updateFormData({ rentFor: item.key })}
-                        className={`flex items-center justify-between p-6 rounded-2xl border cursor-pointer transition-all ${
-                          isSelected 
-                            ? 'border-[#4885FF] bg-[#F0F4F9]/60 shadow-[0_4px_15px_rgba(72,133,255,0.1)]' 
-                            : 'border-slate-100 hover:border-slate-300 bg-white'
-                        }`}
-                      >
-                        <div className="flex items-center gap-4">
-                          <div className={`p-4 rounded-2xl ${isSelected ? 'bg-white shadow-sm text-[#035096]' : 'bg-[#F0F4F9] text-slate-500'}`}>
-                            <IconComponent className="w-10 h-10" />
-                          </div>
-                          <div>
-                            <h3 className="font-bold text-base text-[#0B2C5C]">{item.title}</h3>
-                            <p className="text-xs text-slate-500 mt-0.5">{item.desc}</p>
-                          </div>
-                        </div>
-                        <div className={`w-6 h-6 rounded-full border flex items-center justify-center ${
-                          isSelected ? 'bg-[#4885FF] border-[#4885FF]' : 'border-slate-300'
-                        }`}>
-                          {isSelected && <Check className="w-4 h-4 text-white" />}
-                        </div>
-                      </div>
-                    );
-                  })}
+                  ].map(item => (
+                    <SelectOptionCard
+                      key={item.key}
+                      selected={formData.rentFor === item.key}
+                      onClick={() => updateFormData({ rentFor: item.key })}
+                      icon={item.icon}
+                      title={item.title}
+                      desc={item.desc}
+                    />
+                  ))}
                 </div>
               </div>
             )}
@@ -1125,106 +1155,136 @@ export const PostProperty: React.FC = () => {
               <h2 className="text-xl font-bold text-black mb-1">Who is listing this property?</h2>
               <p className="text-xs text-slate-400 mb-6">Select the role that best describes you.</p>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                {/* Owner */}
-                <div 
-                  onClick={() => updateFormData({ role: 'owner' })}
-                  className={`flex items-center justify-between p-6 rounded-2xl border cursor-pointer transition-all ${
-                    formData.role === 'owner' 
-                      ? 'border-[#4885FF] bg-[#F0F4F9]/60 shadow-[0_4px_15px_rgba(72,133,255,0.1)]' 
-                      : 'border-slate-100 hover:border-slate-300 bg-white'
-                  }`}
-                >
-                  <div className="flex items-center gap-4">
-                    <div className={`p-4 rounded-2xl ${formData.role === 'owner' ? 'bg-white shadow-sm text-[#035096]' : 'bg-[#F0F4F9] text-slate-500'}`}>
-                      <User className="w-10 h-10" />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-base text-[#0B2C5C]">Owner</h3>
-                      <p className="text-xs text-slate-500 mt-0.5">I am the owner</p>
-                    </div>
-                  </div>
-                  <div className={`w-6 h-6 rounded-full border flex items-center justify-center ${
-                    formData.role === 'owner' ? 'bg-[#4885FF] border-[#4885FF]' : 'border-slate-300'
-                  }`}>
-                    {formData.role === 'owner' && <Check className="w-4 h-4 text-white" />}
-                  </div>
-                </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {[
+                  { key: 'owner', title: 'Owner', desc: 'I am the owner', icon: User },
+                  { key: 'agent', title: 'Agent', desc: 'I am a real estate agent', icon: UserCheck },
+                  { key: 'builder/developer', title: 'Builder/Developer', desc: 'I am a builder/developer', icon: Hammer },
+                  { key: 'marketing employee', title: 'Marketing Employee', desc: 'I am a marketing employee', icon: Briefcase },
+                ].map(item => (
+                  <SelectOptionCard
+                    key={item.key}
+                    selected={formData.role === item.key}
+                    onClick={() => updateFormData({ role: item.key })}
+                    icon={item.icon}
+                    title={item.title}
+                    desc={item.desc}
+                  />
+                ))}
+              </div>
+            </div>
 
-                {/* Agent */}
-                <div 
-                  onClick={() => updateFormData({ role: 'agent' })}
-                  className={`flex items-center justify-between p-6 rounded-2xl border cursor-pointer transition-all ${
-                    formData.role === 'agent' 
-                      ? 'border-[#4885FF] bg-[#F0F4F9]/60 shadow-[0_4px_15px_rgba(72,133,255,0.1)]' 
-                      : 'border-slate-100 hover:border-slate-300 bg-white'
-                  }`}
-                >
-                  <div className="flex items-center gap-4">
-                    <div className={`p-4 rounded-2xl ${formData.role === 'agent' ? 'bg-white shadow-sm text-[#035096]' : 'bg-[#F0F4F9] text-slate-500'}`}>
-                      <UserCheck className="w-10 h-10" />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-base text-[#0B2C5C]">Agent</h3>
-                      <p className="text-xs text-slate-500 mt-0.5">I am a real estate agent</p>
-                    </div>
-                  </div>
-                  <div className={`w-6 h-6 rounded-full border flex items-center justify-center ${
-                    formData.role === 'agent' ? 'bg-[#4885FF] border-[#4885FF]' : 'border-slate-300'
-                  }`}>
-                    {formData.role === 'agent' && <Check className="w-4 h-4 text-white" />}
-                  </div>
-                </div>
+            {/* Property Type (combined into Step 1) */}
+            <div className="mb-8 pt-6 border-t border-slate-100">
+              <h2 className="text-xl font-bold text-black mb-1">Select property type</h2>
+              <p className="text-xs text-slate-400 mb-2">Choose the category that best matches your listing.</p>
+            </div>
 
-                {/* Builder/Developer */}
-                <div 
-                  onClick={() => updateFormData({ role: 'builder/developer' })}
-                  className={`flex items-center justify-between p-6 rounded-2xl border cursor-pointer transition-all ${
-                    formData.role === 'builder/developer' 
-                      ? 'border-[#4885FF] bg-[#F0F4F9]/60 shadow-[0_4px_15px_rgba(72,133,255,0.1)]' 
-                      : 'border-slate-100 hover:border-slate-300 bg-white'
-                  }`}
-                >
-                  <div className="flex items-center gap-4">
-                    <div className={`p-4 rounded-2xl ${formData.role === 'builder/developer' ? 'bg-white shadow-sm text-[#035096]' : 'bg-[#F0F4F9] text-slate-500'}`}>
-                      <Hammer className="w-10 h-10" />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-base text-[#0B2C5C]">Builder/Developer</h3>
-                      <p className="text-xs text-slate-500 mt-0.5">I am a builder/developer</p>
-                    </div>
-                  </div>
-                  <div className={`w-6 h-6 rounded-full border flex items-center justify-center ${
-                    formData.role === 'builder/developer' ? 'bg-[#4885FF] border-[#4885FF]' : 'border-slate-300'
-                  }`}>
-                    {formData.role === 'builder/developer' && <Check className="w-4 h-4 text-white" />}
-                  </div>
-                </div>
+            {/* Residentials */}
+            <div className="mb-10">
+              <h2 className="text-xl font-bold text-black mb-1">Residentials</h2>
+              <p className="text-xs text-slate-400 mb-6">Find the perfect home for you</p>
 
-                {/* Marketing Employee */}
-                <div 
-                  onClick={() => updateFormData({ role: 'marketing employee' })}
-                  className={`flex items-center justify-between p-6 rounded-2xl border cursor-pointer transition-all ${
-                    formData.role === 'marketing employee' 
-                      ? 'border-[#4885FF] bg-[#F0F4F9]/60 shadow-[0_4px_15px_rgba(72,133,255,0.1)]' 
-                      : 'border-slate-100 hover:border-slate-300 bg-white'
-                  }`}
-                >
-                  <div className="flex items-center gap-4">
-                    <div className={`p-4 rounded-2xl ${formData.role === 'marketing employee' ? 'bg-white shadow-sm text-[#035096]' : 'bg-[#F0F4F9] text-slate-500'}`}>
-                      <Briefcase className="w-10 h-10" />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-base text-[#0B2C5C]">Marketing Employee</h3>
-                      <p className="text-xs text-slate-500 mt-0.5">I am a marketing employee</p>
-                    </div>
-                  </div>
-                  <div className={`w-6 h-6 rounded-full border flex items-center justify-center ${
-                    formData.role === 'marketing employee' ? 'bg-[#4885FF] border-[#4885FF]' : 'border-slate-300'
-                  }`}>
-                    {formData.role === 'marketing employee' && <Check className="w-4 h-4 text-white" />}
-                  </div>
-                </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {[
+                  { title: 'High-rise Apts', desc: 'Luxury apartments in towers', icon: Building2 },
+                  { title: 'Standalone Apts', desc: 'Independent apartment complexes', icon: Building },
+                  { title: 'Villa Gated Communities', desc: 'Private villas in secure communities', icon: Home },
+                  { title: 'Independent Houses', desc: 'Stand-alone houses and homes', icon: House },
+                  { title: 'PG/Hostel', desc: 'Paying guest and shared hostels', icon: Hotel },
+                ].map(item => (
+                  <SelectOptionCard
+                    key={item.title}
+                    selected={formData.propertyType === item.title}
+                    onClick={() => {
+                      const updates: Partial<PropertyFormData> = { propertyType: item.title, category: 'Residential' };
+                      if (item.title === 'Independent Houses' || item.title === 'PG/Hostel') {
+                        updates.showAmenitiesOption = 'No';
+                        updates.amenities = [];
+                        updates.landmark = '';
+                        updates.unitInventory = emptyUnitInventory();
+                      } else if (
+                        item.title === 'High-rise Apts' ||
+                        item.title === 'Standalone Apts' ||
+                        item.title === 'Villa Gated Communities'
+                      ) {
+                        const hasBlocks = (formData.unitInventory?.blocks?.length || 0) > 0;
+                        if (!hasBlocks) {
+                          updates.unitInventory = createDefaultUnitInventory();
+                        }
+                      }
+                      updateFormData(updates);
+                    }}
+                    icon={item.icon}
+                    title={item.title}
+                    desc={item.desc}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Commercials */}
+            <div className="mb-10">
+              <h2 className="text-xl font-bold text-[#0B2C5C] mb-1">Commercials</h2>
+              <p className="text-xs text-slate-400 mb-6">Explore commercial spaces and opportunities</p>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {[
+                  { title: 'Office Space', desc: 'Offices and co-working spaces', icon: Briefcase },
+                  { title: 'Shops', desc: 'Retail stores and shops', icon: Store },
+                  { title: 'Showrooms', desc: 'Front-facing displays and showrooms', icon: Presentation },
+                  { title: 'Warehouse/Godown', desc: 'Storage and logistics warehouses', icon: Warehouse },
+                  { title: 'Industrial Buildings', desc: 'Manufacturing plants and facilities', icon: Factory },
+                  { title: 'Industrial Space/shed', desc: 'Industrial sheds and storage yards', icon: LandPlot },
+                ].map(item => (
+                  <SelectOptionCard
+                    key={item.title}
+                    selected={formData.propertyType === item.title}
+                    onClick={() =>
+                      updateFormData({
+                        propertyType: item.title,
+                        category: 'Commercial',
+                        unitInventory: emptyUnitInventory(),
+                      })
+                    }
+                    icon={item.icon}
+                    title={item.title}
+                    desc={item.desc}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Lands */}
+            <div className="mb-10">
+              <h2 className="text-xl font-bold text-[#0B2C5C] mb-1">Lands</h2>
+              <p className="text-xs text-slate-400 mb-6">Invest in land plots or agricultural areas</p>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {[
+                  { title: 'Acre', desc: 'Large area lands and farms', icon: Map },
+                  { title: 'Plots', desc: 'Residential and commercial plots', icon: MapPinned },
+                ].map(item => (
+                  <SelectOptionCard
+                    key={item.title}
+                    selected={formData.propertyType === item.title}
+                    onClick={() => {
+                      const updates: Partial<PropertyFormData> = {
+                        propertyType: item.title,
+                        category: 'Lands',
+                        unitInventory: emptyUnitInventory(),
+                      };
+                      if (item.title === 'Acre' || item.title === 'Plots') {
+                        updates.showAmenitiesOption = 'No';
+                        updates.amenities = [];
+                      }
+                      updateFormData(updates);
+                    }}
+                    icon={item.icon}
+                    title={item.title}
+                    desc={item.desc}
+                  />
+                ))}
               </div>
             </div>
 
@@ -1241,167 +1301,8 @@ export const PostProperty: React.FC = () => {
           </div>
         )}
 
-        {/* --- STEP 2: PROPERTY TYPE --- */}
+        {/* --- STEP 2: PROPERTY DETAILS FORM --- */}
         {currentStep === 2 && (
-          <div className="bg-white rounded-2xl shadow-[0_2px_15px_rgba(0,0,0,0.03)] border border-slate-100 p-8 sm:p-10 text-left">
-            {/* Residentials */}
-            <div className="mb-10">
-              <h2 className="text-xl font-bold text-black mb-1">Residentials</h2>
-              <p className="text-xs text-slate-400 mb-6">Find the perfect home for you</p>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                {[
-                  { title: 'High-rise Apts', desc: 'Luxury apartments in towers', icon: Building2 },
-                  { title: 'Standalone Apts', desc: 'Independent apartment complexes', icon: Building },
-                  { title: 'Villa Gated Communities', desc: 'Private villas in secure communities', icon: Home },
-                  { title: 'Independent Houses', desc: 'Stand-alone houses and homes', icon: House },
-                  { title: 'PG/Hostel', desc: 'Paying guest and shared hostels', icon: Hotel },
-                ].map(item => (
-                  <div 
-                    key={item.title}
-                    onClick={() => {
-                      const updates: Partial<PropertyFormData> = { propertyType: item.title, category: 'Residential' };
-                      if (item.title === 'Independent Houses' || item.title === 'PG/Hostel') {
-                        updates.showAmenitiesOption = 'No';
-                        updates.amenities = [];
-                        updates.landmark = '';
-                      }
-                      updateFormData(updates);
-                    }}
-                    className={`flex items-center justify-between p-5 rounded-2xl border cursor-pointer transition-all ${
-                      formData.propertyType === item.title 
-                        ? 'border-[#4885FF] bg-[#F0F4F9]/60 shadow-[0_4px_15px_rgba(72,133,255,0.1)]' 
-                        : 'border-slate-100 hover:border-slate-300 bg-white'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className={`p-4 rounded-xl ${formData.propertyType === item.title ? 'bg-white text-[#035096]' : 'bg-[#F0F4F9] text-slate-500'}`}>
-                        <item.icon className="w-10 h-10" />
-                      </div>
-                      <div>
-                        <h3 className="font-bold text-sm text-[#0B2C5C]">{item.title}</h3>
-                        <p className="text-[11px] text-slate-400 mt-0.5 leading-tight">{item.desc}</p>
-                      </div>
-                    </div>
-                    <div className={`w-5.5 h-5.5 rounded-full border flex items-center justify-center shrink-0 ${
-                      formData.propertyType === item.title ? 'bg-[#4885FF] border-[#4885FF]' : 'border-slate-300'
-                    }`}>
-                      {formData.propertyType === item.title && <Check className="w-3.5 h-3.5 text-white" />}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Commercials */}
-            <div className="mb-10">
-              <h2 className="text-xl font-bold text-[#0B2C5C] mb-1">Commercials</h2>
-              <p className="text-xs text-slate-400 mb-6">Explore commercial spaces and opportunities</p>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                {[
-                  { title: 'Office Space', desc: 'Offices and co-working spaces', icon: Briefcase },
-                  { title: 'Shops', desc: 'Retail stores and shops', icon: Store },
-                  { title: 'Showrooms', desc: 'Front-facing displays and showrooms', icon: Presentation },
-                  { title: 'Warehouse/Godown', desc: 'Storage and logistics warehouses', icon: Warehouse },
-                  { title: 'Industrial Buildings', desc: 'Manufacturing plants and facilities', icon: Factory },
-                  { title: 'Industrial Space/shed', desc: 'Industrial sheds and storage yards', icon: LandPlot },
-                ].map(item => (
-                  <div 
-                    key={item.title}
-                    onClick={() => updateFormData({ propertyType: item.title, category: 'Commercial' })}
-                    className={`flex items-center justify-between p-5 rounded-2xl border cursor-pointer transition-all ${
-                      formData.propertyType === item.title 
-                        ? 'border-[#4885FF] bg-[#F0F4F9]/60 shadow-[0_4px_15px_rgba(72,133,255,0.1)]' 
-                        : 'border-slate-100 hover:border-slate-300 bg-white'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className={`p-4 rounded-xl ${formData.propertyType === item.title ? 'bg-white text-[#035096]' : 'bg-[#F0F4F9] text-slate-500'}`}>
-                        <item.icon className="w-10 h-10" />
-                      </div>
-                      <div>
-                        <h3 className="font-bold text-sm text-[#0B2C5C]">{item.title}</h3>
-                        <p className="text-[11px] text-slate-400 mt-0.5 leading-tight">{item.desc}</p>
-                      </div>
-                    </div>
-                    <div className={`w-5.5 h-5.5 rounded-full border flex items-center justify-center shrink-0 ${
-                      formData.propertyType === item.title ? 'bg-[#4885FF] border-[#4885FF]' : 'border-slate-300'
-                    }`}>
-                      {formData.propertyType === item.title && <Check className="w-3.5 h-3.5 text-white" />}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Lands */}
-            <div className="mb-10">
-              <h2 className="text-xl font-bold text-[#0B2C5C] mb-1">Lands</h2>
-              <p className="text-xs text-slate-400 mb-6">Invest in land plots or agricultural areas</p>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                {[
-                  { title: 'Acre', desc: 'Large area lands and farms', icon: Map },
-                  { title: 'Plots', desc: 'Residential and commercial plots', icon: MapPinned },
-                ].map(item => (
-                  <div 
-                    key={item.title}
-                    onClick={() => {
-                      const updates: Partial<PropertyFormData> = { propertyType: item.title, category: 'Lands' };
-                      if (item.title === 'Acre' || item.title === 'Plots') {
-                        updates.showAmenitiesOption = 'No';
-                        updates.amenities = [];
-                      }
-                      updateFormData(updates);
-                    }}
-                    className={`flex items-center justify-between p-5 rounded-2xl border cursor-pointer transition-all ${
-                      formData.propertyType === item.title 
-                        ? 'border-[#4885FF] bg-[#F0F4F9]/60 shadow-[0_4px_15px_rgba(72,133,255,0.1)]' 
-                        : 'border-slate-100 hover:border-slate-300 bg-white'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className={`p-4 rounded-xl ${formData.propertyType === item.title ? 'bg-white text-[#035096]' : 'bg-[#F0F4F9] text-slate-500'}`}>
-                        <item.icon className="w-10 h-10" />
-                      </div>
-                      <div>
-                        <h3 className="font-bold text-sm text-[#0B2C5C]">{item.title}</h3>
-                        <p className="text-[11px] text-slate-400 mt-0.5 leading-tight">{item.desc}</p>
-                      </div>
-                    </div>
-                    <div className={`w-5.5 h-5.5 rounded-full border flex items-center justify-center shrink-0 ${
-                      formData.propertyType === item.title ? 'bg-[#4885FF] border-[#4885FF]' : 'border-slate-300'
-                    }`}>
-                      {formData.propertyType === item.title && <Check className="w-3.5 h-3.5 text-white" />}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Bottom Actions */}
-            <div className="flex justify-end gap-5 pt-4 border-t border-slate-100">
-              <button 
-                type="button"
-                onClick={handlePrevious}
-                className="bg-[#035096] hover:bg-[#024078] text-white px-11 py-3.5 rounded-2xl font-semibold text-[17px] transition-colors min-w-[160px] text-center focus:outline-none"
-              >
-                Previous
-              </button>
-              <button 
-                type="button"
-                onClick={handleNext}
-                className="bg-[#035096] hover:bg-[#024078] text-white px-11 py-3.5 rounded-2xl font-semibold text-[17px] transition-colors min-w-[160px] text-center focus:outline-none"
-              >
-                Next
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* --- STEP 3: PROPERTY DETAILS FORM --- */}
-        {currentStep === 3 && (
           <form onSubmit={handleSubmit} className="space-y-8 text-left">
             {isHighRiseAptSell ? (
               <div className="bg-white rounded-2xl shadow-[0_2px_15px_rgba(0,0,0,0.03)] border border-slate-100 p-8 sm:p-10 space-y-10">
@@ -3453,6 +3354,7 @@ export const PostProperty: React.FC = () => {
                       </div>
                       <div className="space-y-2">
                         <label className="block text-xs font-semibold text-slate-500 uppercase">Property on which Floor</label>
+                        {/* Dropdown kept for revert if client asks
                         <CustomSelect 
                           value={formData.floorNumber || 'Cellar 1'}
                           onChange={e => updateFormData({ floorNumber: e.target.value })}
@@ -3472,6 +3374,14 @@ export const PostProperty: React.FC = () => {
                           <option value="9th">9th</option>
                           <option value="10th+">10th+</option>
                         </CustomSelect>
+                        */}
+                        <input
+                          type="text"
+                          placeholder="e.g., Ground, 3rd, 12"
+                          value={formData.floorNumber || ''}
+                          onChange={e => updateFormData({ floorNumber: e.target.value })}
+                          className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800"
+                        />
                       </div>
                       <div className="space-y-2">
                         <label className="block text-xs font-semibold text-slate-500 uppercase">Facing</label>
@@ -3595,6 +3505,17 @@ export const PostProperty: React.FC = () => {
                 </div>
               </>
             )}
+
+                {/* --- Unit / Flat Inventory (apartments & gated communities) --- */}
+                {isApartmentInventory && (
+                  <div className="bg-white">
+                    <UnitInventorySection
+                      value={formData.unitInventory || emptyUnitInventory()}
+                      onChange={(unitInventory) => updateFormData({ unitInventory })}
+                      unitLabel={inventoryUnitLabel}
+                    />
+                  </div>
+                )}
 
                 {/* --- Amenities & Features Section --- */}
                 {!isLandsAcre && !isLandsPlots && (
@@ -4691,8 +4612,8 @@ export const PostProperty: React.FC = () => {
           </form>
         )}
 
-        {/* --- STEP 4: REVIEW & SUBMIT (PREVIEW LAYOUT) --- */}
-        {currentStep === 4 && (
+        {/* --- STEP 3: REVIEW & SUBMIT (PREVIEW LAYOUT) --- */}
+        {currentStep === 3 && (
           <div className="space-y-8 text-left">
             <div className="bg-white rounded-2xl shadow-[0_2px_15px_rgba(0,0,0,0.03)] border border-slate-100 p-8 sm:p-10">
               
@@ -4774,6 +4695,48 @@ export const PostProperty: React.FC = () => {
                           <span className="text-[11px] font-semibold text-slate-400 block uppercase">Furnishing</span>
                           <span className="text-sm font-bold text-[#0B2C5C] mt-1 block">{formData.furnishing || 'N/A'}</span>
                         </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {isApartmentInventory && (formData.unitInventory?.blocks?.length || 0) > 0 && (
+                    <div>
+                      <h3 className="text-lg font-bold text-[#0B2C5C] mb-4">
+                        {inventoryUnitLabel === 'villas' ? 'Villa' : 'Flat'} Inventory
+                      </h3>
+                      <div className="space-y-3">
+                        {formData.unitInventory!.blocks.map((block) => {
+                          const flats = block.floors.flatMap((f) => f.flats);
+                          const counts = {
+                            available: flats.filter((f) => f.status === 'available').length,
+                            occupied: flats.filter((f) => f.status === 'occupied').length,
+                            sold: flats.filter((f) => f.status === 'sold').length,
+                            mortgage: flats.filter((f) => f.status === 'mortgage').length,
+                          };
+                          return (
+                            <div
+                              key={block.id}
+                              className="p-4 bg-[#F0F4F9]/60 rounded-xl border border-slate-100"
+                            >
+                              <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                                <span className="text-sm font-bold text-[#0B2C5C]">{block.name}</span>
+                                <span className="text-xs text-slate-500">
+                                  {block.floors.length} floors · {flats.length} {inventoryUnitLabel}
+                                </span>
+                              </div>
+                              <div className="flex flex-wrap gap-3">
+                                {(Object.keys(FLAT_STATUS_META) as Array<keyof typeof FLAT_STATUS_META>).map(
+                                  (status) => (
+                                    <div key={status} className="flex items-center gap-1.5 text-xs text-slate-700">
+                                      <span className={`h-3 w-3 rounded-sm ${FLAT_STATUS_META[status].swatch}`} />
+                                      {FLAT_STATUS_META[status].label}: {counts[status]}
+                                    </div>
+                                  )
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
                   )}

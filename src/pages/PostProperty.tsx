@@ -2,13 +2,23 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { PropertyLocationMap } from '@/components/map/PropertyLocationMap';
+import { DatePicker } from '@/components/ui/DatePicker';
 import {
   UnitInventorySection,
-  createDefaultUnitInventory,
   emptyUnitInventory,
   type UnitInventoryData,
   FLAT_STATUS_META,
 } from '@/components/property/UnitInventorySection';
+import {
+  AmenitiesPopup,
+  countFurnishingSelections,
+  flattenAmenitiesPopup,
+} from '@/components/property/AmenitiesPopup';
+import {
+  MediaUploadSection,
+  getMediaCategories,
+  type MediaItem,
+} from '@/components/property/MediaUploadSection';
 import { 
   Building2,
   Building,
@@ -82,7 +92,10 @@ interface PropertyFormData {
   pricePerSqft: string;
 
   // Amenities
-  amenities: string[]; 
+  amenities: string[];
+  furnishingSelections?: string[];
+  furnishingCounts?: Record<string, number>;
+  societyAmenitySelections?: string[]; 
 
   // Location
   city: string;
@@ -95,8 +108,8 @@ interface PropertyFormData {
   fullAddress: string;
 
   // Media
-  images: File[];
-  imagePreviews: string[];
+  media: MediaItem[];
+  thumbnailId: string;
   videoUrl: string;
   floorPlanUrl: string;
 
@@ -132,6 +145,9 @@ interface PropertyFormData {
   otherTaxes?: string;
   priceNegotiable?: string;
   brokerageCharge?: string; 
+  brokerageOnPropertyValue?: string;
+  brokerageOnRentValue?: string;
+  brokerageOnRentUnit?: string; 
   showAmenitiesOption?: string; 
   boostPostOption?: string; 
   rentPerMonth?: string;
@@ -223,87 +239,26 @@ interface PropertyFormData {
   room_type?: string;
   sharing_room?: string;
   pg_hostel_name?: string;
+  attachedBathroom?: string;
+  acRoomsAvailable?: string;
+  pgMoreBrief?: string;
+  pgPrivateRooms?: string;
+  pgSharingRooms?: string;
+  pgTotalBeds?: string;
+  pgBedsFilled?: string;
+  pgFeeDeposit?: string;
+  pgFeeAdvanceDeposit?: string;
+  pgEmployeeDeposits?: string;
+  pgTvCount?: string;
+  pgGeysersCount?: string;
+  pgWashingMachineCount?: string;
+  pgBuildingDeposit?: string;
+  pgBuildingRentPerMonth?: string;
+  pgOutrightSellPrice?: string;
 
   /** Multi-unit inventory for apartments / gated communities */
   unitInventory?: UnitInventoryData;
 }
-
-const amenityCategories = {
-  "Children's Play Area": [
-    "Dedicated, safe playgrounds with swings, slides etc",
-    "Sandpits"
-  ],
-  "Community Services & Management": [
-    "Resident Association/Management Committee: For smooth functioning and decision-making",
-    "Community Events: Organized festivals, sports tournaments and social gathering",
-    "App-Based Community Management: For communication, raising requests and payments"
-  ],
-  "Convenience & Lifestyle": [
-    "Business Center",
-    "Library/Reading Room",
-    "Retail/Commercial Spaces (within the community)",
-    "Power backup: 24/7 generator backup",
-    "Water Supply",
-    "Intercom",
-    "Video Door Phone",
-    "High Speed Internet / wi-fi",
-    "Ample Parking",
-    "Maintenance Staff",
-    "Convenience stores/ Supermarket",
-    "Cafeteria/Restaurant",
-    "Salon/Spa",
-    "Pharmacy",
-    "Service Apartments",
-    "Guest Rooms",
-    "Amphitheater/Mini-Theater",
-    "Creche/Daycare facility",
-    "Co-working Spaces"
-  ],
-  "Indoor Games": [
-    "Carrom, Chess, and other board games.",
-    "Billiards/Pool Table",
-    "Table Tennis"
-  ],
-  "Landscaped Gardens & Parks": [
-    "Seating areas, gazebos.",
-    "Green spaces for relaxation and strolls"
-  ],
-  "Outdoor Sports Facilities": [
-    "Badminton Courts",
-    "Basketball Courts",
-    "Cricket Practice Net",
-    "Football/ Multi-purpose Sports Field",
-    "Jogging/Walking Tracks",
-    "Themed gardens (e.g., sensory gardens, herbs gardens)",
-    "Tennis Courts"
-  ],
-  "Recreational & Leisure/Clubhouse/Community Hall": [
-    "Aerobics / Zumba Studio",
-    "Lounge areas and seating.",
-    "Party lawns or banquet facilities",
-    "Swimming Pool",
-    "Fitness & Wellness",
-    "Gymnasium / Fitness Center",
-    "Yoga / Meditation Room",
-    "Spa/ Sauna/ Steam Room",
-    "Multipurpose halls for events and gatherings."
-  ],
-  "Security & Safety": [
-    "Intercom Facility",
-    "Boom Barriers",
-    "24/7 Manned Security",
-    "CCTV Surveillance",
-    "Controlled Access points",
-    "Perimeter Fencing/ Walls"
-  ],
-  "Sustainable & Eco-Friendly": [
-    "Electric Vehicle charging stations",
-    "Waste Segregation and Composting Facilities",
-    "Sewage Treatment Plant",
-    "Solar Panels for Common Area Lighting",
-    "Rainwater Harvesting System"
-  ]
-};
 
 const ORR_EXIT_OPTIONS = [
   'Exit 1: Kokapet',
@@ -363,9 +318,13 @@ const CustomSelect: React.FC<{
   React.Children.forEach(children, (child) => {
     if (React.isValidElement(child) && child.type === 'option') {
       const element = child as React.ReactElement<{ value?: any; children?: any }>;
+      const rawLabel = element.props.children;
+      const label = Array.isArray(rawLabel)
+        ? rawLabel.map((part) => (typeof part === 'string' || typeof part === 'number' ? String(part) : '')).join('').replace(/\s+/g, ' ').trim()
+        : String(rawLabel ?? '');
       options.push({
         value: String(element.props.value || ''),
-        label: String(element.props.children || '')
+        label
       });
     }
   });
@@ -498,6 +457,9 @@ const initialFormData: PropertyFormData = {
   maintenanceCharges: '',
   pricePerSqft: '',
   amenities: [],
+  furnishingSelections: [],
+  furnishingCounts: {},
+  societyAmenitySelections: [],
   city: '',
   locality: '',
   landmark: '',
@@ -506,8 +468,8 @@ const initialFormData: PropertyFormData = {
   metroDistance: '',
   mmtsDistance: '',
   fullAddress: '',
-  images: [],
-  imagePreviews: [],
+  media: [],
+  thumbnailId: '',
   videoUrl: '',
   floorPlanUrl: '',
   contactName: '',
@@ -541,13 +503,16 @@ const initialFormData: PropertyFormData = {
   otherTaxes: 'Include',
   priceNegotiable: 'Yes',
   brokerageCharge: 'No',
+  brokerageOnPropertyValue: '',
+  brokerageOnRentValue: '15',
+  brokerageOnRentUnit: 'Days',
   showAmenitiesOption: 'No',
   boostPostOption: 'regular',
   rentPerMonth: '',
   rentFor: '',
   securityDepositType: 'Months',
   securityDepositVal: '',
-  maintenanceAmountType: 'Select M',
+  maintenanceAmountType: '1',
   maintenanceAmountVal: '',
   seatingsCount: '',
   receptionAvailable: 'Select',
@@ -608,6 +573,22 @@ const initialFormData: PropertyFormData = {
   room_type: 'Sharing',
   sharing_room: '1',
   pg_hostel_name: '',
+  attachedBathroom: 'Select',
+  acRoomsAvailable: 'Select',
+  pgMoreBrief: '',
+  pgPrivateRooms: '',
+  pgSharingRooms: '',
+  pgTotalBeds: '',
+  pgBedsFilled: '',
+  pgFeeDeposit: '',
+  pgFeeAdvanceDeposit: '',
+  pgEmployeeDeposits: '',
+  pgTvCount: '',
+  pgGeysersCount: '',
+  pgWashingMachineCount: '',
+  pgBuildingDeposit: '',
+  pgBuildingRentPerMonth: '',
+  pgOutrightSellPrice: '',
   unitInventory: emptyUnitInventory(),
 };
 
@@ -629,6 +610,7 @@ export const PostProperty: React.FC = () => {
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [formData, setFormData] = useState<PropertyFormData>(initialFormData);
   const [validationError, setValidationError] = useState<string>('');
+  const [amenitiesPopupOpen, setAmenitiesPopupOpen] = useState(false);
 
   if (!isAuthenticated || user?.role !== 'agent') {
     return null;
@@ -642,6 +624,7 @@ export const PostProperty: React.FC = () => {
   const isCommercialShowroom = formData.category === 'Commercial' && formData.propertyType === 'Showrooms' && (formData.intent === 'sell' || formData.intent === 'rent');
   const isCommercialShop = formData.category === 'Commercial' && formData.propertyType === 'Shops' && (formData.intent === 'sell' || formData.intent === 'rent');
   const isCommercialOfficeSpace = formData.category === 'Commercial' && formData.propertyType === 'Office Space' && (formData.intent === 'sell' || formData.intent === 'rent');
+  const isPgHostel = formData.category === 'Residential' && formData.propertyType === 'PG/Hostel' && (formData.intent === 'sell' || formData.intent === 'rent');
   const isHighRiseAptSell = (formData.category === 'Residential' && (formData.intent === 'sell' || formData.intent === 'rent')) || isCommercialOfficeSpace || isCommercialShop || isCommercialShowroom || isCommercialGodown || isCommercialIndustrial || isCommercialShed || isLandsAcre || isLandsPlots;
   const isAmenitiesDisabled = formData.propertyType === 'Independent Houses' || formData.propertyType === 'PG/Hostel' || isLandsAcre || isLandsPlots;
   const isApartmentInventory =
@@ -656,6 +639,82 @@ export const PostProperty: React.FC = () => {
     setFormData(prev => ({ ...prev, ...fields }));
     setValidationError('');
   };
+
+  const clampPgBrief = (value: string) => {
+    const words = value.match(/\S+/g);
+    if (!words || words.length <= 400) return value;
+    return words.slice(0, 400).join(' ');
+  };
+
+  const clampPgRange = (value: string, min: number, max: number) => {
+    if (value === '') return '';
+    const n = Number(value);
+    if (Number.isNaN(n)) return '';
+    return String(Math.min(max, Math.max(min, Math.trunc(n))));
+  };
+
+  const rentPricingFields = (
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
+      <div className="space-y-2">
+        <label className="block text-xs font-semibold text-slate-500 uppercase">Rent per month</label>
+        <input
+          type="text"
+          inputMode="numeric"
+          placeholder="e.g. 15000"
+          value={formData.rentPerMonth || ''}
+          onChange={e => updateFormData({ rentPerMonth: e.target.value.replace(/[^\d]/g, '') })}
+          className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800"
+        />
+      </div>
+      <div className="space-y-2">
+        <label className="block text-xs font-semibold text-slate-500 uppercase">Security Deposit</label>
+        <div className="flex rounded-xl border border-slate-200 focus-within:border-[#4885FF] overflow-hidden">
+          <input
+            type="text"
+            inputMode="numeric"
+            placeholder="Number"
+            value={formData.securityDepositVal || ''}
+            onChange={e => updateFormData({ securityDepositVal: e.target.value.replace(/[^\d]/g, '') })}
+            className="w-full px-4 py-3 focus:outline-none text-sm text-slate-800"
+          />
+          <CustomSelect
+            value={formData.securityDepositType || 'Months'}
+            onChange={e => updateFormData({ securityDepositType: e.target.value })}
+            className="px-3 min-w-[7.5rem] bg-slate-50 border-l border-slate-200 focus:outline-none text-sm text-slate-600 bg-white"
+          >
+            <option value="Months">Months</option>
+            <option value="Years">Years</option>
+          </CustomSelect>
+        </div>
+      </div>
+      <div className="space-y-2">
+        <label className="block text-xs font-semibold text-slate-500 uppercase">Maintenance Amount</label>
+        <div className="flex rounded-xl border border-slate-200 focus-within:border-[#4885FF] overflow-hidden">
+          <input
+            type="text"
+            inputMode="numeric"
+            placeholder="e.g. 1000"
+            value={formData.maintenanceAmountVal || ''}
+            onChange={e => updateFormData({ maintenanceAmountVal: e.target.value.replace(/[^\d]/g, '') })}
+            className="w-full px-4 py-3 focus:outline-none text-sm text-slate-800"
+          />
+          <CustomSelect
+            value={formData.maintenanceAmountType || '1'}
+            onChange={e => updateFormData({ maintenanceAmountType: e.target.value })}
+            className="px-3 min-w-[8.5rem] bg-slate-50 border-l border-slate-200 focus:outline-none text-sm text-slate-600 bg-white"
+          >
+            {Array.from({ length: 12 }, (_, i) => {
+              const month = String(i + 1);
+              const label = month === '1' ? '1 Month' : `${month} Months`;
+              return (
+                <option key={month} value={month}>{label}</option>
+              );
+            })}
+          </CustomSelect>
+        </div>
+      </div>
+    </div>
+  );
 
   const handleBedroomCountChange = (value: string) => {
     const count = parseInt(value) || 0;
@@ -727,27 +786,12 @@ export const PostProperty: React.FC = () => {
     updateFormData({ otherRoomsList: updated });
   };
 
-  const toggleCategoryAmenities = (category: keyof typeof amenityCategories) => {
-    const subItems = amenityCategories[category];
-    const allSelected = subItems.every(item => formData.amenities.includes(item));
-    
-    let updatedAmenities = [...formData.amenities];
-    if (allSelected) {
-      updatedAmenities = updatedAmenities.filter(item => !subItems.includes(item));
-    } else {
-      subItems.forEach(item => {
-        if (!updatedAmenities.includes(item)) {
-          updatedAmenities.push(item);
-        }
-      });
-    }
-    updateFormData({ amenities: updatedAmenities });
+  const amenitiesPopupValue = {
+    furnishings: formData.furnishingSelections || [],
+    counts: formData.furnishingCounts || {},
+    society: formData.societyAmenitySelections || [],
   };
-
-  const isCategoryChecked = (category: keyof typeof amenityCategories) => {
-    const subItems = amenityCategories[category];
-    return subItems.every(item => formData.amenities.includes(item));
-  };
+  const selectedAmenityLabels = flattenAmenitiesPopup(amenitiesPopupValue);
 
   // Helper validation for steps
   const validateStep = (step: number): boolean => {
@@ -800,6 +844,15 @@ export const PostProperty: React.FC = () => {
           if (!formData.expectedPrice) {
             formData.expectedPrice = formData.totalCost || '0';
           }
+        } else if (isPgHostel) {
+          if (!formData.locality) return triggerError('Locality is required.');
+          if (formData.intent === 'sell') {
+            if (!formData.pgOutrightSellPrice) return triggerError('Outright sell price is required.');
+            formData.expectedPrice = formData.pgOutrightSellPrice;
+          } else if (!formData.rentPerMonth) {
+            return triggerError('Per Month Fee is required.');
+          }
+          if (!formData.totalAreaVal) formData.totalAreaVal = '0';
         } else {
           if (!formData.locality) return triggerError('Locality is required.');
           if (!formData.totalAreaVal && (isCommercialOfficeSpace || isCommercialShop || isCommercialShowroom || isCommercialGodown || isCommercialIndustrial || isCommercialShed) && formData.propertyAreaVal) {
@@ -832,6 +885,8 @@ export const PostProperty: React.FC = () => {
           ? `${formData.landAcre || '0'} Acre Lands in ${formData.village || 'Locality'}`
           : isLandsPlots
           ? `${formData.plotAreaSqYds || '0'} Sq.Yds Plot in ${formData.village || 'Locality'}`
+          : isPgHostel
+          ? `${formData.pg_hostel_name || 'PG/Hostel'} in ${formData.locality || 'Premium Locality'}`
           : isComm 
           ? `${bedroomStr} Commercial ${propTypeLabel} in ${projName}`
           : `${bedroomStr} ${propTypeLabel} in ${projName}`;
@@ -839,6 +894,8 @@ export const PostProperty: React.FC = () => {
           ? `Premium Lands of ${formData.landAcre || '0'} Acres and ${formData.landGuntas || '0'} Guntas in ${formData.village || 'Locality'}. Boundary: ${formData.boundary || 'N/A'}, soil type: ${formData.soilType || 'N/A'}, nature of land: ${formData.natureOfLand || 'N/A'}.`
           : isLandsPlots
           ? `Premium Plot of ${formData.plotAreaSqYds || '0'} Sq.Yds in ${formData.village || 'Locality'}. Facing: ${formData.facing || 'N/A'}, corner plot: ${formData.cornerPlot || 'No'}.`
+          : isPgHostel
+          ? `${formData.pg_hostel_name || 'PG/Hostel'} ${formData.intent === 'rent' ? 'for rent' : 'for sale'} in ${formData.locality || 'Premium Locality'}.${formData.pgMoreBrief ? ' ' + formData.pgMoreBrief : ''}`
           : isComm 
           ? ((isCommercialOfficeSpace || isCommercialIndustrial)
             ? `Premium Commercial ${propTypeLabel} with ${formData.seatingsCount || '0'} seats and ${formData.cabinsCount || '0'} cabins ${formData.intent === 'rent' ? 'for rent' : 'for sale'} in ${projName}. Features: ${formData.furnishing || 'Unfurnished'}, facing ${formData.facing || 'East'}.`
@@ -878,7 +935,7 @@ export const PostProperty: React.FC = () => {
         if (!formData.locality) return triggerError('Locality is required.');
         if (!formData.pinCode) return triggerError('Pin Code is required.');
         if (!formData.fullAddress) return triggerError('Full Address is required.');
-        if (formData.images.length < 3) {
+        if ((formData.media || []).filter(item => item.kind === 'image').length < 3) {
           return triggerError('Please upload at least 3 property images.');
         }
         if (!formData.contactName) return triggerError('Contact Name is required.');
@@ -935,26 +992,29 @@ export const PostProperty: React.FC = () => {
     navigate('/');
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const filesArray = Array.from(e.target.files);
-      const newPreviews = filesArray.map(file => URL.createObjectURL(file));
+  const mediaItems = formData.media || [];
 
-      updateFormData({
-        images: [...formData.images, ...filesArray],
-        imagePreviews: [...formData.imagePreviews, ...newPreviews],
-      });
-    }
-  };
+  const mediaCategories = getMediaCategories({
+    category: formData.category,
+    propertyType: formData.propertyType,
+    bedroomCount: formData.bedroomCount,
+  });
 
-  const removeImage = (index: number) => {
-    const updatedImages = formData.images.filter((_, i) => i !== index);
-    const updatedPreviews = formData.imagePreviews.filter((_, i) => i !== index);
-    updateFormData({
-      images: updatedImages,
-      imagePreviews: updatedPreviews
-    });
-  };
+  const uploadedImages = mediaItems.filter(item => item.kind === 'image');
+
+  const galleryPreviews = [
+    ...uploadedImages.filter(item => item.id === formData.thumbnailId),
+    ...uploadedImages.filter(item => item.id !== formData.thumbnailId),
+  ].map(item => item.preview);
+
+  const mediaUploadSection = (
+    <MediaUploadSection
+      items={mediaItems}
+      thumbnailId={formData.thumbnailId || ''}
+      categories={mediaCategories}
+      onChange={({ items, thumbnailId }) => updateFormData({ media: items, thumbnailId })}
+    />
+  );
 
   const toggleSelection = (field: 'suitableFor' | 'amenities' | 'propertyFeatures' | 'suitableForCommercial' | 'utilities', item: string) => {
     const list = formData[field] as string[];
@@ -972,8 +1032,8 @@ export const PostProperty: React.FC = () => {
           <p className="text-sm text-slate-500 mt-1">List your property and reach millions of buyers</p>
         </div>
 
-        {/* Stepper Header */}
-        <div className="bg-white rounded-2xl shadow-[0_2px_15px_rgba(0,0,0,0.03)] border border-slate-100 p-8 mb-8">
+        {/* Stepper Header — sticks below the site navbar while scrolling */}
+        <div className="sticky top-[88px] z-40 bg-white rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.08)] border border-slate-100 p-8 mb-8">
           <div className="flex items-center justify-between w-full mb-6 overflow-x-auto pb-2 scrollbar-none">
             {/* Step 1: Intent + Type */}
             <div 
@@ -1175,117 +1235,149 @@ export const PostProperty: React.FC = () => {
             </div>
 
             {/* Property Type (combined into Step 1) */}
-            <div className="mb-8 pt-6 border-t border-slate-100">
+            <div className="mb-10 pt-6 border-t border-slate-100">
               <h2 className="text-xl font-bold text-black mb-1">Select property type</h2>
-              <p className="text-xs text-slate-400 mb-2">Choose the category that best matches your listing.</p>
-            </div>
+              <p className="text-xs text-slate-400 mb-5">Choose the category that best matches your listing.</p>
 
-            {/* Residentials */}
-            <div className="mb-10">
-              <h2 className="text-xl font-bold text-black mb-1">Residentials</h2>
-              <p className="text-xs text-slate-400 mb-6">Find the perfect home for you</p>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="flex w-full overflow-hidden rounded-full border border-slate-300 divide-x divide-slate-300 mb-8">
                 {[
-                  { title: 'High-rise Apts', desc: 'Luxury apartments in towers', icon: Building2 },
-                  { title: 'Standalone Apts', desc: 'Independent apartment complexes', icon: Building },
-                  { title: 'Villa Gated Communities', desc: 'Private villas in secure communities', icon: Home },
-                  { title: 'Independent Houses', desc: 'Stand-alone houses and homes', icon: House },
-                  { title: 'PG/Hostel', desc: 'Paying guest and shared hostels', icon: Hotel },
-                ].map(item => (
-                  <SelectOptionCard
-                    key={item.title}
-                    selected={formData.propertyType === item.title}
-                    onClick={() => {
-                      const updates: Partial<PropertyFormData> = { propertyType: item.title, category: 'Residential' };
-                      if (item.title === 'Independent Houses' || item.title === 'PG/Hostel') {
-                        updates.showAmenitiesOption = 'No';
-                        updates.amenities = [];
-                        updates.landmark = '';
-                        updates.unitInventory = emptyUnitInventory();
-                      } else if (
-                        item.title === 'High-rise Apts' ||
-                        item.title === 'Standalone Apts' ||
-                        item.title === 'Villa Gated Communities'
-                      ) {
-                        const hasBlocks = (formData.unitInventory?.blocks?.length || 0) > 0;
-                        if (!hasBlocks) {
-                          updates.unitInventory = createDefaultUnitInventory();
+                  { key: 'Residential' as const, label: 'Residential', icon: Home },
+                  { key: 'Commercial' as const, label: 'Commercial', icon: Building2 },
+                  { key: 'Lands' as const, label: 'Land', icon: MapPin },
+                ].map((item) => {
+                  const selected = (formData.category || 'Residential') === item.key;
+                  return (
+                    <button
+                      key={item.key}
+                      type="button"
+                      onClick={() => {
+                        if (formData.category === item.key) return;
+                        const updates: Partial<PropertyFormData> = {
+                          category: item.key,
+                          propertyType: '',
+                          unitInventory: emptyUnitInventory(),
+                        };
+                        if (item.key === 'Lands') {
+                          updates.showAmenitiesOption = 'No';
+                          updates.amenities = [];
+                          updates.furnishingSelections = [];
+                          updates.furnishingCounts = {};
+                          updates.societyAmenitySelections = [];
                         }
-                      }
-                      updateFormData(updates);
-                    }}
-                    icon={item.icon}
-                    title={item.title}
-                    desc={item.desc}
-                  />
-                ))}
+                        updateFormData(updates);
+                      }}
+                      className={`flex-1 flex items-center justify-center gap-2 py-3 px-2 text-sm font-semibold transition-colors ${
+                        selected
+                          ? 'bg-[#4A90E2] text-white'
+                          : 'bg-white text-slate-700 hover:bg-slate-50'
+                      }`}
+                    >
+                      <item.icon className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" strokeWidth={1.75} />
+                      <span>{item.label}</span>
+                    </button>
+                  );
+                })}
               </div>
-            </div>
 
-            {/* Commercials */}
-            <div className="mb-10">
-              <h2 className="text-xl font-bold text-[#0B2C5C] mb-1">Commercials</h2>
-              <p className="text-xs text-slate-400 mb-6">Explore commercial spaces and opportunities</p>
+              {(formData.category || 'Residential') === 'Residential' && (
+                <div>
+                  <p className="text-xs text-slate-400 mb-6">Find the perfect home for you</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {[
+                      { title: 'High-rise Apts', desc: 'Luxury apartments in towers', icon: Building2 },
+                      { title: 'Standalone Apts', desc: 'Independent apartment complexes', icon: Building },
+                      { title: 'Villa Gated Communities', desc: 'Private villas in secure communities', icon: Home },
+                      { title: 'Independent Houses', desc: 'Stand-alone houses and homes', icon: House },
+                      { title: 'PG/Hostel', desc: 'Paying guest and shared hostels', icon: Hotel },
+                    ].map(item => (
+                      <SelectOptionCard
+                        key={item.title}
+                        selected={formData.propertyType === item.title}
+                        onClick={() => {
+                          const updates: Partial<PropertyFormData> = { propertyType: item.title, category: 'Residential' };
+                          if (item.title === 'Independent Houses' || item.title === 'PG/Hostel') {
+                            updates.showAmenitiesOption = 'No';
+                            updates.amenities = [];
+                            updates.furnishingSelections = [];
+                            updates.furnishingCounts = {};
+                            updates.societyAmenitySelections = [];
+                            updates.landmark = '';
+                            updates.unitInventory = emptyUnitInventory();
+                          }
+                          updateFormData(updates);
+                        }}
+                        icon={item.icon}
+                        title={item.title}
+                        desc={item.desc}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {[
-                  { title: 'Office Space', desc: 'Offices and co-working spaces', icon: Briefcase },
-                  { title: 'Shops', desc: 'Retail stores and shops', icon: Store },
-                  { title: 'Showrooms', desc: 'Front-facing displays and showrooms', icon: Presentation },
-                  { title: 'Warehouse/Godown', desc: 'Storage and logistics warehouses', icon: Warehouse },
-                  { title: 'Industrial Buildings', desc: 'Manufacturing plants and facilities', icon: Factory },
-                  { title: 'Industrial Space/shed', desc: 'Industrial sheds and storage yards', icon: LandPlot },
-                ].map(item => (
-                  <SelectOptionCard
-                    key={item.title}
-                    selected={formData.propertyType === item.title}
-                    onClick={() =>
-                      updateFormData({
-                        propertyType: item.title,
-                        category: 'Commercial',
-                        unitInventory: emptyUnitInventory(),
-                      })
-                    }
-                    icon={item.icon}
-                    title={item.title}
-                    desc={item.desc}
-                  />
-                ))}
-              </div>
-            </div>
+              {formData.category === 'Commercial' && (
+                <div>
+                  <p className="text-xs text-slate-400 mb-6">Explore commercial spaces and opportunities</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {[
+                      { title: 'Office Space', desc: 'Offices and co-working spaces', icon: Briefcase },
+                      { title: 'Shops', desc: 'Retail stores and shops', icon: Store },
+                      { title: 'Showrooms', desc: 'Front-facing displays and showrooms', icon: Presentation },
+                      { title: 'Warehouse/Godown', desc: 'Storage and logistics warehouses', icon: Warehouse },
+                      { title: 'Industrial Buildings', desc: 'Manufacturing plants and facilities', icon: Factory },
+                      { title: 'Industrial Space/shed', desc: 'Industrial sheds and storage yards', icon: LandPlot },
+                    ].map(item => (
+                      <SelectOptionCard
+                        key={item.title}
+                        selected={formData.propertyType === item.title}
+                        onClick={() =>
+                          updateFormData({
+                            propertyType: item.title,
+                            category: 'Commercial',
+                            unitInventory: emptyUnitInventory(),
+                          })
+                        }
+                        icon={item.icon}
+                        title={item.title}
+                        desc={item.desc}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
 
-            {/* Lands */}
-            <div className="mb-10">
-              <h2 className="text-xl font-bold text-[#0B2C5C] mb-1">Lands</h2>
-              <p className="text-xs text-slate-400 mb-6">Invest in land plots or agricultural areas</p>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {[
-                  { title: 'Acre', desc: 'Large area lands and farms', icon: Map },
-                  { title: 'Plots', desc: 'Residential and commercial plots', icon: MapPinned },
-                ].map(item => (
-                  <SelectOptionCard
-                    key={item.title}
-                    selected={formData.propertyType === item.title}
-                    onClick={() => {
-                      const updates: Partial<PropertyFormData> = {
-                        propertyType: item.title,
-                        category: 'Lands',
-                        unitInventory: emptyUnitInventory(),
-                      };
-                      if (item.title === 'Acre' || item.title === 'Plots') {
-                        updates.showAmenitiesOption = 'No';
-                        updates.amenities = [];
-                      }
-                      updateFormData(updates);
-                    }}
-                    icon={item.icon}
-                    title={item.title}
-                    desc={item.desc}
-                  />
-                ))}
-              </div>
+              {formData.category === 'Lands' && (
+                <div>
+                  <p className="text-xs text-slate-400 mb-6">Invest in land plots or agricultural areas</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {[
+                      { title: 'Acre', desc: 'Large area lands and farms', icon: Map },
+                      { title: 'Plots', desc: 'Residential and commercial plots', icon: MapPinned },
+                    ].map(item => (
+                      <SelectOptionCard
+                        key={item.title}
+                        selected={formData.propertyType === item.title}
+                        onClick={() => {
+                          const updates: Partial<PropertyFormData> = {
+                            propertyType: item.title,
+                            category: 'Lands',
+                            unitInventory: emptyUnitInventory(),
+                          };
+                          updates.showAmenitiesOption = 'No';
+                          updates.amenities = [];
+                          updates.furnishingSelections = [];
+                          updates.furnishingCounts = {};
+                          updates.societyAmenitySelections = [];
+                          updateFormData(updates);
+                        }}
+                        icon={item.icon}
+                        title={item.title}
+                        desc={item.desc}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Bottom Actions */}
@@ -1752,6 +1844,12 @@ export const PostProperty: React.FC = () => {
                         sublocality={formData.sublocality || ''}
                       />
                     </div>
+                    {formData.intent === 'rent' && (
+                      <div>
+                        <h3 className="text-lg font-bold text-[#0B2C5C] mb-4 pb-2 border-b border-slate-100">Rental Details</h3>
+                        {rentPricingFields}
+                      </div>
+                    )}
                   </>
                 ) : isLandsPlots ? (
                   <>
@@ -2305,33 +2403,49 @@ export const PostProperty: React.FC = () => {
                         sublocality={formData.sublocality || ''}
                       />
                     </div>
+                    {formData.intent === 'rent' && (
+                      <div>
+                        <h3 className="text-lg font-bold text-[#0B2C5C] mb-4 pb-2 border-b border-slate-100">Rental Details</h3>
+                        {rentPricingFields}
+                      </div>
+                    )}
                   </>
                 ) : (
                   <>
                     {/* --- Locality Details Section --- */}
                 <div>
                   <h3 className="text-lg font-bold text-[#0B2C5C] mb-4 pb-2 border-b border-slate-100">Locality Details</h3>
-                  <div className={`grid grid-cols-1 sm:grid-cols-2 ${(formData.intent === 'rent' && !(isCommercialOfficeSpace || isCommercialIndustrial || isCommercialShed)) ? 'md:grid-cols-3' : 'md:grid-cols-4'} gap-6`}>
+                  <div className={`grid grid-cols-1 sm:grid-cols-2 ${
+                    isCommercialShed || isCommercialIndustrial || isCommercialGodown || isCommercialShowroom || isPgHostel || (formData.intent === 'rent' && !isCommercialOfficeSpace)
+                      ? 'md:grid-cols-2'
+                      : 'md:grid-cols-3'
+                  } gap-6`}>
                     <div className="space-y-2">
-                      <label className="block text-xs font-semibold text-slate-500 uppercase">(by) Area</label>
-                      <input 
-                        type="text" 
-                        placeholder="Area"
-                        value={formData.byArea || ''}
-                        onChange={e => updateFormData({ byArea: e.target.value })}
-                        className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800"
-                      />
+                      <label className="block text-xs font-semibold text-slate-500 uppercase">
+                        Area, Locality <span className="text-red-500">*</span>
+                      </label>
+                      <div className="flex items-center w-full px-3 py-3 rounded-xl border border-slate-200 focus-within:border-[#4885FF] bg-white">
+                        <MapPin className="w-4 h-4 text-[#035096] shrink-0 mr-2" />
+                        <input
+                          type="text"
+                          placeholder="Area"
+                          aria-label="Area"
+                          value={formData.byArea || ''}
+                          onChange={e => updateFormData({ byArea: e.target.value })}
+                          className="min-w-0 flex-1 bg-transparent focus:outline-none text-sm text-slate-800 placeholder:text-slate-400"
+                        />
+                        <span className="px-1.5 text-slate-400 select-none">,</span>
+                        <input
+                          type="text"
+                          placeholder="Locality"
+                          aria-label="Locality"
+                          value={formData.locality || ''}
+                          onChange={e => updateFormData({ locality: e.target.value })}
+                          className="min-w-0 flex-1 bg-transparent focus:outline-none text-sm text-slate-800 placeholder:text-slate-400"
+                        />
+                      </div>
                     </div>
-                    <div className="space-y-2">
-                      <label className="block text-xs font-semibold text-slate-500 uppercase">Locality <span className="text-red-500">*</span></label>
-                      <input 
-                        type="text" 
-                        placeholder="Locality"
-                        value={formData.locality || ''}
-                        onChange={e => updateFormData({ locality: e.target.value })}
-                        className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800"
-                      />
-                    </div>
+                    {!(isCommercialShed || isCommercialIndustrial || isCommercialGodown || isCommercialShowroom || isPgHostel) && (
                     <div className="space-y-2">
                       <label className="block text-xs font-semibold text-slate-500 uppercase">Project/ Building Name</label>
                       <input 
@@ -2342,6 +2456,7 @@ export const PostProperty: React.FC = () => {
                         className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800"
                       />
                     </div>
+                    )}
                     {(isCommercialOfficeSpace || isCommercialShop || isCommercialShowroom || isCommercialGodown || isCommercialIndustrial || isCommercialShed) ? (
                       <div className="space-y-2">
                         <label className="block text-xs font-semibold text-slate-500 uppercase">Property at</label>
@@ -2358,7 +2473,7 @@ export const PostProperty: React.FC = () => {
                         </CustomSelect>
                       </div>
                     ) : (
-                      formData.intent !== 'rent' && (
+                      formData.intent !== 'rent' && !isPgHostel && (
                         <div className="space-y-2">
                           <label className="block text-xs font-semibold text-slate-500 uppercase">Developed by</label>
                           <input 
@@ -2379,53 +2494,269 @@ export const PostProperty: React.FC = () => {
                   <h3 className="text-lg font-bold text-[#0B2C5C] mb-4 pb-2 border-b border-slate-100">Property Details</h3>
                   <div className="space-y-6">
                     {formData.propertyType === 'PG/Hostel' ? (
+                      formData.intent === 'sell' ? (
                       <div className="space-y-6">
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
                           <div className="space-y-2">
-                            <label className="block text-xs font-semibold text-slate-500 uppercase">Available For</label>
+                            <label className="block text-xs font-semibold text-slate-500 uppercase">Hostel</label>
                             <CustomSelect
-                              value={formData.available || 'Girls'}
+                              value={formData.available === 'Others' ? 'Co-living' : (formData.available || 'Girls')}
                               onChange={e => updateFormData({ available: e.target.value })}
-                              className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm bg-white"
+                              className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800 bg-white"
                             >
                               <option value="Girls">Girls</option>
                               <option value="Boys">Boys</option>
-                              <option value="Others">Others</option>
+                              <option value="Co-living">Co-living</option>
                             </CustomSelect>
                           </div>
-
                           <div className="space-y-2">
                             <label className="block text-xs font-semibold text-slate-500 uppercase">For</label>
                             <CustomSelect
                               value={formData.pg_for || 'Students'}
                               onChange={e => updateFormData({ pg_for: e.target.value })}
-                              className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm bg-white"
+                              className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800 bg-white"
                             >
                               <option value="Students">Students</option>
                               <option value="Working People">Working People</option>
                               <option value="Both">Both</option>
                             </CustomSelect>
                           </div>
+                          <div className="space-y-2">
+                            <label className="block text-xs font-semibold text-slate-500 uppercase">Private Rooms</label>
+                            <input
+                              type="number"
+                              min={1}
+                              max={100}
+                              placeholder="1-100"
+                              value={formData.pgPrivateRooms || ''}
+                              onChange={e => updateFormData({ pgPrivateRooms: clampPgRange(e.target.value, 1, 100) })}
+                              className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <label className="block text-xs font-semibold text-slate-500 uppercase">Sharing Rooms</label>
+                            <input
+                              type="number"
+                              min={1}
+                              max={100}
+                              placeholder="1-100"
+                              value={formData.pgSharingRooms || ''}
+                              onChange={e => updateFormData({ pgSharingRooms: clampPgRange(e.target.value, 1, 100) })}
+                              className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800"
+                            />
+                          </div>
+                        </div>
 
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+                          <div className="space-y-2">
+                            <label className="block text-xs font-semibold text-slate-500 uppercase">Total Beds</label>
+                            <input
+                              type="number"
+                              min={1}
+                              max={500}
+                              placeholder="1-500"
+                              value={formData.pgTotalBeds || ''}
+                              onChange={e => updateFormData({ pgTotalBeds: clampPgRange(e.target.value, 1, 500) })}
+                              className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <label className="block text-xs font-semibold text-slate-500 uppercase">Beds Filled</label>
+                            <input
+                              type="number"
+                              min={1}
+                              max={500}
+                              placeholder="1-500"
+                              value={formData.pgBedsFilled || ''}
+                              onChange={e => updateFormData({ pgBedsFilled: clampPgRange(e.target.value, 1, 500) })}
+                              className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <label className="block text-xs font-semibold text-slate-500 uppercase">Fee Deposit</label>
+                            <input
+                              type="text"
+                              placeholder="Enter fee deposit"
+                              value={formData.pgFeeDeposit || ''}
+                              onChange={e => updateFormData({ pgFeeDeposit: e.target.value })}
+                              className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <label className="block text-xs font-semibold text-slate-500 uppercase">Fee Advance Deposit</label>
+                            <input
+                              type="text"
+                              placeholder="Enter advance deposit"
+                              value={formData.pgFeeAdvanceDeposit || ''}
+                              onChange={e => updateFormData({ pgFeeAdvanceDeposit: e.target.value })}
+                              className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+                          <div className="space-y-2">
+                            <label className="block text-xs font-semibold text-slate-500 uppercase">Employee Deposits</label>
+                            <input
+                              type="text"
+                              placeholder="Enter amount"
+                              value={formData.pgEmployeeDeposits || ''}
+                              onChange={e => updateFormData({ pgEmployeeDeposits: e.target.value })}
+                              className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <label className="block text-xs font-semibold text-slate-500 uppercase">TV</label>
+                            <input
+                              type="number"
+                              min={0}
+                              placeholder="Count"
+                              value={formData.pgTvCount || ''}
+                              onChange={e => updateFormData({ pgTvCount: e.target.value })}
+                              className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <label className="block text-xs font-semibold text-slate-500 uppercase">Geysers</label>
+                            <input
+                              type="number"
+                              min={0}
+                              placeholder="Count"
+                              value={formData.pgGeysersCount || ''}
+                              onChange={e => updateFormData({ pgGeysersCount: e.target.value })}
+                              className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <label className="block text-xs font-semibold text-slate-500 uppercase">Washing Machine</label>
+                            <input
+                              type="number"
+                              min={0}
+                              placeholder="Count"
+                              value={formData.pgWashingMachineCount || ''}
+                              onChange={e => updateFormData({ pgWashingMachineCount: e.target.value })}
+                              className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+                          <div className="space-y-2">
+                            <label className="block text-xs font-semibold text-slate-500 uppercase">Two Wheeler Parking</label>
+                            <input
+                              type="number"
+                              min={0}
+                              placeholder="Count"
+                              value={formData.twoWheelerParking || ''}
+                              onChange={e => updateFormData({ twoWheelerParking: e.target.value })}
+                              className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <label className="block text-xs font-semibold text-slate-500 uppercase">Four Wheeler Parking</label>
+                            <input
+                              type="number"
+                              min={0}
+                              placeholder="Count"
+                              value={formData.fourWheelerParking || ''}
+                              onChange={e => updateFormData({ fourWheelerParking: e.target.value })}
+                              className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <label className="block text-xs font-semibold text-slate-500 uppercase">Building Deposit</label>
+                            <input
+                              type="text"
+                              placeholder="Enter amount"
+                              value={formData.pgBuildingDeposit || ''}
+                              onChange={e => updateFormData({ pgBuildingDeposit: e.target.value })}
+                              className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <label className="block text-xs font-semibold text-slate-500 uppercase">Building Rent per Month</label>
+                            <input
+                              type="text"
+                              placeholder="Enter amount"
+                              value={formData.pgBuildingRentPerMonth || ''}
+                              onChange={e => updateFormData({ pgBuildingRentPerMonth: e.target.value })}
+                              className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+                          <div className="space-y-2">
+                            <label className="block text-xs font-semibold text-slate-500 uppercase">Outright Sell Price</label>
+                            <input
+                              type="text"
+                              placeholder="Enter price"
+                              value={formData.pgOutrightSellPrice || ''}
+                              onChange={e => updateFormData({ pgOutrightSellPrice: e.target.value })}
+                              className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <label className="block text-xs font-semibold text-slate-500 uppercase">More Brief about PG</label>
+                          <textarea
+                            rows={5}
+                            placeholder="Write about the PG (max 400 words)"
+                            value={formData.pgMoreBrief || ''}
+                            onChange={e => updateFormData({ pgMoreBrief: clampPgBrief(e.target.value) })}
+                            className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800 resize-none"
+                          />
+                          <p className="text-xs text-slate-400">
+                            {(formData.pgMoreBrief || '').trim() ? (formData.pgMoreBrief || '').trim().split(/\s+/).length : 0}/400 words
+                          </p>
+                        </div>
+                      </div>
+                      ) : (
+                      <div className="space-y-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+                          <div className="space-y-2">
+                            <label className="block text-xs font-semibold text-slate-500 uppercase">Available</label>
+                            <CustomSelect
+                              value={formData.available === 'Co-living' ? 'Others' : (formData.available || 'Girls')}
+                              onChange={e => updateFormData({ available: e.target.value })}
+                              className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800 bg-white"
+                            >
+                              <option value="Girls">Girls</option>
+                              <option value="Boys">Boys</option>
+                              <option value="Others">Others</option>
+                            </CustomSelect>
+                          </div>
+                          <div className="space-y-2">
+                            <label className="block text-xs font-semibold text-slate-500 uppercase">For</label>
+                            <CustomSelect
+                              value={formData.pg_for || 'Students'}
+                              onChange={e => updateFormData({ pg_for: e.target.value })}
+                              className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800 bg-white"
+                            >
+                              <option value="Students">Students</option>
+                              <option value="Working People">Working People</option>
+                              <option value="Both">Both</option>
+                            </CustomSelect>
+                          </div>
                           <div className="space-y-2">
                             <label className="block text-xs font-semibold text-slate-500 uppercase">Room Type</label>
                             <CustomSelect
                               value={formData.room_type || 'Sharing'}
                               onChange={e => updateFormData({ room_type: e.target.value })}
-                              className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm bg-white"
+                              className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800 bg-white"
                             >
                               <option value="Sharing">Sharing</option>
                               <option value="Private">Private</option>
                             </CustomSelect>
                           </div>
-
-                          {formData.room_type === 'Sharing' && (
+                          {formData.room_type !== 'Private' && (
                             <div className="space-y-2">
                               <label className="block text-xs font-semibold text-slate-500 uppercase">Sharing in Room</label>
                               <CustomSelect
                                 value={formData.sharing_room || '1'}
                                 onChange={e => updateFormData({ sharing_room: e.target.value })}
-                                className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm bg-white"
+                                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800 bg-white"
                               >
                                 {Array.from({ length: 10 }, (_, i) => String(i + 1)).map(num => (
                                   <option key={num} value={num}>{num} Sharing</option>
@@ -2435,7 +2766,34 @@ export const PostProperty: React.FC = () => {
                           )}
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+                          <div className="space-y-2">
+                            <label className="block text-xs font-semibold text-slate-500 uppercase">Attached Bathroom</label>
+                            <CustomSelect
+                              value={formData.attachedBathroom || 'Select'}
+                              onChange={e => updateFormData({ attachedBathroom: e.target.value })}
+                              className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800 bg-white"
+                            >
+                              <option value="Select">Select</option>
+                              <option value="Yes">Yes</option>
+                              <option value="No">No</option>
+                            </CustomSelect>
+                          </div>
+                          <div className="space-y-2">
+                            <label className="block text-xs font-semibold text-slate-500 uppercase">AC Rooms Available</label>
+                            <CustomSelect
+                              value={formData.acRoomsAvailable || 'Select'}
+                              onChange={e => updateFormData({ acRoomsAvailable: e.target.value })}
+                              className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800 bg-white"
+                            >
+                              <option value="Select">Select</option>
+                              <option value="Yes">Yes</option>
+                              <option value="No">No</option>
+                            </CustomSelect>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
                           <div className="space-y-2">
                             <label className="block text-xs font-semibold text-slate-500 uppercase">PG/Hostel Name</label>
                             <input
@@ -2443,32 +2801,25 @@ export const PostProperty: React.FC = () => {
                               placeholder="PG Name"
                               value={formData.pg_hostel_name || ''}
                               onChange={e => updateFormData({ pg_hostel_name: e.target.value })}
-                              className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm"
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <label className="block text-xs font-semibold text-slate-500 uppercase">Per Month Fee</label>
-                            <input
-                              type="text"
-                              placeholder="Enter Fee"
-                              value={formData.rentPerMonth || ''}
-                              onChange={e => updateFormData({ rentPerMonth: e.target.value })}
-                              className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm"
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <label className="block text-xs font-semibold text-slate-500 uppercase">Deposit</label>
-                            <input
-                              type="text"
-                              placeholder="Enter Deposit"
-                              value={formData.securityDepositVal || ''}
-                              onChange={e => updateFormData({ securityDepositVal: e.target.value })}
-                              className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm"
+                              className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800"
                             />
                           </div>
                         </div>
 
-                        {/* Includes / Excludes Checklist */}
+                        <div className="space-y-2">
+                          <label className="block text-xs font-semibold text-slate-500 uppercase">More Brief about PG</label>
+                          <textarea
+                            rows={5}
+                            placeholder="Write about the PG (max 400 words)"
+                            value={formData.pgMoreBrief || ''}
+                            onChange={e => updateFormData({ pgMoreBrief: clampPgBrief(e.target.value) })}
+                            className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800 resize-none"
+                          />
+                          <p className="text-xs text-slate-400">
+                            {(formData.pgMoreBrief || '').trim() ? (formData.pgMoreBrief || '').trim().split(/\s+/).length : 0}/400 words
+                          </p>
+                        </div>
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-slate-100">
                           <div className="space-y-2">
                             <span className="block text-sm font-semibold text-[#0B2C5C]">Includes</span>
@@ -2491,7 +2842,6 @@ export const PostProperty: React.FC = () => {
                               ))}
                             </div>
                           </div>
-                          
                           <div className="space-y-2">
                             <span className="block text-sm font-semibold text-[#0B2C5C]">Excludes</span>
                             <div className="grid grid-cols-2 gap-2">
@@ -2515,6 +2865,7 @@ export const PostProperty: React.FC = () => {
                           </div>
                         </div>
                       </div>
+                      )
                     ) : (isCommercialOfficeSpace || isCommercialShop || isCommercialShowroom || isCommercialGodown || isCommercialIndustrial || isCommercialShed) ? (
                       <>
                         {(isCommercialOfficeSpace || isCommercialShowroom || isCommercialIndustrial) && (
@@ -2625,66 +2976,6 @@ export const PostProperty: React.FC = () => {
                                 <option value="Cold Storage">Cold Storage</option>
                               </CustomSelect>
                             </div>
-                            <div className="space-y-2">
-                              <label className="block text-xs font-semibold text-slate-500 uppercase">Closed Shed Carpet Area</label>
-                              <div className="flex rounded-xl border border-slate-200 focus-within:border-[#4885FF] relative">
-                                <input 
-                                  type="text" 
-                                  placeholder="Enter Carpet Area"
-                                  value={formData.closedShedCarpetArea || ''}
-                                  onChange={e => updateFormData({ closedShedCarpetArea: e.target.value })}
-                                  className="w-full px-4 py-3 rounded-l-xl focus:outline-none text-sm text-slate-800"
-                                />
-                                <CustomSelect 
-                                  value={formData.closedShedCarpetAreaUnit || 'Sft.'}
-                                  onChange={e => updateFormData({ closedShedCarpetAreaUnit: e.target.value })}
-                                  className="px-2 bg-slate-50 border-l border-slate-200 focus:outline-none text-xs text-slate-600 bg-white"
-                                >
-                                  <option value="Sft.">Sft.</option>
-                                  <option value="Sq.Yards">Sq.Yards</option>
-                                </CustomSelect>
-                              </div>
-                            </div>
-                            <div className="space-y-2">
-                              <label className="block text-xs font-semibold text-slate-500 uppercase">Open Space Carpet Area</label>
-                              <div className="flex rounded-xl border border-slate-200 focus-within:border-[#4885FF] relative">
-                                <input 
-                                  type="text" 
-                                  placeholder="Enter Builtup Area"
-                                  value={formData.openSpaceCarpetArea || ''}
-                                  onChange={e => updateFormData({ openSpaceCarpetArea: e.target.value })}
-                                  className="w-full px-4 py-3 rounded-l-xl focus:outline-none text-sm text-slate-800"
-                                />
-                                <CustomSelect 
-                                  value={formData.openSpaceCarpetAreaUnit || 'Sft.'}
-                                  onChange={e => updateFormData({ openSpaceCarpetAreaUnit: e.target.value })}
-                                  className="px-2 bg-slate-50 border-l border-slate-200 focus:outline-none text-xs text-slate-600 bg-white"
-                                >
-                                  <option value="Sft.">Sft.</option>
-                                  <option value="Sq.Yards">Sq.Yards</option>
-                                </CustomSelect>
-                              </div>
-                            </div>
-                            <div className="space-y-2">
-                              <label className="block text-xs font-semibold text-slate-500 uppercase">Total Carpet Area</label>
-                              <div className="flex rounded-xl border border-slate-200 focus-within:border-[#4885FF] relative">
-                                <input 
-                                  type="text" 
-                                  placeholder="Enter Total"
-                                  value={formData.totalCarpetAreaVal || ''}
-                                  onChange={e => updateFormData({ totalCarpetAreaVal: e.target.value })}
-                                  className="w-full px-4 py-3 rounded-l-xl focus:outline-none text-sm text-slate-800"
-                                />
-                                <CustomSelect 
-                                  value={formData.totalCarpetAreaUnit || 'Sft.'}
-                                  onChange={e => updateFormData({ totalCarpetAreaUnit: e.target.value })}
-                                  className="px-2 bg-slate-50 border-l border-slate-200 focus:outline-none text-xs text-slate-600 bg-white"
-                                >
-                                  <option value="Sft.">Sft.</option>
-                                  <option value="Sq.Yards">Sq.Yards</option>
-                                </CustomSelect>
-                              </div>
-                            </div>
                           </div>
                         )}
 
@@ -2771,81 +3062,6 @@ export const PostProperty: React.FC = () => {
                               </div>
                             </div>
                           </>
-                        )}
-
-                        {isCommercialShowroom && (
-                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-                            <div className="space-y-2">
-                              <label className="block text-xs font-semibold text-slate-500 uppercase">Work Space</label>
-                              <input 
-                                type="text" 
-                                placeholder="Enter Garage/Repairing shed"
-                                value={formData.workSpace || ''}
-                                onChange={e => updateFormData({ workSpace: e.target.value })}
-                                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800"
-                              />
-                            </div>
-                            <div className="space-y-2">
-                              <label className="block text-xs font-semibold text-slate-500 uppercase">Garage Shed Carpet Area</label>
-                              <div className="flex rounded-xl border border-slate-200 focus-within:border-[#4885FF] relative">
-                                <input 
-                                  type="text" 
-                                  placeholder="Enter Garage"
-                                  value={formData.garageShedCarpetArea || ''}
-                                  onChange={e => updateFormData({ garageShedCarpetArea: e.target.value })}
-                                  className="w-full px-4 py-3 rounded-l-xl focus:outline-none text-sm text-slate-800"
-                                />
-                                <CustomSelect 
-                                  value={formData.garageShedCarpetAreaUnit || 'Sft.'}
-                                  onChange={e => updateFormData({ garageShedCarpetAreaUnit: e.target.value })}
-                                  className="px-2 bg-slate-50 border-l border-slate-200 focus:outline-none text-xs text-slate-600 bg-white"
-                                >
-                                  <option value="Sft.">Sft.</option>
-                                  <option value="Sq.Yards">Sq.Yards</option>
-                                </CustomSelect>
-                              </div>
-                            </div>
-                            <div className="space-y-2">
-                              <label className="block text-xs font-semibold text-slate-500 uppercase">Showroom Space Carpet Area</label>
-                              <div className="flex rounded-xl border border-slate-200 focus-within:border-[#4885FF] relative">
-                                <input 
-                                  type="text" 
-                                  placeholder="Enter Showroom"
-                                  value={formData.showroomSpaceCarpetArea || ''}
-                                  onChange={e => updateFormData({ showroomSpaceCarpetArea: e.target.value })}
-                                  className="w-full px-4 py-3 rounded-l-xl focus:outline-none text-sm text-slate-800"
-                                />
-                                <CustomSelect 
-                                  value={formData.showroomSpaceCarpetAreaUnit || 'Sft.'}
-                                  onChange={e => updateFormData({ showroomSpaceCarpetAreaUnit: e.target.value })}
-                                  className="px-2 bg-slate-50 border-l border-slate-200 focus:outline-none text-xs text-slate-600 bg-white"
-                                >
-                                  <option value="Sft.">Sft.</option>
-                                  <option value="Sq.Yards">Sq.Yards</option>
-                                </CustomSelect>
-                              </div>
-                            </div>
-                            <div className="space-y-2">
-                              <label className="block text-xs font-semibold text-slate-500 uppercase">Total Carpet Area</label>
-                              <div className="flex rounded-xl border border-slate-200 focus-within:border-[#4885FF] relative">
-                                <input 
-                                  type="text" 
-                                  placeholder="Enter Total"
-                                  value={formData.totalCarpetAreaVal || ''}
-                                  onChange={e => updateFormData({ totalCarpetAreaVal: e.target.value })}
-                                  className="w-full px-4 py-3 rounded-l-xl focus:outline-none text-sm text-slate-800"
-                                />
-                                <CustomSelect 
-                                  value={formData.totalCarpetAreaUnit || 'Sft.'}
-                                  onChange={e => updateFormData({ totalCarpetAreaUnit: e.target.value })}
-                                  className="px-2 bg-slate-50 border-l border-slate-200 focus:outline-none text-xs text-slate-600 bg-white"
-                                >
-                                  <option value="Sft.">Sft.</option>
-                                  <option value="Sq.Yards">Sq.Yards</option>
-                                </CustomSelect>
-                              </div>
-                            </div>
-                          </div>
                         )}
 
                         {isCommercialShop && (
@@ -2970,12 +3186,10 @@ export const PostProperty: React.FC = () => {
                           </div>
                           <div className="space-y-2">
                             <label className="block text-xs font-semibold text-slate-500 uppercase">Property Available From</label>
-                            <input 
-                              type="text" 
-                              placeholder="Available From"
+                            <DatePicker
                               value={formData.availableFrom || ''}
-                              onChange={e => updateFormData({ availableFrom: e.target.value })}
-                              className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800"
+                              onChange={date => updateFormData({ availableFrom: date })}
+                              placeholder="Available From"
                             />
                           </div>
                           <div className="space-y-2">
@@ -3051,12 +3265,10 @@ export const PostProperty: React.FC = () => {
                           </div>
                           <div className="space-y-2">
                             <label className="block text-xs font-semibold text-slate-500 uppercase">Property Available From</label>
-                            <input 
-                              type="text" 
-                              placeholder="Available From"
+                            <DatePicker
                               value={formData.availableFrom || ''}
-                              onChange={e => updateFormData({ availableFrom: e.target.value })}
-                              className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800"
+                              onChange={date => updateFormData({ availableFrom: date })}
+                              placeholder="Available From"
                             />
                           </div>
                           <div className="space-y-2">
@@ -3169,7 +3381,7 @@ export const PostProperty: React.FC = () => {
                     )}
 
                     {/* Other Rooms checkboxes */}
-                    {(!isCommercialOfficeSpace && !isCommercialShop && !isCommercialShowroom && !isCommercialGodown && !isCommercialShed) && (
+                    {(!isCommercialOfficeSpace && !isCommercialShop && !isCommercialShowroom && !isCommercialGodown && !isCommercialIndustrial && !isCommercialShed && !isPgHostel) && (
                       <div className="space-y-2 pt-2">
                         <span className="block text-base font-bold text-[#0B2C5C]">Other Rooms</span>
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -3228,29 +3440,31 @@ export const PostProperty: React.FC = () => {
                     )}
 
                     {/* Areas and UDS */}
-                    {(!isCommercialShop && !isCommercialShowroom && !isCommercialGodown && !isCommercialShed) && (
-                      <div className={`grid grid-cols-1 ${(isCommercialOfficeSpace || isCommercialIndustrial) ? 'md:grid-cols-3' : 'md:grid-cols-4'} gap-6 pt-2`}>
-                        <div className="space-y-2">
-                          <label className="block text-xs font-semibold text-slate-500 uppercase">Property Carpet Area</label>
-                          <div className="flex rounded-xl border border-slate-200 focus-within:border-[#4885FF] relative">
-                            <input 
-                              type="text" 
-                              placeholder="Enter Carpet Area"
-                              value={formData.carpetArea || ''}
-                              onChange={e => updateFormData({ carpetArea: e.target.value })}
-                              className="w-full px-4 py-3 rounded-l-xl focus:outline-none text-sm text-slate-800"
-                            />
-                            <CustomSelect 
-                              value={formData.carpetAreaUnit || 'Sft.'}
-                              onChange={e => updateFormData({ carpetAreaUnit: e.target.value })}
-                              className="px-3 bg-slate-50 border-l border-slate-200 focus:outline-none text-sm text-slate-600 bg-white"
-                            >
-                              <option value="Sft.">Sft.</option>
-                              <option value="Sq.Yards">Sq.Yards</option>
-                              <option value="Sq.Meters">Sq.Meters</option>
-                            </CustomSelect>
+                    {(!isCommercialShop && !isCommercialShowroom && !isCommercialGodown && !isCommercialShed && !isPgHostel) && (
+                      <div className={`grid grid-cols-1 ${(formData.intent === 'rent' || isCommercialOfficeSpace || isCommercialIndustrial) ? 'md:grid-cols-3' : 'md:grid-cols-4'} gap-6 pt-2`}>
+                        {formData.intent !== 'rent' && (
+                          <div className="space-y-2">
+                            <label className="block text-xs font-semibold text-slate-500 uppercase">Property Carpet Area</label>
+                            <div className="flex rounded-xl border border-slate-200 focus-within:border-[#4885FF] relative">
+                              <input 
+                                type="text" 
+                                placeholder="Enter Carpet Area"
+                                value={formData.carpetArea || ''}
+                                onChange={e => updateFormData({ carpetArea: e.target.value })}
+                                className="w-full px-4 py-3 rounded-l-xl focus:outline-none text-sm text-slate-800"
+                              />
+                              <CustomSelect 
+                                value={formData.carpetAreaUnit || 'Sft.'}
+                                onChange={e => updateFormData({ carpetAreaUnit: e.target.value })}
+                                className="px-3 bg-slate-50 border-l border-slate-200 focus:outline-none text-sm text-slate-600 bg-white"
+                              >
+                                <option value="Sft.">Sft.</option>
+                                <option value="Sq.Yards">Sq.Yards</option>
+                                <option value="Sq.Meters">Sq.Meters</option>
+                              </CustomSelect>
+                            </div>
                           </div>
-                        </div>
+                        )}
                         <div className="space-y-2">
                           <label className="block text-xs font-semibold text-slate-500 uppercase">Property Builtup Area</label>
                           <div className="flex rounded-xl border border-slate-200 focus-within:border-[#4885FF] relative">
@@ -3272,28 +3486,30 @@ export const PostProperty: React.FC = () => {
                             </CustomSelect>
                           </div>
                         </div>
-                        <div className="space-y-2">
-                          <label className="block text-xs font-semibold text-slate-500 uppercase">Property Super Builtup Area</label>
-                          <div className="flex rounded-xl border border-slate-200 focus-within:border-[#4885FF] relative">
-                            <input 
-                              type="text" 
-                              placeholder="Enter Super Builtup Area"
-                              value={formData.superBuiltUpArea || ''}
-                              onChange={e => updateFormData({ superBuiltUpArea: e.target.value })}
-                              className="w-full px-4 py-3 rounded-l-xl focus:outline-none text-sm text-slate-800"
-                            />
-                            <CustomSelect 
-                              value={formData.superBuiltUpAreaUnit || 'Sft.'}
-                              onChange={e => updateFormData({ superBuiltUpAreaUnit: e.target.value })}
-                              className="px-3 bg-slate-50 border-l border-slate-200 focus:outline-none text-sm text-slate-600 bg-white"
-                            >
-                              <option value="Sft.">Sft.</option>
-                              <option value="Sq.Yards">Sq.Yards</option>
-                              <option value="Sq.Meters">Sq.Meters</option>
-                            </CustomSelect>
+                        {formData.intent !== 'rent' && (
+                          <div className="space-y-2">
+                            <label className="block text-xs font-semibold text-slate-500 uppercase">Property Super Builtup Area</label>
+                            <div className="flex rounded-xl border border-slate-200 focus-within:border-[#4885FF] relative">
+                              <input 
+                                type="text" 
+                                placeholder="Enter Super Builtup Area"
+                                value={formData.superBuiltUpArea || ''}
+                                onChange={e => updateFormData({ superBuiltUpArea: e.target.value })}
+                                className="w-full px-4 py-3 rounded-l-xl focus:outline-none text-sm text-slate-800"
+                              />
+                              <CustomSelect 
+                                value={formData.superBuiltUpAreaUnit || 'Sft.'}
+                                onChange={e => updateFormData({ superBuiltUpAreaUnit: e.target.value })}
+                                className="px-3 bg-slate-50 border-l border-slate-200 focus:outline-none text-sm text-slate-600 bg-white"
+                              >
+                                <option value="Sft.">Sft.</option>
+                                <option value="Sq.Yards">Sq.Yards</option>
+                                <option value="Sq.Meters">Sq.Meters</option>
+                              </CustomSelect>
+                            </div>
                           </div>
-                        </div>
-                        {!(isCommercialOfficeSpace || isCommercialIndustrial) && (
+                        )}
+                        {formData.intent !== 'rent' && !(isCommercialOfficeSpace || isCommercialIndustrial) && (
                           <div className="space-y-2">
                             <label className="block text-xs font-semibold text-slate-500 uppercase">UDS</label>
                             <input 
@@ -3309,6 +3525,7 @@ export const PostProperty: React.FC = () => {
                     )}
 
                     {/* Parking, Floor details & facing */}
+                    {!isPgHostel && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 pt-2">
                       <div className="space-y-2">
                         <label className="block text-xs font-semibold text-slate-500 uppercase">Furnished</label>
@@ -3352,6 +3569,7 @@ export const PostProperty: React.FC = () => {
                           className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800"
                         />
                       </div>
+                      {!isPgHostel && (
                       <div className="space-y-2">
                         <label className="block text-xs font-semibold text-slate-500 uppercase">Property on which Floor</label>
                         {/* Dropdown kept for revert if client asks
@@ -3383,6 +3601,8 @@ export const PostProperty: React.FC = () => {
                           className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800"
                         />
                       </div>
+                      )}
+                      {!isPgHostel && (
                       <div className="space-y-2">
                         <label className="block text-xs font-semibold text-slate-500 uppercase">Facing</label>
                         <CustomSelect 
@@ -3400,12 +3620,14 @@ export const PostProperty: React.FC = () => {
                           <option value="South-West">South-West</option>
                         </CustomSelect>
                       </div>
+                      )}
                     </div>
+                    )}
 
 
 
                     {/* Pricing block */}
-                    {formData.intent !== 'rent' && (
+                    {formData.intent !== 'rent' && !isPgHostel && (
                       <div className="grid grid-cols-1 md:grid-cols-5 gap-6 pt-2">
                         <div className="space-y-2">
                           <label className="block text-xs font-semibold text-slate-500 uppercase">
@@ -3483,22 +3705,65 @@ export const PostProperty: React.FC = () => {
                       </div>
                     )}
 
+                    {formData.intent === 'rent' && rentPricingFields}
+
                     {/* Brokerage Charge */}
                     <div className="space-y-2 pt-2">
                       <label className="block text-sm font-semibold text-[#0B2C5C]">Brokerage Charge</label>
-                      <div className="flex gap-6 mt-1">
-                        {['Yes', 'No'].map(item => (
-                          <label key={item} className="flex items-center gap-2 cursor-pointer text-sm text-slate-800">
-                            <input 
-                              type="radio"
-                              name="brokerageCharge"
-                              checked={formData.brokerageCharge === item}
-                              onChange={() => updateFormData({ brokerageCharge: item })}
-                              className="w-4 h-4 text-[#4885FF] border-slate-300 focus:ring-[#4885FF]"
-                            />
-                            {item}
-                          </label>
-                        ))}
+                      <div className="flex flex-wrap items-end gap-6 mt-1">
+                        <div className="flex gap-6">
+                          {['Yes', 'No'].map(item => (
+                            <label key={item} className="flex items-center gap-2 cursor-pointer text-sm text-slate-800">
+                              <input 
+                                type="radio"
+                                name="brokerageCharge"
+                                checked={formData.brokerageCharge === item}
+                                onChange={() => updateFormData({ brokerageCharge: item })}
+                                className="w-4 h-4 text-[#4885FF] border-slate-300 focus:ring-[#4885FF]"
+                              />
+                              {item}
+                            </label>
+                          ))}
+                        </div>
+                        {formData.brokerageCharge === 'Yes' && formData.intent !== 'rent' && (
+                          <div className="space-y-2 min-w-[220px]">
+                            <label className="block text-xs font-semibold text-slate-500 uppercase">Brokerage on property value</label>
+                            <div className="flex rounded-xl border border-slate-200 focus-within:border-[#4885FF] overflow-hidden">
+                              <input
+                                type="text"
+                                inputMode="decimal"
+                                placeholder="e.g. 1"
+                                value={formData.brokerageOnPropertyValue || ''}
+                                onChange={e => updateFormData({ brokerageOnPropertyValue: e.target.value.replace(/[^\d.]/g, '') })}
+                                className="w-full px-4 py-3 focus:outline-none text-sm text-slate-800"
+                              />
+                              <span className="px-3 flex items-center bg-slate-50 border-l border-slate-200 text-sm text-slate-600">%</span>
+                            </div>
+                          </div>
+                        )}
+                        {formData.brokerageCharge === 'Yes' && formData.intent === 'rent' && (
+                          <div className="space-y-2 min-w-[240px]">
+                            <label className="block text-xs font-semibold text-slate-500 uppercase">Brokerage on Rent</label>
+                            <div className="flex rounded-xl border border-slate-200 focus-within:border-[#4885FF] overflow-hidden">
+                              <input
+                                type="text"
+                                inputMode="numeric"
+                                placeholder="e.g. 15"
+                                value={formData.brokerageOnRentValue || ''}
+                                onChange={e => updateFormData({ brokerageOnRentValue: e.target.value.replace(/[^\d]/g, '') })}
+                                className="w-full px-4 py-3 focus:outline-none text-sm text-slate-800"
+                              />
+                              <CustomSelect
+                                value={formData.brokerageOnRentUnit || 'Days'}
+                                onChange={e => updateFormData({ brokerageOnRentUnit: e.target.value })}
+                                className="px-3 bg-slate-50 border-l border-slate-200 focus:outline-none text-sm text-slate-600 bg-white"
+                              >
+                                <option value="Days">Days</option>
+                                <option value="Months">Months</option>
+                              </CustomSelect>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -3536,7 +3801,22 @@ export const PostProperty: React.FC = () => {
                                     name="showAmenitiesOption"
                                     checked={isChecked}
                                     disabled={isAmenitiesDisabled}
-                                    onChange={() => !isAmenitiesDisabled && updateFormData({ showAmenitiesOption: item })}
+                                    onChange={() => {
+                                      if (isAmenitiesDisabled) return;
+                                      if (item === 'Yes') {
+                                        updateFormData({ showAmenitiesOption: 'Yes' });
+                                        setAmenitiesPopupOpen(true);
+                                      } else {
+                                        updateFormData({
+                                          showAmenitiesOption: 'No',
+                                          amenities: [],
+                                          furnishingSelections: [],
+                                          furnishingCounts: {},
+                                          societyAmenitySelections: [],
+                                        });
+                                        setAmenitiesPopupOpen(false);
+                                      }
+                                    }}
                                     className="w-4 h-4 text-[#035096] border-slate-300 focus:ring-[#035096]"
                                   />
                                   {item}
@@ -3546,312 +3826,51 @@ export const PostProperty: React.FC = () => {
                           </div>
                         </div>
 
-                        {/* Detailed Nested Checkboxes if "Yes" */}
                         {formData.showAmenitiesOption === 'Yes' && (
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4 border-t border-slate-100">
-                            {/* Column 1 */}
-                            <div className="space-y-6">
-                              {/* Children's Play Area */}
-                              <div className="space-y-2">
-                                <label className="flex items-center gap-2 cursor-pointer">
-                                  <input 
-                                    type="checkbox"
-                                    checked={isCategoryChecked("Children's Play Area")}
-                                    onChange={() => toggleCategoryAmenities("Children's Play Area")}
-                                    className="w-4 h-4 rounded text-[#035096] border-slate-300 focus:ring-[#035096]"
-                                  />
-                                  <span className="font-bold text-sm text-[#0B2C5C]">Children's Play Area</span>
-                                </label>
-                                <div className="pl-6 space-y-2">
-                                  {["Dedicated, safe playgrounds with swings, slides etc", "Sandpits"].map(item => (
-                                    <label key={item} className="flex items-start gap-2 cursor-pointer text-xs text-slate-800">
-                                      <input 
-                                        type="checkbox"
-                                        checked={formData.amenities.includes(item)}
-                                        onChange={() => toggleSelection('amenities', item)}
-                                        className="w-3.5 h-3.5 mt-0.5 rounded text-[#035096] border-slate-300 focus:ring-[#035096]"
-                                      />
-                                      <span>{item}</span>
-                                    </label>
-                                  ))}
-                                </div>
-                              </div>
-
-                              {/* Community Services & Management */}
-                              <div className="space-y-2">
-                                <label className="flex items-center gap-2 cursor-pointer">
-                                  <input 
-                                    type="checkbox"
-                                    checked={isCategoryChecked("Community Services & Management")}
-                                    onChange={() => toggleCategoryAmenities("Community Services & Management")}
-                                    className="w-4 h-4 rounded text-[#035096] border-slate-300 focus:ring-[#035096]"
-                                  />
-                                  <span className="font-bold text-sm text-[#0B2C5C]">Community Services & Management</span>
-                                </label>
-                                <div className="pl-6 space-y-2">
-                                  {[
-                                    "Resident Association/Management Committee: For smooth functioning and decision-making",
-                                    "Community Events: Organized festivals, sports tournaments and social gathering",
-                                    "App-Based Community Management: For communication, raising requests and payments"
-                                  ].map(item => (
-                                    <label key={item} className="flex items-start gap-2 cursor-pointer text-xs text-slate-800">
-                                      <input 
-                                        type="checkbox"
-                                        checked={formData.amenities.includes(item)}
-                                        onChange={() => toggleSelection('amenities', item)}
-                                        className="w-3.5 h-3.5 mt-0.5 rounded text-[#035096] border-slate-300 focus:ring-[#035096]"
-                                      />
-                                      <span>{item}</span>
-                                    </label>
-                                  ))}
-                                </div>
-                              </div>
-
-                              {/* Convenience & Lifestyle */}
-                              <div className="space-y-2">
-                                <label className="flex items-center gap-2 cursor-pointer">
-                                  <input 
-                                    type="checkbox"
-                                    checked={isCategoryChecked("Convenience & Lifestyle")}
-                                    onChange={() => toggleCategoryAmenities("Convenience & Lifestyle")}
-                                    className="w-4 h-4 rounded text-[#035096] border-slate-300 focus:ring-[#035096]"
-                                  />
-                                  <span className="font-bold text-sm text-[#0B2C5C]">Convenience & Lifestyle</span>
-                                </label>
-                                <div className="pl-6 space-y-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                  {[
-                                    "Business Center",
-                                    "Library/Reading Room",
-                                    "Retail/Commercial Spaces (within the community)",
-                                    "Power backup: 24/7 generator backup",
-                                    "Water Supply",
-                                    "Intercom",
-                                    "Video Door Phone",
-                                    "High Speed Internet / wi-fi",
-                                    "Ample Parking",
-                                    "Maintenance Staff",
-                                    "Convenience stores/ Supermarket",
-                                    "Cafeteria/Restaurant",
-                                    "Salon/Spa",
-                                    "Pharmacy",
-                                    "Service Apartments",
-                                    "Guest Rooms",
-                                    "Amphitheater/Mini-Theater",
-                                    "Creche/Daycare facility",
-                                    "Co-working Spaces"
-                                  ].map(item => (
-                                    <label key={item} className="flex items-start gap-2 cursor-pointer text-xs text-slate-800">
-                                      <input 
-                                        type="checkbox"
-                                        checked={formData.amenities.includes(item)}
-                                        onChange={() => toggleSelection('amenities', item)}
-                                        className="w-3.5 h-3.5 mt-0.5 rounded text-[#035096] border-slate-300 focus:ring-[#035096]"
-                                      />
-                                      <span>{item}</span>
-                                    </label>
-                                  ))}
-                                </div>
-                              </div>
-
-                              {/* Indoor Games */}
-                              <div className="space-y-2">
-                                <label className="flex items-center gap-2 cursor-pointer">
-                                  <input 
-                                    type="checkbox"
-                                    checked={isCategoryChecked("Indoor Games")}
-                                    onChange={() => toggleCategoryAmenities("Indoor Games")}
-                                    className="w-4 h-4 rounded text-[#035096] border-slate-300 focus:ring-[#035096]"
-                                  />
-                                  <span className="font-bold text-sm text-[#0B2C5C]">Indoor Games</span>
-                                </label>
-                                <div className="pl-6 space-y-2">
-                                  {[
-                                    "Carrom, Chess, and other board games.",
-                                    "Billiards/Pool Table",
-                                    "Table Tennis"
-                                  ].map(item => (
-                                    <label key={item} className="flex items-start gap-2 cursor-pointer text-xs text-slate-800">
-                                      <input 
-                                        type="checkbox"
-                                        checked={formData.amenities.includes(item)}
-                                        onChange={() => toggleSelection('amenities', item)}
-                                        className="w-3.5 h-3.5 mt-0.5 rounded text-[#035096] border-slate-300 focus:ring-[#035096]"
-                                      />
-                                      <span>{item}</span>
-                                    </label>
-                                  ))}
-                                </div>
-                              </div>
-
-                              {/* Landscaped Gardens & Parks */}
-                              <div className="space-y-2">
-                                <label className="flex items-center gap-2 cursor-pointer">
-                                  <input 
-                                    type="checkbox"
-                                    checked={isCategoryChecked("Landscaped Gardens & Parks")}
-                                    onChange={() => toggleCategoryAmenities("Landscaped Gardens & Parks")}
-                                    className="w-4 h-4 rounded text-[#035096] border-slate-300 focus:ring-[#035096]"
-                                  />
-                                  <span className="font-bold text-sm text-[#0B2C5C]">Landscaped Gardens & Parks</span>
-                                </label>
-                                <div className="pl-6 space-y-2">
-                                  {[
-                                    "Seating areas, gazebos.",
-                                    "Green spaces for relaxation and strolls"
-                                  ].map(item => (
-                                    <label key={item} className="flex items-start gap-2 cursor-pointer text-xs text-slate-800">
-                                      <input 
-                                        type="checkbox"
-                                        checked={formData.amenities.includes(item)}
-                                        onChange={() => toggleSelection('amenities', item)}
-                                        className="w-3.5 h-3.5 mt-0.5 rounded text-[#035096] border-slate-300 focus:ring-[#035096]"
-                                      />
-                                      <span>{item}</span>
-                                    </label>
-                                  ))}
-                                </div>
-                              </div>
+                          <div className="pt-4 border-t border-slate-100 space-y-4">
+                            <div className="flex flex-wrap items-center justify-between gap-3">
+                              <p className="text-sm text-slate-600">
+                                <span className="font-semibold text-[#0B2C5C]">{countFurnishingSelections(amenitiesPopupValue)}</span>
+                                {' '}furnishings,{' '}
+                                <span className="font-semibold text-[#0B2C5C]">{amenitiesPopupValue.society.length}</span>
+                                {' '}amenities selected
+                              </p>
+                              <button
+                                type="button"
+                                onClick={() => setAmenitiesPopupOpen(true)}
+                                className="px-4 py-2 rounded-xl border border-[#035096] text-[#035096] text-sm font-semibold hover:bg-[#F0F7FF] transition-colors"
+                              >
+                                Add furnishings & amenities
+                              </button>
                             </div>
-
-                            {/* Column 2 */}
-                            <div className="space-y-6">
-                              {/* Outdoor Sports Facilities */}
-                              <div className="space-y-2">
-                                <label className="flex items-center gap-2 cursor-pointer">
-                                  <input 
-                                    type="checkbox"
-                                    checked={isCategoryChecked("Outdoor Sports Facilities")}
-                                    onChange={() => toggleCategoryAmenities("Outdoor Sports Facilities")}
-                                    className="w-4 h-4 rounded text-[#035096] border-slate-300 focus:ring-[#035096]"
-                                  />
-                                  <span className="font-bold text-sm text-[#0B2C5C]">Outdoor Sports Facilities</span>
-                                </label>
-                                <div className="pl-6 space-y-2">
-                                  {[
-                                    "Badminton Courts",
-                                    "Basketball Courts",
-                                    "Cricket Practice Net",
-                                    "Football/ Multi-purpose Sports Field",
-                                    "Jogging/Walking Tracks",
-                                    "Themed gardens (e.g., sensory gardens, herbs gardens)",
-                                    "Tennis Courts"
-                                  ].map(item => (
-                                    <label key={item} className="flex items-start gap-2 cursor-pointer text-xs text-slate-800">
-                                      <input 
-                                        type="checkbox"
-                                        checked={formData.amenities.includes(item)}
-                                        onChange={() => toggleSelection('amenities', item)}
-                                        className="w-3.5 h-3.5 mt-0.5 rounded text-[#035096] border-slate-300 focus:ring-[#035096]"
-                                      />
-                                      <span>{item}</span>
-                                    </label>
-                                  ))}
-                                </div>
+                            {selectedAmenityLabels.length > 0 && (
+                              <div className="flex flex-wrap gap-2">
+                                {selectedAmenityLabels.map((item) => (
+                                  <span
+                                    key={item}
+                                    className="inline-flex items-center px-3 py-1.5 rounded-full bg-[#F0F7FF] text-[#035096] text-xs font-semibold"
+                                  >
+                                    {item}
+                                  </span>
+                                ))}
                               </div>
-
-                              {/* Recreational & Leisure/Clubhouse/Community Hall */}
-                              <div className="space-y-2">
-                                <label className="flex items-center gap-2 cursor-pointer">
-                                  <input 
-                                    type="checkbox"
-                                    checked={isCategoryChecked("Recreational & Leisure/Clubhouse/Community Hall")}
-                                    onChange={() => toggleCategoryAmenities("Recreational & Leisure/Clubhouse/Community Hall")}
-                                    className="w-4 h-4 rounded text-[#035096] border-slate-300 focus:ring-[#035096]"
-                                  />
-                                  <span className="font-bold text-sm text-[#0B2C5C]">Recreational & Leisure/Clubhouse/Community Hall</span>
-                                </label>
-                                <div className="pl-6 space-y-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                  {[
-                                    "Aerobics / Zumba Studio",
-                                    "Lounge areas and seating.",
-                                    "Party lawns or banquet facilities",
-                                    "Swimming Pool",
-                                    "Fitness & Wellness",
-                                    "Gymnasium / Fitness Center",
-                                    "Yoga / Meditation Room",
-                                    "Spa/ Sauna/ Steam Room",
-                                    "Multipurpose halls for events and gatherings."
-                                  ].map(item => (
-                                    <label key={item} className="flex items-start gap-2 cursor-pointer text-xs text-slate-800">
-                                      <input 
-                                        type="checkbox"
-                                        checked={formData.amenities.includes(item)}
-                                        onChange={() => toggleSelection('amenities', item)}
-                                        className="w-3.5 h-3.5 mt-0.5 rounded text-[#035096] border-slate-300 focus:ring-[#035096]"
-                                      />
-                                      <span>{item}</span>
-                                    </label>
-                                  ))}
-                                </div>
-                              </div>
-
-                              {/* Security & Safety */}
-                              <div className="space-y-2">
-                                <label className="flex items-center gap-2 cursor-pointer">
-                                  <input 
-                                    type="checkbox"
-                                    checked={isCategoryChecked("Security & Safety")}
-                                    onChange={() => toggleCategoryAmenities("Security & Safety")}
-                                    className="w-4 h-4 rounded text-[#035096] border-slate-300 focus:ring-[#035096]"
-                                  />
-                                  <span className="font-bold text-sm text-[#0B2C5C]">Security & Safety</span>
-                                </label>
-                                <div className="pl-6 space-y-2">
-                                  {[
-                                    "Intercom Facility",
-                                    "Boom Barriers",
-                                    "24/7 Manned Security",
-                                    "CCTV Surveillance",
-                                    "Controlled Access points",
-                                    "Perimeter Fencing/ Walls"
-                                  ].map(item => (
-                                    <label key={item} className="flex items-start gap-2 cursor-pointer text-xs text-slate-800">
-                                      <input 
-                                        type="checkbox"
-                                        checked={formData.amenities.includes(item)}
-                                        onChange={() => toggleSelection('amenities', item)}
-                                        className="w-3.5 h-3.5 mt-0.5 rounded text-[#035096] border-slate-300 focus:ring-[#035096]"
-                                      />
-                                      <span>{item}</span>
-                                    </label>
-                                  ))}
-                                </div>
-                              </div>
-
-                              {/* Sustainable & Eco-Friendly */}
-                              <div className="space-y-2">
-                                <label className="flex items-center gap-2 cursor-pointer">
-                                  <input 
-                                    type="checkbox"
-                                    checked={isCategoryChecked("Sustainable & Eco-Friendly")}
-                                    onChange={() => toggleCategoryAmenities("Sustainable & Eco-Friendly")}
-                                    className="w-4 h-4 rounded text-[#035096] border-slate-300 focus:ring-[#035096]"
-                                  />
-                                  <span className="font-bold text-sm text-[#0B2C5C]">Sustainable & Eco-Friendly</span>
-                                </label>
-                                <div className="pl-6 space-y-2">
-                                  {[
-                                    "Electric Vehicle charging stations",
-                                    "Waste Segregation and Composting Facilities",
-                                    "Sewage Treatment Plant",
-                                    "Solar Panels for Common Area Lighting",
-                                    "Rainwater Harvesting System"
-                                  ].map(item => (
-                                    <label key={item} className="flex items-start gap-2 cursor-pointer text-xs text-slate-800">
-                                      <input 
-                                        type="checkbox"
-                                        checked={formData.amenities.includes(item)}
-                                        onChange={() => toggleSelection('amenities', item)}
-                                        className="w-3.5 h-3.5 mt-0.5 rounded text-[#035096] border-slate-300 focus:ring-[#035096]"
-                                      />
-                                      <span>{item}</span>
-                                    </label>
-                                  ))}
-                                </div>
-                              </div>
-                            </div>
+                            )}
                           </div>
                         )}
+
+                        <AmenitiesPopup
+                          open={amenitiesPopupOpen}
+                          onOpenChange={setAmenitiesPopupOpen}
+                          value={amenitiesPopupValue}
+                          onChange={(value) =>
+                            updateFormData({
+                              furnishingSelections: value.furnishings,
+                              furnishingCounts: value.counts,
+                              societyAmenitySelections: value.society,
+                              amenities: flattenAmenitiesPopup(value),
+                            })
+                          }
+                        />
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-slate-100">
                           <div className="space-y-2">
@@ -3879,7 +3898,7 @@ export const PostProperty: React.FC = () => {
                               className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#035096] text-sm text-slate-800"
                             />
                           </div>
-                          <div className="md:col-span-2 space-y-2">
+                          <div className="space-y-2">
                             <label className="block text-sm font-semibold text-[#0B2C5C]">Property Location</label>
                             <input 
                               type="text" 
@@ -3888,6 +3907,17 @@ export const PostProperty: React.FC = () => {
                               onChange={e => updateFormData({ floorPlanUrl: e.target.value })}
                               className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#035096] text-sm text-slate-800"
                             />
+                          </div>
+                          <div className="space-y-2">
+                            <label className="block text-sm font-semibold text-[#0B2C5C]">Video URL (Optional)</label>
+                            <input 
+                              type="url" 
+                              placeholder="e.g., YouTube or Vimeo link"
+                              value={formData.videoUrl || ''}
+                              onChange={e => updateFormData({ videoUrl: e.target.value })}
+                              className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#035096] text-sm text-slate-800"
+                            />
+                            <p className="text-xs text-slate-400">Video should not contain a phone number.</p>
                           </div>
                         </div>
                       </>
@@ -3899,145 +3929,8 @@ export const PostProperty: React.FC = () => {
                 {/* --- Media Upload Section --- */}
                 <div>
                   <h3 className="text-lg font-bold text-[#0B2C5C] mb-4 pb-2 border-b border-slate-100">Media Upload</h3>
-                  
-                  <div className="space-y-4">
-                    <label className="block text-sm font-semibold text-[#0B2C5C]">
-                      Property Images <span className="text-red-500">*</span> <span className="text-xs text-slate-400 font-normal">(Minimum 3)</span>
-                    </label>
-                    
-                    {/* Drag & Drop Area */}
-                    <div className="border-2 border-dashed border-slate-200 hover:border-[#4885FF] rounded-2xl p-8 text-center bg-slate-50/50 transition-colors relative cursor-pointer">
-                      <input 
-                        type="file" 
-                        multiple 
-                        accept="image/*"
-                        onChange={handleImageUpload}
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                      />
-                      <div className="flex flex-col items-center justify-center gap-2">
-                        <div className="p-3 bg-white rounded-full shadow-sm text-[#035096]">
-                          <Upload className="w-6 h-6" />
-                        </div>
-                        <span className="text-sm font-semibold text-[#0B2C5C]">Drag and drop images here or click to browse</span>
-                        <span className="text-xs text-slate-400">Supports PNG, JPG, JPEG (Max 5MB each)</span>
-                      </div>
-                    </div>
-
-                    {/* Previews grid */}
-                    {formData.imagePreviews.length > 0 && (
-                      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-4 mt-4">
-                        {formData.imagePreviews.map((preview, index) => (
-                          <div key={index} className="relative group rounded-xl overflow-hidden aspect-square border border-slate-200">
-                            <img src={preview} alt="preview" className="w-full h-full object-cover" />
-                            <button
-                              type="button"
-                              onClick={() => removeImage(index)}
-                              className="absolute top-1.5 right-1.5 p-1 bg-red-500 hover:bg-red-600 text-white rounded-full shadow transition-all duration-200"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-                      <div className="space-y-2">
-                        <label className="block text-sm font-semibold text-[#0B2C5C]">Video URL (Optional)</label>
-                        <input 
-                          type="url" 
-                          placeholder="e.g., YouTube or Vimeo link"
-                          value={formData.videoUrl || ''}
-                          onChange={e => updateFormData({ videoUrl: e.target.value })}
-                          className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="block text-sm font-semibold text-[#0B2C5C]">
-                          {isLandsAcre || isLandsPlots ? 'Property Boundaries Map' : 'Floor Plan URL (Optional)'}
-                        </label>
-                        <input 
-                          type="url" 
-                          placeholder={isLandsAcre || isLandsPlots ? 'e.g., Property boundaries map image or PDF link' : 'e.g., Floor plan image or PDF link'}
-                          value={formData.floorPlanUrl || ''}
-                          onChange={e => updateFormData({ floorPlanUrl: e.target.value })}
-                          className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800"
-                        />
-                      </div>
-                    </div>
-                  </div>
+                  {mediaUploadSection}
                 </div>
-
-                {/* --- Promotion options --- */}
-                {!isLandsAcre && !isLandsPlots && (
-                <div>
-                  <h3 className="text-lg font-bold text-[#0B2C5C] mb-4 pb-2 border-b border-slate-100">Promotion Options</h3>
-                  {/* Boost Post Radio Cards */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <label className={`p-6 rounded-2xl border-2 cursor-pointer transition-all flex flex-col justify-between ${
-                      formData.boostPostOption === 'regular' 
-                        ? 'border-[#035096] bg-[#035096]/5' 
-                        : 'border-slate-200 hover:border-slate-300'
-                    }`}>
-                      <div className="flex items-center gap-3">
-                        <input 
-                          type="radio" 
-                          name="boostPostOption"
-                          value="regular"
-                          checked={formData.boostPostOption === 'regular'}
-                          onChange={() => updateFormData({ boostPostOption: 'regular' })}
-                          className="w-4 h-4 text-[#035096] border-slate-300 focus:ring-[#035096]"
-                        />
-                        <div>
-                          <span className="font-bold text-base text-[#0B2C5C] block">Regular Post</span>
-                          <span className="text-xs text-slate-500 mt-1 block">Our Team</span>
-                        </div>
-                      </div>
-                    </label>
-
-                    <label className={`p-6 rounded-2xl border-2 cursor-pointer transition-all flex flex-col justify-between ${
-                      formData.boostPostOption === 'boost' 
-                        ? 'border-[#035096] bg-[#035096]/5' 
-                        : 'border-slate-200 hover:border-slate-300'
-                    }`}>
-                      <div className="space-y-4">
-                        <div className="flex items-center gap-3">
-                          <input 
-                            type="radio" 
-                            name="boostPostOption"
-                            value="boost"
-                            checked={formData.boostPostOption === 'boost'}
-                            onChange={() => updateFormData({ boostPostOption: 'boost' })}
-                            className="w-4 h-4 text-[#035096] border-slate-300 focus:ring-[#035096]"
-                          />
-                          <div>
-                            <span className="font-bold text-base text-[#0B2C5C] block">Boost Post</span>
-                          </div>
-                        </div>
-                        <p className="text-xs text-slate-600 leading-relaxed">
-                          A "boost post advertisement" refers to a paid promotion of an existing social media post to reach a wider audience beyond your followers. <strong>Our team will work for you.</strong>
-                        </p>
-                        <ul className="text-xs text-slate-600 space-y-1.5 list-disc pl-4">
-                          <li>Eye-catching property banners designed just for you.</li>
-                          <li>Showcase your property on our website with prominent banners.</li>
-                          <li>Get notifications to our interested clients about your property.</li>
-                          <li>Go beyond your reach with social media promotion on top platforms.</li>
-                          <li>You'll be notified by SMS and WhatsApp of any inquiries from potential buyers/renters interested in your property.</li>
-                        </ul>
-                        <div className="pt-2 border-t border-slate-200">
-                          <span className="font-bold text-xs text-[#0B2C5C] block">Benefits:</span>
-                          <ul className="text-xs text-slate-500 space-y-1 pl-4 list-decimal mt-1">
-                            <li>Reach a broader audience beyond your existing followers</li>
-                            <li>Target specific demographics or interests for increased relevance</li>
-                            <li>Increase engagement with your post (likes, comments, shares)</li>
-                            <li>Drive traffic to your website or landing page</li>
-                          </ul>
-                        </div>
-                      </div>
-                    </label>
-                  </div>
-                </div>
-                )}
 
               </div>
             ) : (
@@ -4265,56 +4158,63 @@ export const PostProperty: React.FC = () => {
                     ) : formData.intent === 'rent' ? (
                       <>
                         <div className="space-y-2">
-                          <label className="block text-sm font-semibold text-[#0B2C5C]">Rent per Month <span className="text-red-500">*</span></label>
+                          <label className="block text-sm font-semibold text-[#0B2C5C]">Rent per month <span className="text-red-500">*</span></label>
                           <input 
                             type="text" 
-                            placeholder="Enter Rent"
+                            inputMode="numeric"
+                            placeholder="e.g. 15000"
                             value={formData.rentPerMonth || ''}
-                            onChange={e => updateFormData({ rentPerMonth: e.target.value })}
+                            onChange={e => updateFormData({ rentPerMonth: e.target.value.replace(/[^\d]/g, '') })}
                             className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800"
                           />
                         </div>
                         
                         <div className="space-y-2">
                           <label className="block text-sm font-semibold text-[#0B2C5C]">Security Deposit</label>
-                          <div className="flex rounded-xl border border-slate-200 focus-within:border-[#4885FF] relative">
+                          <div className="flex rounded-xl border border-slate-200 focus-within:border-[#4885FF] overflow-hidden">
+                            <input 
+                              type="text"
+                              inputMode="numeric"
+                              placeholder="Number"
+                              value={formData.securityDepositVal || ''}
+                              onChange={e => updateFormData({ securityDepositVal: e.target.value.replace(/[^\d]/g, '') })}
+                              className="w-full px-4 py-3 focus:outline-none text-sm text-slate-800"
+                            />
                             <CustomSelect 
                               value={formData.securityDepositType || 'Months'}
                               onChange={e => updateFormData({ securityDepositType: e.target.value })}
-                              className="px-2 bg-slate-50 border-r border-slate-200 focus:outline-none text-xs text-slate-600 bg-white"
+                              className="px-3 min-w-[7.5rem] bg-slate-50 border-l border-slate-200 focus:outline-none text-sm text-slate-600 bg-white"
                             >
                               <option value="Months">Months</option>
-                              <option value="Amount">Amount</option>
+                              <option value="Years">Years</option>
                             </CustomSelect>
-                            <input 
-                              type="text" 
-                              placeholder="Enter Amount"
-                              value={formData.securityDepositVal || ''}
-                              onChange={e => updateFormData({ securityDepositVal: e.target.value })}
-                              className="w-full px-4 py-3 rounded-l-xl focus:outline-none text-sm text-slate-800"
-                            />
                           </div>
                         </div>
 
                         <div className="space-y-2">
                           <label className="block text-sm font-semibold text-[#0B2C5C]">Maintenance Amount</label>
-                          <div className="flex rounded-xl border border-slate-200 focus-within:border-[#4885FF] relative">
-                            <CustomSelect 
-                              value={formData.maintenanceAmountType || 'Select M'}
-                              onChange={e => updateFormData({ maintenanceAmountType: e.target.value })}
-                              className="px-2 bg-slate-50 border-r border-slate-200 focus:outline-none text-xs text-slate-600 bg-white"
-                            >
-                              <option value="Select M">Select M</option>
-                              <option value="Select Month">Select Month</option>
-                              <option value="Select Year">Select Year</option>
-                            </CustomSelect>
+                          <div className="flex rounded-xl border border-slate-200 focus-within:border-[#4885FF] overflow-hidden">
                             <input 
-                              type="text" 
-                              placeholder="Enter Amount"
+                              type="text"
+                              inputMode="numeric"
+                              placeholder="e.g. 1000"
                               value={formData.maintenanceAmountVal || ''}
-                              onChange={e => updateFormData({ maintenanceAmountVal: e.target.value })}
-                              className="w-full px-4 py-3 rounded-l-xl focus:outline-none text-sm text-slate-800"
+                              onChange={e => updateFormData({ maintenanceAmountVal: e.target.value.replace(/[^\d]/g, '') })}
+                              className="w-full px-4 py-3 focus:outline-none text-sm text-slate-800"
                             />
+                            <CustomSelect 
+                              value={formData.maintenanceAmountType || '1'}
+                              onChange={e => updateFormData({ maintenanceAmountType: e.target.value })}
+                              className="px-3 min-w-[8.5rem] bg-slate-50 border-l border-slate-200 focus:outline-none text-sm text-slate-600 bg-white"
+                            >
+                              {Array.from({ length: 12 }, (_, i) => {
+                                const month = String(i + 1);
+                                const label = month === '1' ? '1 Month' : `${month} Months`;
+                                return (
+                                  <option key={month} value={month}>{label}</option>
+                                );
+                              })}
+                            </CustomSelect>
                           </div>
                         </div>
                       </>
@@ -4483,49 +4383,9 @@ export const PostProperty: React.FC = () => {
                 {/* SECTION: Media Upload */}
                 <div className="mb-10">
                   <h3 className="text-lg font-bold text-[#0B2C5C] mb-4 pb-2 border-b border-slate-100">Media Upload</h3>
-                  
-                  <div className="space-y-4">
-                    <label className="block text-sm font-semibold text-[#0B2C5C]">
-                      Property Images <span className="text-red-500">*</span> <span className="text-xs text-slate-400 font-normal">(Minimum 3)</span>
-                    </label>
-                    
-                    {/* Drag & Drop Area */}
-                    <div className="border-2 border-dashed border-slate-200 hover:border-[#4885FF] rounded-2xl p-8 text-center bg-slate-50/50 transition-colors relative cursor-pointer">
-                      <input 
-                        type="file" 
-                        multiple 
-                        accept="image/*"
-                        onChange={handleImageUpload}
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                      />
-                      <div className="flex flex-col items-center justify-center gap-2">
-                        <div className="p-3 bg-white rounded-full shadow-sm text-[#035096]">
-                          <Upload className="w-6 h-6" />
-                        </div>
-                        <span className="text-sm font-semibold text-[#0B2C5C]">Drag and drop images here or click to browse</span>
-                        <span className="text-xs text-slate-400">Supports PNG, JPG, JPEG (Max 5MB each)</span>
-                      </div>
-                    </div>
-
-                    {/* Previews grid */}
-                    {formData.imagePreviews.length > 0 && (
-                      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-4 mt-4">
-                        {formData.imagePreviews.map((preview, index) => (
-                          <div key={index} className="relative group rounded-xl overflow-hidden aspect-square border border-slate-200">
-                            <img src={preview} alt="preview" className="w-full h-full object-cover" />
-                            <button
-                              type="button"
-                              onClick={() => removeImage(index)}
-                              className="absolute top-1.5 right-1.5 p-1 bg-red-500 hover:bg-red-600 text-white rounded-full shadow transition-all duration-200"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                  <div className="space-y-6">
+                    {mediaUploadSection}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
                         <label className="block text-sm font-semibold text-[#0B2C5C]">Video URL (Optional)</label>
                         <input 
@@ -4535,16 +4395,7 @@ export const PostProperty: React.FC = () => {
                           onChange={e => updateFormData({ videoUrl: e.target.value })}
                           className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800"
                         />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="block text-sm font-semibold text-[#0B2C5C]">Floor Plan URL (Optional)</label>
-                        <input 
-                          type="url" 
-                          placeholder="e.g., Floor plan image or PDF link"
-                          value={formData.floorPlanUrl}
-                          onChange={e => updateFormData({ floorPlanUrl: e.target.value })}
-                          className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800"
-                        />
+                        <p className="text-xs text-slate-400">Video should not contain a phone number.</p>
                       </div>
                     </div>
                   </div>
@@ -4642,20 +4493,20 @@ export const PostProperty: React.FC = () => {
 
               {/* Media Gallery Grid */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                {formData.imagePreviews.length > 0 ? (
+                {galleryPreviews.length > 0 ? (
                   <>
                     <div className="md:col-span-2 rounded-2xl overflow-hidden aspect-[4/3] sm:aspect-[16/10] bg-slate-100 border border-slate-100 shadow-sm">
-                      <img src={formData.imagePreviews[0]} alt="main" className="w-full h-full object-cover" />
+                      <img src={galleryPreviews[0]} alt="main" className="w-full h-full object-cover" />
                     </div>
                     <div className="grid grid-rows-2 gap-4">
                       <div className="rounded-xl overflow-hidden aspect-[16/10] bg-slate-100 border border-slate-100 shadow-sm">
-                        <img src={formData.imagePreviews[1] || formData.imagePreviews[0]} alt="sub-1" className="w-full h-full object-cover" />
+                        <img src={galleryPreviews[1] || galleryPreviews[0]} alt="sub-1" className="w-full h-full object-cover" />
                       </div>
                       <div className="rounded-xl overflow-hidden aspect-[16/10] bg-slate-100 border border-slate-100 shadow-sm relative">
-                        <img src={formData.imagePreviews[2] || formData.imagePreviews[0]} alt="sub-2" className="w-full h-full object-cover" />
-                        {formData.imagePreviews.length > 3 && (
+                        <img src={galleryPreviews[2] || galleryPreviews[0]} alt="sub-2" className="w-full h-full object-cover" />
+                        {galleryPreviews.length > 3 && (
                           <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white font-bold text-lg">
-                            +{formData.imagePreviews.length - 3} More
+                            +{galleryPreviews.length - 3} More
                           </div>
                         )}
                       </div>
@@ -4699,44 +4550,40 @@ export const PostProperty: React.FC = () => {
                     </div>
                   )}
 
-                  {isApartmentInventory && (formData.unitInventory?.blocks?.length || 0) > 0 && (
+                  {isApartmentInventory && formData.unitInventory?.enabled && (formData.unitInventory?.blocks?.length || 0) > 0 && (
                     <div>
                       <h3 className="text-lg font-bold text-[#0B2C5C] mb-4">
                         {inventoryUnitLabel === 'villas' ? 'Villa' : 'Flat'} Inventory
                       </h3>
-                      <div className="space-y-3">
-                        {formData.unitInventory!.blocks.map((block) => {
-                          const flats = block.floors.flatMap((f) => f.flats);
-                          const counts = {
-                            available: flats.filter((f) => f.status === 'available').length,
-                            occupied: flats.filter((f) => f.status === 'occupied').length,
-                            sold: flats.filter((f) => f.status === 'sold').length,
-                            mortgage: flats.filter((f) => f.status === 'mortgage').length,
-                          };
-                          return (
-                            <div
-                              key={block.id}
-                              className="p-4 bg-[#F0F4F9]/60 rounded-xl border border-slate-100"
-                            >
-                              <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-                                <span className="text-sm font-bold text-[#0B2C5C]">{block.name}</span>
-                                <span className="text-xs text-slate-500">
-                                  {block.floors.length} floors · {flats.length} {inventoryUnitLabel}
-                                </span>
-                              </div>
-                              <div className="flex flex-wrap gap-3">
-                                {(Object.keys(FLAT_STATUS_META) as Array<keyof typeof FLAT_STATUS_META>).map(
-                                  (status) => (
-                                    <div key={status} className="flex items-center gap-1.5 text-xs text-slate-700">
-                                      <span className={`h-3 w-3 rounded-sm ${FLAT_STATUS_META[status].swatch}`} />
-                                      {FLAT_STATUS_META[status].label}: {counts[status]}
-                                    </div>
-                                  )
-                                )}
-                              </div>
-                            </div>
-                          );
-                        })}
+                      <div className="border border-slate-100 rounded-xl overflow-hidden">
+                        <table className="w-full text-sm text-left">
+                          <thead className="bg-slate-50 text-[#0B2C5C] font-semibold">
+                            <tr>
+                              <th className="px-4 py-3">Block</th>
+                              <th className="px-4 py-3">Floor</th>
+                              <th className="px-4 py-3">
+                                {inventoryUnitLabel === 'villas' ? 'Villa No.' : 'Flat No.'}
+                              </th>
+                              <th className="px-4 py-3">Status</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100">
+                            {formData.unitInventory!.blocks.flatMap((block) =>
+                              block.floors.flatMap((floor) =>
+                                floor.flats.map((flat) => (
+                                  <tr key={flat.id}>
+                                    <td className="px-4 py-3 text-slate-800">{block.name}</td>
+                                    <td className="px-4 py-3 text-slate-800">{floor.label}</td>
+                                    <td className="px-4 py-3 text-slate-800">{flat.unitNumber}</td>
+                                    <td className="px-4 py-3 text-slate-800">
+                                      {FLAT_STATUS_META[flat.status].label}
+                                    </td>
+                                  </tr>
+                                ))
+                              )
+                            )}
+                          </tbody>
+                        </table>
                       </div>
                     </div>
                   )}

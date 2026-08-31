@@ -1,5 +1,5 @@
-import React, { useMemo, useState } from 'react';
-import { ChevronDown, Plus, Trash2 } from 'lucide-react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Plus, Trash2 } from 'lucide-react';
 
 export type FlatStatus = 'available' | 'occupied' | 'sold' | 'mortgage';
 
@@ -38,78 +38,113 @@ export const FLAT_STATUS_META: Record<
   mortgage: { label: 'Mortgage', swatch: 'bg-[#CBD5E1]', selectedRing: 'ring-[#94A3B8]' },
 };
 
-const STATUS_CYCLE: FlatStatus[] = ['available', 'occupied', 'sold', 'mortgage'];
+const STATUS_OPTIONS: { value: FlatStatus; label: string }[] = (
+  Object.keys(FLAT_STATUS_META) as FlatStatus[]
+).map((status) => ({ value: status, label: FLAT_STATUS_META[status].label }));
+
+const inputClass =
+  'w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4885FF] text-sm text-slate-800';
 
 function uid(prefix: string) {
   return `${prefix}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
-function floorLabel(n: number) {
-  const abs = Math.abs(n);
-  const mod100 = abs % 100;
-  const suffix =
-    mod100 >= 11 && mod100 <= 13
-      ? 'th'
-      : ({ 1: 'st', 2: 'nd', 3: 'rd' } as Record<number, string>)[abs % 10] || 'th';
-  return `${n}${suffix} Floor`;
-}
-
-function nextBlockCode(blocks: InventoryBlock[]) {
-  const used = new Set(blocks.map((b) => b.code.toUpperCase()));
-  for (let i = 0; i < 26; i += 1) {
-    const code = String.fromCharCode(65 + i);
-    if (!used.has(code)) return code;
-  }
-  return `B${blocks.length + 1}`;
+function parseFloorNumber(raw: string) {
+  const match = raw.match(/-?\d+/);
+  if (!match) return 0;
+  const n = Number(match[0]);
+  return Number.isNaN(n) ? 0 : n;
 }
 
 export function createDefaultUnitInventory(): UnitInventoryData {
-  const makeFlats = (floorNumber: number, count: number): InventoryFlat[] =>
-    Array.from({ length: count }, (_, i) => ({
-      id: uid('flat'),
-      unitNumber: `${floorNumber}0${i + 1}`,
-      status: (i % 4 === 0
-        ? 'available'
-        : i % 4 === 1
-          ? 'occupied'
-          : i % 4 === 2
-            ? 'sold'
-            : 'mortgage') as FlatStatus,
-    }));
-
-  const makeFloors = (count: number, flatsPerFloor: number): InventoryFloor[] =>
-    Array.from({ length: count }, (_, i) => {
-      const floorNumber = i + 1;
-      return {
-        id: uid('floor'),
-        floorNumber,
-        label: floorLabel(floorNumber),
-        flats: makeFlats(floorNumber, flatsPerFloor),
-      };
-    });
-
-  return {
-    enabled: true,
-    blocks: [
-      {
-        id: uid('block'),
-        name: 'A - Block',
-        code: 'A',
-        floors: makeFloors(4, 7),
-      },
-      {
-        id: uid('block'),
-        name: 'B - Block',
-        code: 'B',
-        floors: makeFloors(3, 5),
-      },
-    ],
-  };
+  return emptyUnitInventory();
 }
 
 export function emptyUnitInventory(): UnitInventoryData {
   return { enabled: false, blocks: [] };
 }
+
+const FieldSelect: React.FC<{
+  value: string;
+  onChange: (value: string) => void;
+  options: { value: string; label: string }[];
+  placeholder?: string;
+  disabled?: boolean;
+  className?: string;
+}> = ({ value, onChange, options, placeholder = 'Select', disabled, className }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const selected = options.find((o) => o.value === value);
+  const displayLabel = selected?.label || placeholder;
+
+  return (
+    <div className={`relative w-full ${className || ''}`} ref={dropdownRef}>
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => setIsOpen((open) => !open)}
+        className={`w-full px-4 py-3 rounded-xl border flex items-center justify-between text-sm transition-all bg-white ${
+          disabled
+            ? 'bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed'
+            : isOpen
+              ? 'border-[#035096] ring-1 ring-[#035096] text-[#035096] cursor-pointer font-medium'
+              : 'border-slate-200 hover:border-slate-300 text-slate-700 cursor-pointer'
+        }`}
+      >
+        <span className={`truncate ${selected ? '' : 'text-slate-400'}`}>{displayLabel}</span>
+        <svg
+          className={`w-4 h-4 shrink-0 transition-transform duration-200 ${isOpen ? 'transform rotate-180 text-[#035096]' : 'text-slate-400'}`}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          viewBox="0 0 24 24"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+        </svg>
+      </button>
+
+      {!disabled && isOpen && (
+        <div className="absolute left-0 mt-1.5 min-w-full w-max bg-white border border-slate-200 rounded-xl shadow-lg z-50 py-1.5 max-h-60 overflow-y-auto">
+          {options.length === 0 ? (
+            <p className="px-4 py-2.5 text-sm text-slate-400">No options</p>
+          ) : (
+            options.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => {
+                  onChange(opt.value);
+                  setIsOpen(false);
+                }}
+                className={`w-full text-left px-4 py-2.5 text-sm transition-colors hover:bg-slate-50 flex items-center justify-between gap-4 ${
+                  value === opt.value ? 'bg-[#F0F4F9]/60 font-semibold text-[#035096]' : 'text-slate-700'
+                }`}
+              >
+                <span className="whitespace-nowrap">{opt.label}</span>
+                {value === opt.value && (
+                  <svg className="w-4 h-4 text-[#035096] shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                  </svg>
+                )}
+              </button>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
 
 interface UnitInventorySectionProps {
   value: UnitInventoryData;
@@ -123,325 +158,302 @@ export const UnitInventorySection: React.FC<UnitInventorySectionProps> = ({
   onChange,
   unitLabel = 'flats',
 }) => {
-  const [activeBlockId, setActiveBlockId] = useState<string>(
-    value.blocks[0]?.id || ''
-  );
-  const [openMenu, setOpenMenu] = useState<'blocks' | 'floors' | 'flats' | null>(null);
-  const [addCount, setAddCount] = useState(1);
-
-  const activeBlock = useMemo(
-    () => value.blocks.find((b) => b.id === activeBlockId) || value.blocks[0] || null,
-    [value.blocks, activeBlockId]
-  );
-
-  const sync = (blocks: InventoryBlock[], enabled = true) => {
-    onChange({ enabled, blocks });
-    if (blocks.length && !blocks.some((b) => b.id === activeBlockId)) {
-      setActiveBlockId(blocks[0].id);
-    }
-  };
-
-  const ensureActive = () => {
-    if (!activeBlock && value.blocks[0]) setActiveBlockId(value.blocks[0].id);
-  };
-
-  const addBlocks = (count: number) => {
-    const next = [...value.blocks];
-    for (let i = 0; i < count; i += 1) {
-      const code = nextBlockCode(next);
-      next.push({
-        id: uid('block'),
-        name: `${code} - Block`,
-        code,
-        floors: [],
-      });
-    }
-    sync(next);
-    setActiveBlockId(next[next.length - 1].id);
-    setOpenMenu(null);
-  };
-
-  const removeBlock = (blockId: string) => {
-    const next = value.blocks.filter((b) => b.id !== blockId);
-    sync(next, next.length > 0);
-    setOpenMenu(null);
-  };
-
-  const addFloors = (count: number) => {
-    if (!activeBlock) return;
-    const start =
-      activeBlock.floors.reduce((max, f) => Math.max(max, f.floorNumber), 0) + 1;
-    const nextFloors = [...activeBlock.floors];
-    for (let i = 0; i < count; i += 1) {
-      const floorNumber = start + i;
-      nextFloors.push({
-        id: uid('floor'),
-        floorNumber,
-        label: floorLabel(floorNumber),
-        flats: [],
-      });
-    }
-    sync(
-      value.blocks.map((b) =>
-        b.id === activeBlock.id ? { ...b, floors: nextFloors } : b
-      )
-    );
-    setOpenMenu(null);
-  };
-
-  const removeFloor = (floorId: string) => {
-    if (!activeBlock) return;
-    sync(
-      value.blocks.map((b) =>
-        b.id === activeBlock.id
-          ? { ...b, floors: b.floors.filter((f) => f.id !== floorId) }
-          : b
-      )
-    );
-  };
-
-  const addFlats = (count: number) => {
-    if (!activeBlock || activeBlock.floors.length === 0) return;
-    sync(
-      value.blocks.map((b) => {
-        if (b.id !== activeBlock.id) return b;
-        return {
-          ...b,
-          floors: b.floors.map((floor) => {
-            const start = floor.flats.length;
-            const newFlats = Array.from({ length: count }, (_, i) => ({
-              id: uid('flat'),
-              unitNumber: `${floor.floorNumber}${String(start + i + 1).padStart(2, '0')}`,
-              status: 'available' as FlatStatus,
-            }));
-            return { ...floor, flats: [...floor.flats, ...newFlats] };
-          }),
-        };
-      })
-    );
-    setOpenMenu(null);
-  };
-
-  const cycleFlatStatus = (floorId: string, flatId: string) => {
-    if (!activeBlock) return;
-    sync(
-      value.blocks.map((b) => {
-        if (b.id !== activeBlock.id) return b;
-        return {
-          ...b,
-          floors: b.floors.map((floor) => {
-            if (floor.id !== floorId) return floor;
-            return {
-              ...floor,
-              flats: floor.flats.map((flat) => {
-                if (flat.id !== flatId) return flat;
-                const idx = STATUS_CYCLE.indexOf(flat.status);
-                return { ...flat, status: STATUS_CYCLE[(idx + 1) % STATUS_CYCLE.length] };
-              }),
-            };
-          }),
-        };
-      })
-    );
-  };
-
-  const removeFlat = (floorId: string, flatId: string) => {
-    if (!activeBlock) return;
-    sync(
-      value.blocks.map((b) => {
-        if (b.id !== activeBlock.id) return b;
-        return {
-          ...b,
-          floors: b.floors.map((floor) =>
-            floor.id !== floorId
-              ? floor
-              : { ...floor, flats: floor.flats.filter((f) => f.id !== flatId) }
-          ),
-        };
-      })
-    );
-  };
-
+  const singular =
+    unitLabel === 'villas' ? 'villa' : unitLabel === 'units' ? 'unit' : 'flat';
+  const plural = unitLabel;
   const unitTitle =
     unitLabel === 'villas' ? 'List of villas' : unitLabel === 'units' ? 'List of units' : 'List of flats';
+  const addQuestion =
+    unitLabel === 'villas'
+      ? 'Do you want to add the villas?'
+      : unitLabel === 'units'
+        ? 'Do you want to add the units?'
+        : 'Do you want to add the flats?';
+
+  const [draftBlock, setDraftBlock] = useState('');
+  const [draftFloor, setDraftFloor] = useState('');
+  const [draftUnit, setDraftUnit] = useState('');
+  const [draftStatus, setDraftStatus] = useState<FlatStatus>('available');
+  const [addError, setAddError] = useState('');
+
+  const listedRows = useMemo(
+    () =>
+      value.blocks.flatMap((block) =>
+        block.floors
+          .slice()
+          .sort((a, b) => a.floorNumber - b.floorNumber)
+          .flatMap((floor) =>
+            floor.flats.map((flat) => ({
+              blockId: block.id,
+              blockCode: block.code,
+              blockName: block.name,
+              floorId: floor.id,
+              floorNumber: floor.floorNumber,
+              floorLabel: floor.label,
+              flat,
+            }))
+          )
+      ),
+    [value.blocks]
+  );
+
+  const setEnabled = (enabled: boolean) => {
+    if (!enabled) {
+      onChange(emptyUnitInventory());
+      setDraftBlock('');
+      setDraftFloor('');
+      setDraftUnit('');
+      setDraftStatus('available');
+      setAddError('');
+      return;
+    }
+    onChange({ ...value, enabled: true });
+  };
+
+  const addListedUnit = () => {
+    const blockName = draftBlock.trim();
+    const floorName = draftFloor.trim();
+    const unitNumber = draftUnit.trim();
+    if (!blockName || !floorName || !unitNumber) return;
+
+    const nextBlocks = value.blocks.map((block) => ({
+      ...block,
+      floors: block.floors.map((floor) => ({
+        ...floor,
+        flats: [...floor.flats],
+      })),
+    }));
+
+    const blockKey = blockName.toLowerCase();
+    let block = nextBlocks.find(
+      (b) => b.code.toLowerCase() === blockKey || b.name.toLowerCase() === blockKey
+    );
+    if (!block) {
+      block = {
+        id: uid('block'),
+        name: blockName,
+        code: blockName,
+        floors: [],
+      };
+      nextBlocks.push(block);
+    }
+
+    const floorKey = floorName.toLowerCase();
+    const floorNumber = parseFloorNumber(floorName);
+    let floor = block.floors.find(
+      (f) => f.label.toLowerCase() === floorKey || String(f.floorNumber) === floorKey
+    );
+    if (!floor) {
+      floor = {
+        id: uid('floor'),
+        floorNumber,
+        label: floorName,
+        flats: [],
+      };
+      block.floors.push(floor);
+    }
+
+    if (floor.flats.some((flat) => flat.unitNumber.toLowerCase() === unitNumber.toLowerCase())) {
+      setAddError(`This ${singular} is already added on that floor.`);
+      return;
+    }
+
+    floor.flats.push({
+      id: uid('flat'),
+      unitNumber,
+      status: draftStatus,
+    });
+
+    onChange({ enabled: true, blocks: nextBlocks });
+    setDraftUnit('');
+    setAddError('');
+  };
+
+  const updateFlatStatus = (blockId: string, floorId: string, flatId: string, status: FlatStatus) => {
+    onChange({
+      enabled: true,
+      blocks: value.blocks.map((block) =>
+        block.id !== blockId
+          ? block
+          : {
+              ...block,
+              floors: block.floors.map((floor) =>
+                floor.id !== floorId
+                  ? floor
+                  : {
+                      ...floor,
+                      flats: floor.flats.map((flat) =>
+                        flat.id === flatId ? { ...flat, status } : flat
+                      ),
+                    }
+              ),
+            }
+      ),
+    });
+  };
+
+  const removeFlat = (blockId: string, floorId: string, flatId: string) => {
+    const nextBlocks = value.blocks
+      .map((block) => {
+        if (block.id !== blockId) return block;
+        const floors = block.floors
+          .map((floor) =>
+            floor.id !== floorId
+              ? floor
+              : { ...floor, flats: floor.flats.filter((flat) => flat.id !== flatId) }
+          )
+          .filter((floor) => floor.flats.length > 0);
+        return { ...block, floors };
+      })
+      .filter((block) => block.floors.length > 0);
+
+    onChange({ enabled: true, blocks: nextBlocks });
+  };
 
   return (
     <div className="pt-2">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-4 pb-2 border-b border-slate-100">
-        <div>
-          <h3 className="text-lg font-bold text-[#0B2C5C]">{unitTitle}</h3>
-          <p className="text-xs text-slate-400 mt-0.5">
-            Map blocks, floors, and {unitLabel}. Click a unit to cycle its status.
-          </p>
-        </div>
+      <div className="mb-4 pb-2 border-b border-slate-100">
+        <h3 className="text-lg font-bold text-[#0B2C5C]">{unitTitle}</h3>
+      </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          {(['blocks', 'floors', 'flats'] as const).map((menu) => (
-            <div key={menu} className="relative">
-              <button
-                type="button"
-                onClick={() => {
-                  ensureActive();
-                  setOpenMenu((prev) => (prev === menu ? null : menu));
-                  setAddCount(1);
-                }}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-[#035096] px-3 py-2 text-xs font-semibold text-white hover:bg-[#024078] transition"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                Add {menu === 'blocks' ? 'Blocks' : menu === 'floors' ? 'Floors' : unitLabel === 'villas' ? 'Villas' : 'Flats'}
-                <ChevronDown className="w-3.5 h-3.5 opacity-80" />
-              </button>
-
-              {openMenu === menu && (
-                <div className="absolute right-0 z-20 mt-2 w-52 rounded-xl border border-slate-200 bg-white p-3 shadow-lg">
-                  {menu === 'floors' && !activeBlock && (
-                    <p className="text-xs text-slate-500">Add a block first.</p>
-                  )}
-                  {menu === 'flats' && (!activeBlock || activeBlock.floors.length === 0) && (
-                    <p className="text-xs text-slate-500">Add floors to the active block first.</p>
-                  )}
-                  {(menu === 'blocks' ||
-                    (menu === 'floors' && activeBlock) ||
-                    (menu === 'flats' && activeBlock && activeBlock.floors.length > 0)) && (
-                    <>
-                      <label className="block text-[11px] font-semibold uppercase text-slate-500 mb-1">
-                        How many?
-                      </label>
-                      <input
-                        type="number"
-                        min={1}
-                        max={30}
-                        value={addCount}
-                        onChange={(e) => setAddCount(Math.max(1, Math.min(30, Number(e.target.value) || 1)))}
-                        className="w-full mb-3 rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:border-[#4885FF]"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (menu === 'blocks') addBlocks(addCount);
-                          else if (menu === 'floors') addFloors(addCount);
-                          else addFlats(addCount);
-                        }}
-                        className="w-full rounded-lg bg-[#035096] py-2 text-xs font-semibold text-white hover:bg-[#024078]"
-                      >
-                        Add
-                      </button>
-                    </>
-                  )}
-                </div>
-              )}
-            </div>
-          ))}
+      <div className="space-y-2">
+        <span className="block text-sm font-semibold text-slate-600">{addQuestion}</span>
+        <div className="flex gap-6 mt-1">
+          {(['Yes', 'No'] as const).map((item) => {
+            const isChecked = item === 'Yes' ? value.enabled : !value.enabled;
+            return (
+              <label key={item} className="flex items-center gap-2 text-sm text-slate-800 cursor-pointer">
+                <input
+                  type="radio"
+                  name={`add-${plural}-option`}
+                  checked={isChecked}
+                  onChange={() => setEnabled(item === 'Yes')}
+                  className="w-4 h-4 text-[#035096] border-slate-300 focus:ring-[#035096]"
+                />
+                {item}
+              </label>
+            );
+          })}
         </div>
       </div>
 
-      {value.blocks.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50/80 px-6 py-10 text-center">
-          <p className="text-sm text-slate-600 mb-3">No blocks yet. Start by adding a block for this project.</p>
-          <button
-            type="button"
-            onClick={() => addBlocks(1)}
-            className="inline-flex items-center gap-1.5 rounded-full bg-[#035096] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#024078]"
-          >
-            <Plus className="w-4 h-4" />
-            Add first block
-          </button>
-        </div>
-      ) : (
-        <>
-          <div className="flex flex-wrap gap-2 mb-5">
-            {value.blocks.map((block) => (
-              <div key={block.id} className="inline-flex items-center gap-1">
-                <button
-                  type="button"
-                  onClick={() => setActiveBlockId(block.id)}
-                  className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${
-                    activeBlock?.id === block.id
-                      ? 'bg-slate-200 text-[#0B2C5C]'
-                      : 'bg-white border border-slate-200 text-slate-600 hover:border-slate-300'
-                  }`}
-                >
-                  {block.name}
-                </button>
-                {value.blocks.length > 1 && (
-                  <button
-                    type="button"
-                    title="Remove block"
-                    onClick={() => removeBlock(block.id)}
-                    className="rounded-md p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-500"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                )}
-              </div>
-            ))}
+      {value.enabled && (
+        <div className="mt-6 space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
+            <div className="space-y-2">
+              <label className="block text-xs font-semibold text-slate-500 uppercase">Block</label>
+              <input
+                type="text"
+                placeholder="e.g. A - Block"
+                value={draftBlock}
+                onChange={(e) => {
+                  setDraftBlock(e.target.value);
+                  setAddError('');
+                }}
+                className={inputClass}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="block text-xs font-semibold text-slate-500 uppercase">Floor</label>
+              <input
+                type="text"
+                placeholder="e.g. 1st Floor"
+                value={draftFloor}
+                onChange={(e) => {
+                  setDraftFloor(e.target.value);
+                  setAddError('');
+                }}
+                className={inputClass}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="block text-xs font-semibold text-slate-500 uppercase">
+                {singular === 'villa' ? 'Villa No.' : singular === 'unit' ? 'Unit No.' : 'Flat No.'}
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. 101"
+                value={draftUnit}
+                onChange={(e) => {
+                  setDraftUnit(e.target.value);
+                  setAddError('');
+                }}
+                className={inputClass}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="block text-xs font-semibold text-slate-500 uppercase">Status</label>
+              <FieldSelect
+                value={draftStatus}
+                onChange={(next) => setDraftStatus(next as FlatStatus)}
+                options={STATUS_OPTIONS}
+              />
+            </div>
+            <button
+              type="button"
+              disabled={!draftBlock.trim() || !draftFloor.trim() || !draftUnit.trim()}
+              onClick={addListedUnit}
+              className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#035096] px-4 py-3 text-sm font-semibold text-white hover:bg-[#024078] disabled:opacity-40 disabled:cursor-not-allowed transition"
+            >
+              <Plus className="w-4 h-4" />
+              Add {singular}
+            </button>
           </div>
 
-          {activeBlock && (
-            <div className="flex flex-col lg:flex-row gap-6">
-              <div className="flex-1 space-y-4 overflow-x-auto">
-                {activeBlock.floors.length === 0 ? (
-                  <div className="rounded-xl border border-dashed border-slate-200 px-4 py-8 text-center text-sm text-slate-500">
-                    No floors in {activeBlock.name}. Use &quot;Add Floors&quot; to continue.
-                  </div>
-                ) : (
-                  activeBlock.floors
-                    .slice()
-                    .sort((a, b) => b.floorNumber - a.floorNumber)
-                    .map((floor) => (
-                      <div key={floor.id} className="flex items-start gap-3 min-w-max">
-                        <div className="w-24 shrink-0 pt-2 flex items-center gap-1">
-                          <span className="text-sm font-semibold text-[#0B2C5C]">{floor.label}</span>
-                          <button
-                            type="button"
-                            title="Remove floor"
-                            onClick={() => removeFloor(floor.id)}
-                            className="p-0.5 text-slate-300 hover:text-red-500"
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </button>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                          {floor.flats.map((flat) => {
-                            const meta = FLAT_STATUS_META[flat.status];
-                            return (
-                              <button
-                                key={flat.id}
-                                type="button"
-                                title={`${flat.unitNumber} — ${meta.label} (click to change)`}
-                                onClick={() => cycleFlatStatus(floor.id, flat.id)}
-                                onContextMenu={(e) => {
-                                  e.preventDefault();
-                                  removeFlat(floor.id, flat.id);
-                                }}
-                                className={`h-9 w-14 rounded-md ${meta.swatch} ring-1 ring-black/5 hover:brightness-95 transition shadow-sm`}
-                              />
-                            );
-                          })}
-                          {floor.flats.length === 0 && (
-                            <span className="text-xs text-slate-400 pt-2">No {unitLabel} on this floor</span>
-                          )}
-                        </div>
-                      </div>
-                    ))
-                )}
-              </div>
+          {addError && <p className="text-xs text-red-500">{addError}</p>}
 
-              <div className="lg:w-40 shrink-0 space-y-3 pt-1">
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Status</p>
-                {(Object.keys(FLAT_STATUS_META) as FlatStatus[]).map((status) => (
-                  <div key={status} className="flex items-center gap-2.5">
-                    <span className={`h-4 w-4 rounded-sm ${FLAT_STATUS_META[status].swatch}`} />
-                    <span className="text-sm text-slate-700">{FLAT_STATUS_META[status].label}</span>
-                  </div>
-                ))}
-                <p className="text-[11px] text-slate-400 pt-2 leading-relaxed">
-                  Click a unit to cycle status. Right-click to remove.
-                </p>
-              </div>
+          {listedRows.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50/80 px-6 py-8 text-center">
+              <p className="text-sm text-slate-600">
+                No {plural} added yet. Enter block, floor, {singular} number and status, then add.
+              </p>
+            </div>
+          ) : (
+            <div className="border border-slate-100 rounded-xl overflow-x-auto overflow-y-visible">
+              <table className="w-full text-sm text-left">
+                <thead className="bg-slate-50 text-[#0B2C5C] font-semibold">
+                  <tr>
+                    <th className="px-4 py-3">Block</th>
+                    <th className="px-4 py-3">Floor</th>
+                    <th className="px-4 py-3">
+                      {singular === 'villa' ? 'Villa No.' : singular === 'unit' ? 'Unit No.' : 'Flat No.'}
+                    </th>
+                    <th className="px-4 py-3">Status</th>
+                    <th className="px-4 py-3 w-12" />
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {listedRows.map((row) => (
+                    <tr key={row.flat.id}>
+                      <td className="px-4 py-3 font-medium text-slate-700">{row.blockName}</td>
+                      <td className="px-4 py-3 text-slate-700">{row.floorLabel}</td>
+                      <td className="px-4 py-3 text-slate-700">{row.flat.unitNumber}</td>
+                      <td className="px-4 py-3 min-w-[10rem]">
+                        <FieldSelect
+                          value={row.flat.status}
+                          onChange={(next) =>
+                            updateFlatStatus(row.blockId, row.floorId, row.flat.id, next as FlatStatus)
+                          }
+                          options={STATUS_OPTIONS}
+                        />
+                      </td>
+                      <td className="px-4 py-3">
+                        <button
+                          type="button"
+                          title={`Remove ${singular}`}
+                          onClick={() => removeFlat(row.blockId, row.floorId, row.flat.id)}
+                          className="rounded-md p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-500"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
-        </>
+        </div>
       )}
     </div>
   );

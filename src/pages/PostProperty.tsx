@@ -45,7 +45,6 @@ import {
   MapPin,
   Smartphone,
   Mail,
-  Trash2,
   Shield,
   ArrowRight
 } from 'lucide-react';

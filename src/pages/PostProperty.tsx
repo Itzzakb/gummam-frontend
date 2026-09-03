@@ -2975,6 +2975,66 @@ export const PostProperty: React.FC = () => {
                                 <option value="Cold Storage">Cold Storage</option>
                               </CustomSelect>
                             </div>
+                            <div className="space-y-2">
+                              <label className="block text-xs font-semibold text-slate-500 uppercase">Closed Shed Area</label>
+                              <div className="flex rounded-xl border border-slate-200 focus-within:border-[#4885FF] relative">
+                                <input 
+                                  type="text" 
+                                  placeholder="Enter Closed Shed Area"
+                                  value={formData.closedShedCarpetArea || ''}
+                                  onChange={e => updateFormData({ closedShedCarpetArea: e.target.value })}
+                                  className="w-full px-4 py-3 rounded-l-xl focus:outline-none text-sm text-slate-800"
+                                />
+                                <CustomSelect 
+                                  value={formData.closedShedCarpetAreaUnit || 'Sft.'}
+                                  onChange={e => updateFormData({ closedShedCarpetAreaUnit: e.target.value })}
+                                  className="px-2 bg-slate-50 border-l border-slate-200 focus:outline-none text-xs text-slate-600 bg-white"
+                                >
+                                  <option value="Sft.">Sft.</option>
+                                  <option value="Sq.Yards">Sq.Yards</option>
+                                </CustomSelect>
+                              </div>
+                            </div>
+                            <div className="space-y-2">
+                              <label className="block text-xs font-semibold text-slate-500 uppercase">Open Space Area</label>
+                              <div className="flex rounded-xl border border-slate-200 focus-within:border-[#4885FF] relative">
+                                <input 
+                                  type="text" 
+                                  placeholder="Enter Open Space Area"
+                                  value={formData.openSpaceCarpetArea || ''}
+                                  onChange={e => updateFormData({ openSpaceCarpetArea: e.target.value })}
+                                  className="w-full px-4 py-3 rounded-l-xl focus:outline-none text-sm text-slate-800"
+                                />
+                                <CustomSelect 
+                                  value={formData.openSpaceCarpetAreaUnit || 'Sft.'}
+                                  onChange={e => updateFormData({ openSpaceCarpetAreaUnit: e.target.value })}
+                                  className="px-2 bg-slate-50 border-l border-slate-200 focus:outline-none text-xs text-slate-600 bg-white"
+                                >
+                                  <option value="Sft.">Sft.</option>
+                                  <option value="Sq.Yards">Sq.Yards</option>
+                                </CustomSelect>
+                              </div>
+                            </div>
+                            <div className="space-y-2">
+                              <label className="block text-xs font-semibold text-slate-500 uppercase">Total Area</label>
+                              <div className="flex rounded-xl border border-slate-200 focus-within:border-[#4885FF] relative">
+                                <input 
+                                  type="text" 
+                                  placeholder="Enter Total Area"
+                                  value={formData.totalCarpetAreaVal || ''}
+                                  onChange={e => updateFormData({ totalCarpetAreaVal: e.target.value })}
+                                  className="w-full px-4 py-3 rounded-l-xl focus:outline-none text-sm text-slate-800"
+                                />
+                                <CustomSelect 
+                                  value={formData.totalCarpetAreaUnit || 'Sft.'}
+                                  onChange={e => updateFormData({ totalCarpetAreaUnit: e.target.value })}
+                                  className="px-2 bg-slate-50 border-l border-slate-200 focus:outline-none text-xs text-slate-600 bg-white"
+                                >
+                                  <option value="Sft.">Sft.</option>
+                                  <option value="Sq.Yards">Sq.Yards</option>
+                                </CustomSelect>
+                              </div>
+                            </div>
                           </div>
                         )}
 
